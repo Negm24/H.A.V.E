@@ -1,11 +1,10 @@
-"""Settings for local AutoPharm development."""
+from .base import *
 
-from .base import *  # noqa: F403
-from .base import env
+DEBUG = True
 
-DEBUG = env.bool("DJANGO_DEBUG", default=True)
+# Local runserver uses HTTP. Keep secure cookies enabled in base settings.
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
-ALLOWED_HOSTS = env.list(
-    "DJANGO_ALLOWED_HOSTS",
-    default=["localhost", "127.0.0.1"],
-)
+# Development-only SMS simulation. Never enable for real deployments.
+AUTH_CONSOLE_SMS = True

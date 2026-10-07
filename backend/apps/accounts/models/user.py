@@ -1,142 +1,156 @@
-from typing import Any
-
-import phonenumbers
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
-from django.utils.translation import gettext_lazy as _
-
 from apps.accounts.managers import UserManager
-from apps.accounts.validators import validate_date_not_in_future, validate_e164_phone_number
-
-
-class CredentialKind(models.TextChoices):
-    PIN = "PIN", _("PIN")
-    PASSWORD = "PASSWORD", _("Password")
-
+from django.contrib.auth.hashers import check_password
+from django.conf import settings
+from django.utils.crypto import salted_hmac
 
 class User(AbstractBaseUser):
-    """The base human identity shared by the kiosk and AutoDoc."""
+    class AccountType(models.TextChoices):
+        CUSTOMER = "CUSTOMER", "Customer"
+        DOCTOR = "DOCTOR", "Doctor"
+        OWNER = "OWNER", "Owner"
 
+    # Credentials belong to the matching customer/doctor/owner profile.
+    password = None
     last_login = None
 
     id = models.CharField(
         primary_key=True,
-        max_length=14,
+        max_length=23,
         editable=False,
     )
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    phone_number = models.CharField(
-        max_length=16,
-        unique=True,
-        validators=[validate_e164_phone_number],
+
+    account_type = models.CharField(
+        max_length=8,
+        choices=AccountType.choices,
     )
+
+    first_name = models.CharField(max_length=32)
+    last_name = models.CharField(max_length=32)
+
+    phone_number = models.CharField(max_length=16)
+    email = models.EmailField(max_length=128)
+
     phone_country_code = models.CharField(
         max_length=2,
-        validators=[
-            RegexValidator(
-                regex=r"^[A-Z]{2}$",
-                message=_("Use a two-letter uppercase ISO country code."),
-                code="invalid_country_code",
-            )
-        ],
+        default="EG",
     )
-    date_of_birth = models.DateField(validators=[validate_date_not_in_future])
-    password = models.CharField(
-        _("credential hash"),
-        max_length=255,
-        db_column="credential_hash",
-    )
-    credential_kind = models.CharField(max_length=10, choices=CredentialKind)
-    email = models.EmailField(max_length=254, null=True, blank=True)
+
+    phone_verified_at = models.DateTimeField(null=True, blank=True)
+
     is_disabled = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
 
-    USERNAME_FIELD = "phone_number"
-    REQUIRED_FIELDS = [
-        "first_name",
-        "last_name",
-        "phone_country_code",
-        "date_of_birth",
-        "credential_kind",
-    ]
+    USERNAME_FIELD = "id"
 
     class Meta:
         db_table = "users"
-        ordering = ["-created_at"]
+
         constraints = [
-            models.CheckConstraint(
-                condition=~models.Q(id=""),
-                name="users_id_not_empty",
-            ),
-            models.CheckConstraint(
-                condition=~models.Q(password=""),
-                name="users_credential_hash_not_empty",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(credential_kind__in=CredentialKind.values),
-                name="users_credential_kind_valid",
+            models.UniqueConstraint(
+                fields=["account_type", "phone_number"],
+                name="users_account_type_phone_unique",
             ),
             models.UniqueConstraint(
+                "account_type",
                 Lower("email"),
-                condition=models.Q(email__isnull=False),
-                name="users_email_ci_unique",
+                name="users_account_type_email_unique",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    account_type__in=["CUSTOMER", "DOCTOR", "OWNER"],
+                ),
+                name="users_account_type_valid",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(is_staff=False)
+                    | models.Q(account_type="OWNER")
+                ),
+                name="users_staff_requires_owner",
             ),
         ]
 
-    def clean(self) -> None:
-        super().clean()
+    @property
+    def credential_profile(self):
+        profile_name = {
+            self.AccountType.CUSTOMER: "customer",
+            self.AccountType.DOCTOR: "doctor",
+            self.AccountType.OWNER: "owner",
+        }[self.account_type]
 
-        if self.email:
-            self.email = self.email.strip().lower()
-
-        self.phone_country_code = self.phone_country_code.upper()
-        try:
-            parsed_number = phonenumbers.parse(self.phone_number, None)
-        except phonenumbers.NumberParseException:
-            return
-
-        detected_region = phonenumbers.region_code_for_number(parsed_number)
-        if detected_region and detected_region != self.phone_country_code:
-            raise ValidationError(
-                {
-                    "phone_country_code": _(
-                        "The country code does not match the phone number."
-                    )
-                }
-            )
+        return getattr(self, profile_name)
 
     @property
-    def credential_hash(self) -> str:
-        return self.password
+    def credential_hash(self):
+        profile = self.credential_profile
+
+        if self.account_type == self.AccountType.CUSTOMER:
+            return profile.pin_hash
+
+        return profile.password_hash
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.credential_hash) # This calls the Django function, not the model's method (Not recursive).
+
+    def set_password(self, raw_password):
+        raise NotImplementedError(
+            "Change credentials through the account service "
+            "so hashing and session invalidation happen together."
+        )
+
+    def _get_session_auth_hash(self, secret=None):
+        credential_state = (
+            f"{self.credential_hash}:"
+            f"{self.credential_profile.credential_changed_at.isoformat()}"
+        )
+
+        return salted_hmac(
+            key_salt="have.accounts.User.session",
+            value=credential_state,
+            secret=secret,
+            algorithm="sha256",
+        ).hexdigest()
+
+    def get_session_auth_fallback_hash(self):
+        for secret in settings.SECRET_KEY_FALLBACKS:
+            yield self._get_session_auth_hash(secret=secret)
 
     @property
-    def is_active(self) -> bool:
+    def is_active(self):
         return not self.is_disabled
 
-    @property
-    def is_staff(self) -> bool:
-        return False
+    def has_perm(self, perm, obj=None):
+        if obj is not None:
+            return False
 
-    def set_unusable_password(self) -> None:
-        raise ValueError("Every AutoPharm user must have a usable credential.")
+        return (
+            self.is_active
+            and self.is_staff
+            and self.account_type == self.AccountType.OWNER
+            and perm in {
+                "accounts.view_doctor",
+                "accounts.change_doctor",
+            }
+        )
 
-    def get_full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}".strip()
+    def has_module_perms(self, app_label):
+        return (
+            app_label == "accounts"
+            and self.has_perm("accounts.view_doctor")
+        )
 
-    def get_short_name(self) -> str:
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    def get_short_name(self):
         return self.first_name
 
-    def has_perm(self, perm: str, obj: Any | None = None) -> bool:
-        return False
-
-    def has_module_perms(self, app_label: str) -> bool:
-        return False
-
-    def __str__(self) -> str:
-        return f"{self.id} - {self.get_full_name()}"
+    def __str__(self):
+        return self.id

@@ -1,0 +1,1312 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "H.A.V.E Backend API",
+    "version": "0.1.0",
+    "description": "Owners use session cookies. Hub customers use HubBearer JWTs. Terminals require device headers and TerminalBearer session tokens. See AUTH_GUIDE.md."
+  },
+  "paths": {
+    "/api/v1/auth/csrf/": {
+      "get": {
+        "operationId": "v1_auth_csrf_retrieve",
+        "description": "Keep the response cookie and send csrf_token as X-CSRFToken on POST requests. This is not a login token.",
+        "summary": "Get a CSRF token",
+        "tags": [
+          "Owner authentication"
+        ],
+        "security": [
+          {}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfToken"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/customers/hub/login/": {
+      "post": {
+        "operationId": "v1_auth_customers_hub_login_create",
+        "summary": "Customer Hub login (phone + PIN)",
+        "tags": [
+          "Customer Hub"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HubLogin"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/HubLogin"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/HubLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HubSession"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/customers/hub/logout/": {
+      "post": {
+        "operationId": "v1_auth_customers_hub_logout_create",
+        "tags": [
+          "Customer Hub"
+        ],
+        "security": [
+          {}
+        ],
+        "responses": {
+          "204": {
+            "description": "Hub session revoked."
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/customers/hub/me/": {
+      "get": {
+        "operationId": "v1_auth_customers_hub_me_retrieve",
+        "tags": [
+          "Customer Hub"
+        ],
+        "security": [
+          {
+            "HubBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerIdentity"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/customers/hub/refresh/": {
+      "post": {
+        "operationId": "v1_auth_customers_hub_refresh_create",
+        "summary": "Rotate Hub refresh cookie and issue new access token",
+        "tags": [
+          "Customer Hub"
+        ],
+        "security": [
+          {}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HubSession"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/customers/signup/": {
+      "post": {
+        "operationId": "v1_auth_customers_signup_create",
+        "description": "For Hub and Terminal. No account is created until verification. Dates use DD-MM-YYYY. Local mock SMS appears only in the server terminal. Resubmit the full form after resend_after seconds to replace an earlier code. This anonymous flow neither uses nor creates login cookies.",
+        "summary": "Start customer signup or resend a code",
+        "tags": [
+          "Customer signup"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerSignup"
+              },
+              "examples": {
+                "Customer": {
+                  "value": {
+                    "first_name": "Youssef",
+                    "last_name": "Negm",
+                    "phone_number": "01012345678",
+                    "email": "customer@example.test",
+                    "date_of_birth": "24-01-2005",
+                    "pin": "4826"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerSignup"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerSignup"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {}
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerSignupChallenge"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid signup fields."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/customers/signup/verify/": {
+      "post": {
+        "operationId": "v1_auth_customers_signup_verify_create",
+        "description": "Use the challenge ID returned by signup and the code from the mock SMS. The code expires after 5 minutes and allows 5 incorrect guesses. Success creates a customer, but does not sign them in. Replays are rejected.",
+        "summary": "Verify SMS code and create the customer account",
+        "tags": [
+          "Customer signup"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerSignupVerification"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerSignupVerification"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerSignupVerification"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {}
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerIdentity"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid input, wrong/expired/used code."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/customers/terminal/login/": {
+      "post": {
+        "operationId": "v1_auth_customers_terminal_login_create",
+        "summary": "Sign in within a Terminal session; replace the session token",
+        "tags": [
+          "Customer Terminal"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerLogin"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerLogin"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "TerminalSerial": [],
+            "TerminalKey": [],
+            "TerminalBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalSession"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/customers/terminal/me/": {
+      "get": {
+        "operationId": "v1_auth_customers_terminal_me_retrieve",
+        "summary": "Current Terminal customer; does NOT renew activity",
+        "tags": [
+          "Customer Terminal"
+        ],
+        "security": [
+          {
+            "TerminalSerial": [],
+            "TerminalKey": [],
+            "TerminalBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerIdentity"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/owners/login/": {
+      "post": {
+        "operationId": "v1_auth_owners_login_create",
+        "description": "Use an existing privately provisioned owner's phone and password. Sets an HttpOnly session cookie; no JWT or Remember Me. Expires after 10 minutes idle or 2 hours total. Swagger supplies CSRF automatically. Reload docs after login to pick up the rotated CSRF token. Wrong credentials, lockout and unavailable Redis all deny login.",
+        "summary": "Sign in as an owner",
+        "tags": [
+          "Owner authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerLogin"
+              },
+              "examples": {
+                "ReplaceWithYourOwnOwnerCredentials": {
+                  "value": {
+                    "phone_number": "01112345678",
+                    "password": "YOUR_OWNER_PASSWORD"
+                  },
+                  "summary": "Replace with your own owner credentials"
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerLogin"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {}
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerIdentity"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid or missing input fields."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/owners/logout/": {
+      "post": {
+        "operationId": "v1_auth_owners_logout_create",
+        "summary": "Sign out the current owner session",
+        "tags": [
+          "Owner authentication"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session deleted."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/owners/me/": {
+      "get": {
+        "operationId": "v1_auth_owners_me_retrieve",
+        "description": "Uses the session cookie set at login. Run manually; polling counts as activity.",
+        "summary": "Check the signed-in owner",
+        "tags": [
+          "Owner authentication"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerIdentity"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/terminals/sessions/": {
+      "post": {
+        "operationId": "v1_terminals_sessions_create",
+        "summary": "Start guest session; replace any previous session on this device",
+        "tags": [
+          "Terminal sessions"
+        ],
+        "security": [
+          {
+            "TerminalSerial": [],
+            "TerminalKey": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalSession"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/terminals/sessions/activity/": {
+      "post": {
+        "operationId": "v1_terminals_sessions_activity_create",
+        "summary": "Record explicit user activity (never background polling)",
+        "tags": [
+          "Terminal sessions"
+        ],
+        "security": [
+          {
+            "TerminalSerial": [],
+            "TerminalKey": [],
+            "TerminalBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalSession"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/terminals/sessions/end/": {
+      "post": {
+        "operationId": "v1_terminals_sessions_end_create",
+        "tags": [
+          "Terminal sessions"
+        ],
+        "security": [
+          {
+            "TerminalSerial": [],
+            "TerminalKey": [],
+            "TerminalBearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session ended."
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CsrfToken": {
+        "type": "object",
+        "properties": {
+          "csrf_token": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "csrf_token"
+        ]
+      },
+      "CustomerIdentity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "account_type": {
+            "type": "string",
+            "readOnly": true
+          },
+          "first_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "last_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "phone_number": {
+            "type": "string",
+            "readOnly": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "readOnly": true
+          },
+          "date_of_birth": {
+            "type": "string",
+            "pattern": "^\\d{2}-\\d{2}-\\d{4}$",
+            "example": "24-01-2005",
+            "readOnly": true
+          },
+          "phone_verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "account_type",
+          "date_of_birth",
+          "email",
+          "first_name",
+          "id",
+          "last_name",
+          "phone_number",
+          "phone_verified_at"
+        ]
+      },
+      "CustomerLogin": {
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "pin": {
+            "type": "string",
+            "writeOnly": true,
+            "maxLength": 4,
+            "pattern": "^[0-9]{4}$"
+          }
+        },
+        "required": [
+          "phone_number",
+          "pin"
+        ]
+      },
+      "CustomerSignup": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "phone_number": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 128
+          },
+          "date_of_birth": {
+            "type": "string",
+            "pattern": "^\\d{2}-\\d{2}-\\d{4}$",
+            "example": "24-01-2005"
+          },
+          "pin": {
+            "type": "string",
+            "writeOnly": true,
+            "maxLength": 4,
+            "pattern": "^[0-9]{4}$"
+          }
+        },
+        "required": [
+          "date_of_birth",
+          "email",
+          "first_name",
+          "last_name",
+          "phone_number",
+          "pin"
+        ]
+      },
+      "CustomerSignupChallenge": {
+        "type": "object",
+        "properties": {
+          "challenge_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "resend_after": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "detail",
+          "expires_in",
+          "resend_after"
+        ]
+      },
+      "CustomerSignupVerification": {
+        "type": "object",
+        "properties": {
+          "challenge_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phone_number": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "code": {
+            "type": "string",
+            "writeOnly": true,
+            "maxLength": 6,
+            "pattern": "^[0-9]{6}$"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "code",
+          "phone_number"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ]
+      },
+      "HubLogin": {
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "pin": {
+            "type": "string",
+            "writeOnly": true,
+            "maxLength": 4,
+            "pattern": "^[0-9]{4}$"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "phone_number",
+          "pin"
+        ]
+      },
+      "HubSession": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerIdentity"
+          }
+        },
+        "required": [
+          "access_token",
+          "customer",
+          "expires_in",
+          "token_type"
+        ]
+      },
+      "OwnerIdentity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "account_type": {
+            "type": "string",
+            "readOnly": true
+          },
+          "first_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "last_name": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "account_type",
+          "first_name",
+          "id",
+          "last_name"
+        ]
+      },
+      "OwnerLogin": {
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "password": {
+            "type": "string",
+            "writeOnly": true,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "password",
+          "phone_number"
+        ]
+      },
+      "TerminalSession": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "idle_expires_in": {
+            "type": "integer"
+          },
+          "session_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerIdentity"
+          }
+        },
+        "required": [
+          "idle_expires_in",
+          "session_id"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "HubBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "TerminalBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Opaque session token"
+      },
+      "TerminalKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Terminal-Key"
+      },
+      "TerminalSerial": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Terminal-Serial"
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sessionid"
+      }
+    }
+  }
+}

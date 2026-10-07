@@ -1,25 +1,22 @@
 from django.db import connection
 
-USER_ID_SEQUENCE_NAME = "accounts_user_id_seq"
-USER_ID_DIGITS = 10
-USER_ID_PREFIX = "USR"
-USER_ID_MAXIMUM = (10**USER_ID_DIGITS) - 1
 
+def generate_user_id(account_type, phone_number):
+    prefixes = {
+        "CUSTOMER": "C",
+        "DOCTOR": "D",
+        "OWNER": "O",
+    }
 
-def generate_user_id() -> str:
-    """Return the next non-PII public user identifier from PostgreSQL."""
+    try:
+        prefix = prefixes[account_type]
+    except KeyError:
+        raise ValueError("Unsupported account type.") from None
+
+    phone_suffix = phone_number[-3:]
+
     with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT nextval(%s::regclass)",
-            [USER_ID_SEQUENCE_NAME],
-        )
-        row = cursor.fetchone()
+        cursor.execute("SELECT nextval('have_user_id_seq')")
+        sequence_number = cursor.fetchone()[0]
 
-    if row is None:
-        raise RuntimeError("PostgreSQL did not return a user ID sequence value.")
-
-    sequence_value = int(row[0])
-    if sequence_value > USER_ID_MAXIMUM:
-        raise OverflowError("The AutoPharm user ID sequence is exhausted.")
-
-    return f"{USER_ID_PREFIX}-{sequence_value:0{USER_ID_DIGITS}d}"
+    return f"HAV-{prefix}{phone_suffix}-{sequence_number:012d}"
