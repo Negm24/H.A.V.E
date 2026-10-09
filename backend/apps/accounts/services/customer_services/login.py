@@ -24,4 +24,5 @@ def authenticate_customer(*, phone_number, pin, source, terminal_serial=None):
         record_failed_login("CUSTOMER", phone_number)
         raise AuthError("Unable to sign in. Check your credentials or try again later.")
     clear_login_failures("CUSTOMER", phone_number)
+    user._authenticated_credential_version = user.customer.credential_changed_at.isoformat()
     return user

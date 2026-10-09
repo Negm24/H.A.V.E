@@ -1,8 +1,19 @@
 from drf_spectacular.utils import extend_schema_serializer
 from rest_framework import serializers
 
-from .shared_serializers import DayMonthYearField
-from apps.accounts.security.validation import normalize_phone_number, normalize_email, validate_name, validate_date_of_birth, validate_pin
+from apps.accounts.security.validation import (
+    normalize_email,
+    normalize_phone_number,
+    validate_date_of_birth,
+    validate_name,
+    validate_pin,
+)
+
+from .shared_serializers import (
+    DayMonthYearField,
+    RecoveryCompleteInputSerializer,
+    StrictInputSerializer,
+)
 
 
 @extend_schema_serializer(component_name="CustomerSignup")
@@ -85,3 +96,18 @@ class CustomerHubSessionOutputSerializer(serializers.Serializer):
     token_type = serializers.CharField()
     expires_in = serializers.IntegerField()
     customer = CustomerIdentityOutputSerializer()
+
+
+class CustomerHubPinResetCompleteInputSerializer(RecoveryCompleteInputSerializer):
+    new_pin = serializers.RegexField(r"^[0-9]{4}$", source="new_credential", max_length=4,
+                                     trim_whitespace=False, write_only=True, validators=[validate_pin])
+    confirm_pin = serializers.RegexField(r"^[0-9]{4}$", source="confirmation", max_length=4,
+                                         trim_whitespace=False, write_only=True)
+
+
+class CustomerHubQrScanInputSerializer(StrictInputSerializer):
+    qr_payload = serializers.CharField(max_length=150, trim_whitespace=False, write_only=True)
+
+
+class CustomerHubQrConfirmInputSerializer(StrictInputSerializer):
+    approve = serializers.BooleanField()

@@ -3,24 +3,51 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.permissions import AllowAny
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..serializers.customer_serializers import (
-    CustomerSignupInputSerializer, CustomerSignupVerificationInputSerializer,
-    CustomerSignupChallengeOutputSerializer, CustomerIdentityOutputSerializer,
-    CustomerHubLoginInputSerializer, CustomerHubSessionOutputSerializer,
+from apps.accounts.security.authentication import HubAuthentication, bearer_token
+from apps.accounts.services.customer_services import pin_reset, qr_login
+from apps.accounts.services.customer_services.hub_sessions import (
+    end_hub_session,
+    refresh_hub_session,
+    start_hub_session,
 )
-from ..serializers.shared_serializers import ErrorOutputSerializer
-from .shared_views import CustomerSessionView, ERRORS, source
-from apps.accounts.security.authentication import HubAuthentication
-from apps.accounts.services.customer_services.hub_sessions import start_hub_session, refresh_hub_session, end_hub_session
 from apps.accounts.services.customer_services.login import authenticate_customer
-from apps.accounts.services.customer_services.signup import SignupError, request_customer_signup, verify_customer_signup
+from apps.accounts.services.customer_services.signup import (
+    SignupError,
+    request_customer_signup,
+    verify_customer_signup,
+)
+
+from ..serializers.customer_serializers import (
+    CustomerHubLoginInputSerializer,
+    CustomerHubPinResetCompleteInputSerializer,
+    CustomerHubQrConfirmInputSerializer,
+    CustomerHubQrScanInputSerializer,
+    CustomerHubSessionOutputSerializer,
+    CustomerIdentityOutputSerializer,
+    CustomerSignupChallengeOutputSerializer,
+    CustomerSignupInputSerializer,
+    CustomerSignupVerificationInputSerializer,
+)
+from ..serializers.shared_serializers import (
+    ErrorOutputSerializer,
+    QrStatusOutputSerializer,
+    RecoveryChallengeOutputSerializer,
+    RecoveryProofOutputSerializer,
+    RecoveryRequestInputSerializer,
+    RecoveryVerifyInputSerializer,
+)
+from .shared_views import CustomerSessionView, ERRORS, RecoveryActionView, source
 
 
 def signup_error_response(exc):
@@ -35,7 +62,7 @@ class CustomerSignupView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["Customer signup"], request=CustomerSignupInputSerializer,
+        tags=["Customer Hub"], request=CustomerSignupInputSerializer,
         summary="Start customer signup or resend a code",
         description=("For Hub and Terminal. No account is created until verification. "
                      "Dates use DD-MM-YYYY. Local mock SMS appears only in the server terminal. "
@@ -68,7 +95,7 @@ class CustomerSignupVerificationView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["Customer signup"], request=CustomerSignupVerificationInputSerializer,
+        tags=["Customer Hub"], request=CustomerSignupVerificationInputSerializer,
         summary="Verify SMS code and create the customer account",
         description=("Use the challenge ID returned by signup and the code from the mock SMS. "
                      "The code expires after 5 minutes and allows 5 incorrect guesses. "
@@ -148,3 +175,68 @@ class CustomerHubMeView(CustomerSessionView):
     @extend_schema(tags=["Customer Hub"], responses={200: CustomerIdentityOutputSerializer, **ERRORS})
     def get(self, request):
         return Response(CustomerIdentityOutputSerializer(request.user).data)
+
+
+@extend_schema_view(post=extend_schema(
+    tags=["Customer Hub"], request=RecoveryRequestInputSerializer, responses={202: RecoveryChallengeOutputSerializer, **ERRORS},
+    summary="Request customer pin reset",
+))
+class CustomerHubPinResetRequestView(RecoveryActionView):
+    serializer_class = RecoveryRequestInputSerializer
+    operation = staticmethod(pin_reset.request_pin_reset)
+    response_status = 202
+
+
+@extend_schema_view(post=extend_schema(
+    tags=["Customer Hub"], request=RecoveryVerifyInputSerializer, responses={200: RecoveryProofOutputSerializer, **ERRORS},
+    summary="Verify customer pin reset",
+))
+class CustomerHubPinResetVerifyView(RecoveryActionView):
+    serializer_class = RecoveryVerifyInputSerializer
+    operation = staticmethod(pin_reset.verify_pin_reset)
+    response_status = 200
+
+
+@extend_schema_view(post=extend_schema(
+    tags=["Customer Hub"], request=CustomerHubPinResetCompleteInputSerializer, responses={200: ErrorOutputSerializer, **ERRORS},
+    summary="Complete customer pin reset (sign in again afterward)",
+))
+class CustomerHubPinResetCompleteView(RecoveryActionView):
+    serializer_class = CustomerHubPinResetCompleteInputSerializer
+    operation = staticmethod(pin_reset.complete_pin_reset)
+    response_status = 200
+
+
+@method_decorator(sensitive_post_parameters("qr_payload"), name="dispatch")
+class CustomerHubQrView(CustomerSessionView):
+    authentication_classes = [HubAuthentication]
+    permission_classes = [IsAuthenticated]
+
+
+class CustomerHubQrScanView(CustomerHubQrView):
+    @extend_schema(tags=["Customer Hub"], request=CustomerHubQrScanInputSerializer,
+                   responses={200: QrStatusOutputSerializer, **ERRORS},
+                   summary="Scan the QR displayed by a Terminal (does not approve login)")
+    def post(self, request):
+        serializer = CustomerHubQrScanInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(qr_login.scan_qr(**serializer.validated_data,
+                         access_token=bearer_token(request), source=source(request)))
+
+
+class CustomerHubQrStatusView(CustomerHubQrView):
+    @extend_schema(tags=["Customer Hub"], responses={200: QrStatusOutputSerializer, **ERRORS},
+                   summary="Check your scanned QR request without renewing its expiry")
+    def get(self, request, challenge_id):
+        return Response(qr_login.hub_qr_status(challenge_id=challenge_id, access_token=bearer_token(request)))
+
+
+class CustomerHubQrConfirmView(CustomerHubQrView):
+    @extend_schema(tags=["Customer Hub"], request=CustomerHubQrConfirmInputSerializer,
+                   responses={200: QrStatusOutputSerializer, **ERRORS},
+                   summary="Explicitly approve or reject login to the displayed Terminal")
+    def post(self, request, challenge_id):
+        serializer = CustomerHubQrConfirmInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(qr_login.confirm_qr(challenge_id=challenge_id, **serializer.validated_data,
+                         access_token=bearer_token(request), source=source(request)))

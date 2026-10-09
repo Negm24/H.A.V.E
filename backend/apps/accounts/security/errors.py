@@ -1,8 +1,9 @@
 
 
 class AuthError(Exception):
-    def __init__(self, detail="Authentication failed.", status=401):
+    def __init__(self, detail="Authentication failed.", status=401, retry_after=None):
         self.detail, self.status = detail, status
+        self.retry_after = retry_after
         super().__init__(detail)
 
 

@@ -1,19 +1,36 @@
 import time
-
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..serializers.owner_serializers import OwnerLoginInputSerializer, OwnerIdentityOutputSerializer
-from ..serializers.shared_serializers import ErrorOutputSerializer
 from apps.accounts.security.permissions import IsOwner
+from apps.accounts.services.owner_services import password_reset
+
+from ..serializers.owner_serializers import (
+    OwnerIdentityOutputSerializer,
+    OwnerLoginInputSerializer,
+    OwnerPasswordResetCompleteInputSerializer,
+)
+from ..serializers.shared_serializers import (
+    ErrorOutputSerializer,
+    RecoveryChallengeOutputSerializer,
+    RecoveryProofOutputSerializer,
+    RecoveryRequestInputSerializer,
+    RecoveryVerifyInputSerializer,
+)
+from .shared_views import ERRORS, RecoveryActionView
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -95,3 +112,33 @@ class OwnerLogoutView(APIView):
     def post(self, request):
         logout(request._request)
         return Response(status=204)
+
+
+@extend_schema_view(post=extend_schema(
+    tags=["Owner authentication"], request=RecoveryRequestInputSerializer, responses={202: RecoveryChallengeOutputSerializer, **ERRORS},
+    summary="Request owner password reset",
+))
+class OwnerPasswordResetRequestView(RecoveryActionView):
+    serializer_class = RecoveryRequestInputSerializer
+    operation = staticmethod(password_reset.request_password_reset)
+    response_status = 202
+
+
+@extend_schema_view(post=extend_schema(
+    tags=["Owner authentication"], request=RecoveryVerifyInputSerializer, responses={200: RecoveryProofOutputSerializer, **ERRORS},
+    summary="Verify owner password reset",
+))
+class OwnerPasswordResetVerifyView(RecoveryActionView):
+    serializer_class = RecoveryVerifyInputSerializer
+    operation = staticmethod(password_reset.verify_password_reset)
+    response_status = 200
+
+
+@extend_schema_view(post=extend_schema(
+    tags=["Owner authentication"], request=OwnerPasswordResetCompleteInputSerializer, responses={200: ErrorOutputSerializer, **ERRORS},
+    summary="Complete owner password reset (sign in again afterward)",
+))
+class OwnerPasswordResetCompleteView(RecoveryActionView):
+    serializer_class = OwnerPasswordResetCompleteInputSerializer
+    operation = staticmethod(password_reset.complete_password_reset)
+    response_status = 200

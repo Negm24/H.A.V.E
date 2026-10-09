@@ -40,6 +40,8 @@ def _new_row(user, *, remember_me, expires_at, user_agent, ip_address, family=No
 
 
 def start_hub_session(user, *, remember_me, previous_token, user_agent, ip_address):
+    verified_version = getattr(user, "_authenticated_credential_version",
+                               user.customer.credential_changed_at.isoformat())
     old = _lookup(previous_token)
     # Ordered locks prevent a deadlock if two browsers switch accounts in reverse.
     ids = sorted({user.pk} | ({old.user_id} if old else set()))
@@ -48,6 +50,8 @@ def start_hub_session(user, *, remember_me, previous_token, user_agent, ip_addre
         user = locked[user.pk]
         if not eligible_customer(user):
             raise AuthError()
+        if user.customer.credential_changed_at.isoformat() != verified_version:
+            raise AuthError("Credentials changed. Sign in again.")
         if old:
             _revoke(old)
         row, raw = _new_row(

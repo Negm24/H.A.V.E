@@ -201,3 +201,10 @@ HUB_REFRESH_COOKIE_NAME = "have_hub_refresh"
 HUB_REFRESH_COOKIE_PATH = "/api/v1/auth/customers/hub/"
 TERMINAL_IDLE_SECONDS = 240
 TERMINAL_MAX_SECONDS = 900
+
+# Login-page recovery, shared across account types; no new environment secrets.
+RECOVERY_CODE_SECONDS = 300
+RECOVERY_PROOF_SECONDS = 300
+RECOVERY_RESEND_SECONDS = 60
+RECOVERY_MAX_ATTEMPTS = 5
+QR_LOGIN_SECONDS = 90

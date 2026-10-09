@@ -3,6 +3,12 @@ from rest_framework import serializers
 
 from apps.accounts.security.validation import normalize_phone_number
 
+from .shared_serializers import PasswordResetCompleteInputSerializer
+
+
+class OwnerPasswordResetCompleteInputSerializer(PasswordResetCompleteInputSerializer):
+    pass
+
 
 @extend_schema_serializer(component_name="OwnerLogin")
 class OwnerLoginInputSerializer(serializers.Serializer):

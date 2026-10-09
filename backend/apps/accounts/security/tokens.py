@@ -1,5 +1,6 @@
 from uuid import UUID
 import hashlib
+import secrets
 
 from django.conf import settings
 from django.utils import timezone
@@ -11,6 +12,10 @@ from .errors import AuthError
 
 def token_hash(raw):
     return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def generate_verification_code():
+    return f"{secrets.randbelow(1_000_000):06d}"
 
 
 def signing_key():

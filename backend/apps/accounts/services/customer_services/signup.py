@@ -1,7 +1,6 @@
 from datetime import date
 from uuid import uuid4
 import json
-import secrets
 
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -10,7 +9,9 @@ from django.db import DatabaseError
 from redis.exceptions import RedisError
 
 from .registration import _create_customer_from_validated_data
-from apps.accounts.security.errors import SignupError
+from apps.accounts.security.errors import AuthError, SignupError
+from apps.accounts.security.tokens import generate_verification_code
+from apps.accounts.services.shared_services.notifications import send_verification_sms
 from apps.accounts.security.state import (
     auth_key, get_redis_client, _digest, _challenge_key, _latest_key,
     _source_limit, ISSUE_SCRIPT, VERIFY_SCRIPT,
@@ -18,10 +19,11 @@ from apps.accounts.security.state import (
 
 
 def _deliver_sms(*, challenge_id, phone_number, code):
-    # Deliberate local test output only, not application logging or an API response.
-    if not (settings.DEBUG and settings.AUTH_CONSOLE_SMS):
-        raise SignupError("SMS delivery is not configured.", status=503)
-    print(f"[MOCK SMS — CUSTOMER SIGNUP] {phone_number} | challenge={challenge_id} | code={code}", flush=True)
+    try:
+        send_verification_sms(purpose="CUSTOMER SIGNUP", challenge_id=challenge_id,
+                              phone_number=phone_number, code=code)
+    except AuthError as exc:
+        raise SignupError(exc.detail, status=exc.status) from None
 
 
 def request_customer_signup(*, data, source):
@@ -35,7 +37,7 @@ def request_customer_signup(*, data, source):
         payload["pin_hash"] = make_password(payload.pop("pin"))
         payload["date_of_birth"] = payload["date_of_birth"].isoformat()
         challenge_id = str(uuid4())
-        code = f"{secrets.randbelow(1_000_000):06d}"
+        code = generate_verification_code()
         phone = payload["phone_number"]
         identity = _digest(phone)
         challenge_key = _challenge_key(challenge_id)

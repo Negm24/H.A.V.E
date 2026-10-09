@@ -13,7 +13,9 @@ new features ship; listed future features are not available endpoints.
 | Customer signup, mocked SMS delivery, code verification, resend | Implemented |
 | Customer Hub login/me/refresh/logout | Implemented |
 | Terminal provisioning, guest sessions, customer login/me, activity/end | Implemented |
-| Customer PIN reset and QR login | Not implemented yet |
+| Customer Hub PIN reset through SMS verification | Implemented |
+| Doctor and owner password reset through SMS verification | Implemented; existing accounts only |
+| Terminal QR displayed for a signed-in Hub customer to scan and confirm | Implemented backend flow |
 | Doctor signup/login, approval dashboard and MFA routes | Not implemented yet |
 
 ## Start the project
@@ -112,7 +114,7 @@ No owner session is modified if you happen to already be signed in.
 
 ### 1. Submit the customer details
 
-Open http://localhost:8000/api/docs/ and find **Customer signup**.
+Open http://localhost:8000/api/docs/ and find **Customer Hub**. Signup and Hub authentication share this section.
 Expand **POST /api/v1/auth/customers/signup/**, choose **Try it out**, then use:
 
 ```json
@@ -481,3 +483,251 @@ did not change database models. Hub reuses `refresh_tokens`; Terminal login adds
 one migration for the approved `terminals` model. The terminal and session tests
 also use a separate test database and isolated Redis prefixes. Concurrent refresh
 tests use real PostgreSQL transactions to confirm replay revokes the session family.
+
+## Recovery: customer PIN, doctor password, owner password
+
+These are **anonymous login-page flows**, not settings inside an account. Customer
+PIN recovery exists in **Hub only**. Doctors and owners reset passwords, not PINs.
+No recovery response logs anyone in. Sign in again after success.
+
+Swagger groups signup, Hub login, PIN recovery, and Hub QR actions under
+**Customer Hub**. Password recovery uses **Doctor authentication** and
+**Owner authentication**. Terminal actions remain under **Customer Terminal**.
+
+### 1. Prepare an existing account and CSRF
+
+- Customer: use the SMS-verified account created through signup above.
+- Owner: use the privately provisioned owner above. There is no public owner signup.
+- Doctor: use an existing doctor record created through the internal registration
+  service. Doctor signup/login and approval/MFA endpoints are not implemented yet.
+  Recovery does not approve a doctor or remove MFA.
+
+In Swagger, refresh `/api/docs/` before testing; it supplies CSRF automatically.
+In Postman, GET `/api/v1/auth/csrf/`, keep the cookie jar enabled, and send the
+returned `csrf_token` in `X-CSRFToken` on **all three recovery POST requests**.
+Use No Auth in Postman; no access token is required. Stay on the same hostname.
+
+Choose the matching base path:
+
+| Account | Base path |
+| --- | --- |
+| Customer | `/api/v1/auth/customers/hub/pin-reset/` |
+| Doctor | `/api/v1/auth/doctors/password-reset/` |
+| Owner | `/api/v1/auth/owners/password-reset/` |
+
+### 2. Request an SMS code
+
+POST `<base path>request/` with your account's actual phone:
+
+```json
+{"phone_number": "01012345678"}
+```
+
+Expect **202** with `challenge_id`, `expires_in: 300`, `resend_after: 60`, and a
+generic message. This response is deliberately the same for unknown or ineligible
+accounts; it does not prove that SMS was sent. Disabled accounts cannot recover;
+customers must already have a verified phone, and owners must be staff owners.
+
+Read the local mock code in a separate terminal:
+
+```powershell
+docker compose logs -f backend
+```
+
+Look for `[MOCK SMS — CUSTOMER RECOVERY]`, `DOCTOR RECOVERY`, or `OWNER RECOVERY`.
+These logs contain secrets: do not share them. Delivery remains a local mock,
+enabled only with `DEBUG=True` and `AUTH_CONSOLE_SMS=True`. There is no production
+SMS provider in this increment; outside this configuration recovery returns 503.
+**No new `.env` values or secrets are required.**
+
+### 3. Verify the SMS code
+
+POST `<base path>verify/`:
+
+```json
+{
+  "phone_number": "01012345678",
+  "challenge_id": "PASTE-CHALLENGE-UUID",
+  "code": "PASTE-SIX-DIGIT-CODE"
+}
+```
+
+Expect **200** with `reset_token` and `expires_in: 300`. The token is permission
+to change this account's credential once; it is **not a login token**. Keep it
+only temporarily, never in a URL. Successful verification consumes the code.
+
+### 4. Set the new credential
+
+Customer: POST `<base path>complete/`:
+
+```json
+{
+  "reset_token": "PASTE-RESET-TOKEN",
+  "new_pin": "5937",
+  "confirm_pin": "5937"
+}
+```
+
+Doctor or owner: POST `<base path>complete/`:
+
+```json
+{
+  "reset_token": "PASTE-RESET-TOKEN",
+  "new_password": "REPLACE-WITH-A-STRONG-NEW-PASSWORD",
+  "confirm_password": "REPLACE-WITH-A-STRONG-NEW-PASSWORD"
+}
+```
+
+Expect **200**: `{"detail": "Credential updated. Sign in again."}`. PINs and codes
+must be JSON strings. Existing PIN/password strength rules still apply. The two
+credential fields must match. An invalid new credential does not consume a valid
+reset token, so correct the input before its deadline.
+
+### 5. Verify the outcome
+
+- Customer: old Hub access/refresh credentials and logged-in Terminal sessions
+  must fail. Log into Hub with the new PIN; the old PIN must fail.
+- Owner: the old owner session must fail `/owners/me/`. Sign in with the new
+  password. Recovery creates no replacement session or authentication cookie.
+- Doctor: existing refresh sessions are revoked; approval and MFA stay unchanged.
+  Until doctor login ships, check the changed credential privately in Django shell
+  using `User.check_password()`, not through a nonexistent doctor login route.
+- Reusing the reset token returns **400**. A customer proof cannot reset an owner
+  or doctor, even if those accounts share a phone number.
+
+For a private doctor password check without typing a password into shell history:
+
+```powershell
+docker compose exec backend python manage.py shell
+```
+
+```python
+from getpass import getpass
+from apps.accounts.models import User
+doctor = User.objects.get(account_type="DOCTOR", phone_number="+201012345678")  # Your existing doctor's phone
+print(doctor.check_password(getpass("New doctor password: ")))
+exit()
+```
+
+### Limits and failure handling
+
+- Resend by calling `request/` again after 60 seconds. Use the newest challenge.
+  A resend invalidates the previous code **and any reset token from it**.
+- Maximum five sends per phone per hour, shared across recovery roles; maximum
+  20 send requests per source IP per ten minutes. These are recovery budgets,
+  separate from signup's existing budgets.
+- Codes expire after five minutes and permit five wrong attempts. Reset tokens
+  expire five minutes after verification. Verify and complete each allow 60
+  requests per source IP per five minutes. Throttling returns **429** with
+  `Retry-After`; restarting the browser does not clear Redis limits.
+- Reset clears the account's failed-login history, not source/device rate limits.
+- Missing CSRF returns **403**. Expired, wrong-role, consumed, or invalid proofs
+  return **400**. Redis/database outages fail closed with **503**.
+- A database failure after proof consumption leaves the old credential unchanged
+  but burns that proof. Request a fresh code rather than retrying the same proof.
+- Simultaneous completions cannot both succeed.
+
+## QR login: Terminal displays, Hub scans and confirms
+
+This is a backend flow. The Terminal frontend will render `qr_payload` as an image;
+the Hub frontend will scan it. For now, **copying the payload in Swagger/Postman
+tests the same backend flow**. No camera or frontend is required.
+
+Use a provisioned Terminal and a verified customer. Log the customer into Hub
+first using the earlier instructions. Keep that Hub session active.
+
+### Swagger setup
+
+In **Authorize**, set `HubBearer` to the Hub access token. Set `TerminalSerial`
+and `TerminalKey` to your device credentials. Start a guest session through
+`POST /api/v1/terminals/sessions/`, then set `TerminalBearer` to its `session_token`.
+Paste token values without a `Bearer ` prefix. The separate schemes let Swagger
+choose the right token for each route. Device credentials are not customer tokens.
+
+### 1. Terminal requests a QR payload
+
+POST `/api/v1/auth/customers/terminal/qr-login/` with no body. Expect **201**:
+`challenge_id`, `status: "waiting_for_scan"`, `expires_in`, and `qr_payload`.
+Save the challenge ID and payload. The Terminal must still be a guest.
+
+### 2. Logged-in Hub customer scans
+
+POST `/api/v1/auth/customers/hub/qr-login/scan/`:
+
+```json
+{"qr_payload": "PASTE-EXACT-PAYLOAD-FROM-TERMINAL"}
+```
+
+Expect **200**, `waiting_for_confirmation`, and trusted Terminal details including
+serial number, name, and addresses. Scanning alone does **not** authorize login.
+The Hub must display these details so the customer confirms the intended Terminal.
+
+### 3. Hub confirms or rejects
+
+POST `/api/v1/auth/customers/hub/qr-login/<challenge_id>/confirm/`:
+
+```json
+{"approve": true}
+```
+
+Expect **200**, `approved`. To reject, use `false` instead; rejection is final.
+The same Hub login session that scanned must confirm; a different customer or
+another Hub session cannot take over this challenge.
+
+Optional status requests:
+
+- Hub: GET `/api/v1/auth/customers/hub/qr-login/<challenge_id>/`.
+- Terminal: GET `/api/v1/auth/customers/terminal/qr-login/<challenge_id>/`.
+
+Poll no faster than once every two seconds. Polling **never extends activity**.
+
+### 4. Terminal completes login
+
+Using the original guest token, POST
+`/api/v1/auth/customers/terminal/qr-login/<challenge_id>/complete/` with no body.
+Expect **200** with customer identity and a **new `session_token`**. Replace
+`TerminalBearer` with that new token, then GET `/api/v1/auth/customers/terminal/me/`.
+The guest token must no longer work. A second completion cannot log anyone in.
+
+Successful completion counts as interaction but keeps the original guest-session
+start time. Current backend settings remain **240 seconds idle / 900 seconds
+absolute maximum**; QR login does not change those configured limits.
+
+### Postman headers
+
+Every Terminal QR request needs all three headers:
+
+```http
+X-Terminal-Serial: HAVE-TEST-001
+X-Terminal-Key: YOUR-DEVICE-CREDENTIAL
+Authorization: Bearer YOUR-GUEST-SESSION-TOKEN
+```
+
+After completion, replace the guest token with the returned customer session token.
+Hub scan/status/confirm requests use only `Authorization: Bearer YOUR-HUB-ACCESS-TOKEN`.
+These QR endpoints do not use cookie authentication, so they need no CSRF header.
+Hub login/refresh/logout still need their existing cookie/CSRF handling.
+
+### QR checks to try
+
+- Completing before approval fails; rejecting prevents completion.
+- A QR expires after at most **90 seconds**, capped by the guest's remaining idle
+  and absolute lifetime. Expired challenges return **400**, not an `expired` state.
+- Generating another QR replaces the old one. Starting another guest session,
+  ending the guest session, rotating the device key, or disabling the Terminal
+  prevents use of its pending QR.
+- Logging out of the approving Hub session, resetting the customer's PIN, or
+  disabling the customer prevents pending QR completion.
+- QR creation allows ten requests per device and twenty per source IP per five
+  minutes. Hub actions allow sixty per customer and source per five minutes;
+  Terminal completion allows sixty per device and source per five minutes.
+  Status polling allows sixty per session per minute. Expect **429** on limits.
+- Redis/database failures deny access; two simultaneous completions yield at most
+  one successful login. No plaintext QR secret is stored in Redis.
+
+### Deployment note
+
+No new migrations are needed for recovery/QR. Customer Terminal sessions now
+include the credential version: sessions created before this change must sign in
+again. Existing owner sessions, Hub tokens, and signup challenges keep their
+formats. Recovery intentionally revokes the recovered account's existing sessions.

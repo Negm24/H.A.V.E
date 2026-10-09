@@ -1,7 +1,7 @@
 # Backend code map
 
-The backend is organized by subsystem, then responsibility. The refactor changes
-Python locations, not URLs, payloads, authentication rules, storage formats, or Docker.
+The backend is organized by subsystem, then responsibility. Features below include
+the recovery and Terminal-to-Hub QR increment as well as the original authentication flows.
 
 ## Folder responsibilities
 
@@ -39,6 +39,14 @@ Paths in this table start at `apps/accounts/`.
 | Private owner provisioning | `management/commands/provision_owner.py` | `services/owner_services/registration.py` |
 | Login counters, backoff, signup challenge keys/scripts | Used by authentication services | `security/state.py` |
 | Shared authentication/signup exceptions | Used across layers | `security/errors.py` |
+| Hub PIN recovery | `api/views/customer_views.py` | `services/customer_services/pin_reset.py` |
+| Doctor password recovery | `api/views/doctor_views.py` | `services/doctor_services/password_reset.py` |
+| Owner password recovery | `api/views/owner_views.py` | `services/owner_services/password_reset.py` |
+| Shared recovery orchestration and session revocation | Called by the three role wrappers | `services/shared_services/recovery.py` |
+| Shared mock SMS delivery | Signup and recovery | `services/shared_services/notifications.py`; code generation in `security/tokens.py` |
+| Recovery codes, proofs, and limits | Called by recovery services | `security/challenges.py`; reuses existing Redis limit/issuance scripts |
+| QR scan, approval, Terminal completion | Customer and Terminal views | `services/customer_services/qr_login.py` |
+| Atomic QR challenge transitions | Called by QR service | `security/qr_state.py`; final token rotation in `apps/terminals/security/state.py` |
 | Names, phones, email, DOB, credentials, required text | Used by serializers and registration | `security/validation.py` |
 
 `customer_serializers.py` owns shared signup, shared credential fields, Hub
@@ -116,8 +124,11 @@ docker compose exec backend python manage.py spectacular --validate --fail-on-wa
 
 Tests use a separate PostgreSQL test database and isolated Redis prefixes.
 Existing tests are retained, with moved mock targets. New tests protect URL
-names/order, exact OpenAPI output, and legacy-format owner, Hub, signup, and
-Terminal credentials. The baseline JSON is public API documentation, not secrets.
+names/order and earlier OpenAPI contracts, allowing the deliberate Customer Hub
+tag merge and new recovery/QR endpoints. Legacy owner, Hub, and signup credentials
+remain supported. Logged-in Terminal sessions now require a credential-version
+stamp so PIN recovery invalidates them; older customer sessions must sign in again.
+The baseline JSON is public API documentation, not secrets.
 For a future intentional API change, review the contract difference before updating
 that fixture; do not regenerate it merely to hide a test failure.
 
