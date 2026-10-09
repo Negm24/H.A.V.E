@@ -855,7 +855,7 @@ The central backend owns all authentication and authorization. Different actors 
 ### 11.1 Terminal customer
 
 - Mobile number and four-digit PIN.
-- SMS verification and reset code.
+- SMS signup verification. PIN recovery is available in Hub only, not Terminal.
 - Short-lived session bound to terminal and kiosk session.
 - Server-side lockout and rate limiting.
 - No access to Advisor doctor endpoints.
@@ -867,6 +867,8 @@ The central backend owns all authentication and authorization. Different actors 
 - A Hub session policy suited to a personal device, separate from the short-lived public-Terminal session.
 - No doctor endpoints and no automatic authorization of a Terminal payment merely because Hub is signed in.
 - Saved payment references are scoped to the customer account and usable only through an explicitly approved checkout.
+- Login-page PIN recovery uses a six-digit SMS code followed by a short-lived, single-use reset token. Customer PINs remain four digits. Successful recovery revokes old sessions and requires a new sign-in; it never creates a login.
+- For QR login, Terminal displays a guest-session-bound QR, the signed-in Hub customer scans and confirms the Terminal identity, and Terminal completes token rotation. Redis atomically enforces one-use approval, short expiry, device/session binding, and the existing Terminal deadlines. Polling does not count as activity.
 
 ### 11.3 Advisor doctor
 
@@ -876,6 +878,7 @@ The central backend owns all authentication and authorization. Different actors 
 - Doctor login uses TOTP MFA with an existing authenticator app. Advisor supplies enrollment and code-entry screens; no fourth frontend is built. Store the enrollment secret encrypted, not as a temporary email OTP.
 - Only an active authorized doctor can issue or revoke a prescription; recent authentication or reauthentication is required for issuing.
 - No assistant, organization-admin, delegated draft, or simulated professional-registry flow.
+- Doctor and owner password recovery uses role-specific SMS verification routes with shared recovery tools. It does not reset MFA, approve a doctor, create an owner, or automatically log in. Codes and reset proofs are kept in Redis with expiry and attempt/send limits; PostgreSQL stores the changed credential hash and credential-change timestamp. No separate recovery table is needed. Development delivery is mocked; a real SMS provider remains a separate integration.
 
 ### 11.4 Identity model
 
@@ -892,7 +895,7 @@ Hub and Advisor shall use 15-minute access tokens and PostgreSQL refresh-token r
 - Protect browser refresh credentials with Secure, HttpOnly cookies and appropriate SameSite/CSRF controls; access tokens should not become persistent localStorage credentials.
 - Redis failures shall not bypass expiry or revocation. Use authoritative PostgreSQL fallback for personal-app token validity where available; fail closed when a required temporary Terminal session or security challenge cannot be verified.
 
-Terminal sessions have 70-second inactivity expiry and a fixed 10-minute maximum, no Remember Me, and no long-lived refresh credential. Backend-enforced expiry is independent of the 15-minute personal-app access-token lifetime. Background polling/refresh does not count as user activity. An in-flight irreversible operation may finish safely while personal-screen access is locked; expiry does not authorize another purchase or abandon reconciliation.
+Terminal sessions have 120-second inactivity expiry and a fixed 10-minute maximum from guest session start, no Remember Me, and no long-lived refresh credential. Customer login rotates the session token without restarting the absolute clock. Backend-enforced expiry is independent of the 15-minute personal-app access-token lifetime. Background polling/refresh and `/me/` do not count as user activity. An in-flight irreversible operation may finish safely while personal-screen access is locked; expiry does not authorize another purchase or abandon reconciliation.
 
 The accepted dashboard is restricted Django admin with native server-side Django sessions, not JWT access/refresh tokens. Enforce 10-minute inactivity expiry and a 2-hour absolute maximum with no Remember Me. A privately provisioned owner profile holds its password hash; the shared identity is staff-enabled, and backend permissions limit the dashboard to doctor approval. Django session records and framework metadata are infrastructure, distinct from Hub/Advisor refresh-token records.
 

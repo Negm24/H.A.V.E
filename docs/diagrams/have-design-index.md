@@ -28,4 +28,6 @@ The accepted design contains 21 application tables covering accounts, owner appr
 
 ## Documentation scope
 
-The earlier auth ERDs, backend-architecture documents, and document/rendering scripts have been removed from the local `docs` folder. They are not current references in this index. The retained documentation consists of the context export, the accepted ERD exports and field dictionary, and links to the editable Lucidchart diagrams. Differences between the accepted design and existing code will be addressed during implementation; a diagram is not evidence that its schema or behavior has already been implemented.
+The earlier auth ERDs, backend-architecture documents, and document/rendering scripts have been removed from the local `docs` folder. They are not current references in this index. The retained design documentation consists of the context export, accepted ERD exports and field dictionary, and links to the editable Lucidchart diagrams. A diagram is not evidence that its entire schema or behavior has been implemented.
+
+The backend has been reset to an empty Django starting point for step-by-step implementation. The trial auth implementation, its runtime data, implementation report, testing guide and Postman collection have been removed. The approved design artifacts above remain the reference for future work.
