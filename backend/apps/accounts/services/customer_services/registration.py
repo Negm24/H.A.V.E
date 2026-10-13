@@ -33,7 +33,7 @@ def create_customer_account(
 
 
 def _create_customer_from_validated_data(
-    *, first_name, last_name, phone_number, email, date_of_birth, pin_hash,
+    *, first_name, last_name, phone_number, email, date_of_birth, pin_hash, email_verified=False,
 ):
     """Internal persistence step; callers validate inputs and establish phone proof."""
     with transaction.atomic():
@@ -51,6 +51,7 @@ def _create_customer_from_validated_data(
                     email=email,
                     phone_country_code="EG",
                     phone_verified_at=timezone.now(),
+                    email_verified_at=timezone.now() if email_verified else None,
                 )
 
                 Customer.objects.create(

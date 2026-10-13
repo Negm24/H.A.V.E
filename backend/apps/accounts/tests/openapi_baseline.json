@@ -315,7 +315,7 @@
     "/api/v1/auth/customers/signup/": {
       "post": {
         "operationId": "v1_auth_customers_signup_create",
-        "description": "For Hub and Terminal. No account is created until verification. Dates use DD-MM-YYYY. Local mock SMS appears only in the server terminal. Resubmit the full form after resend_after seconds to replace an earlier code. This anonymous flow neither uses nor creates login cookies.",
+        "description": "Hub only. No account is created until the phone and email are verified. Dates use DD-MM-YYYY. Local mock SMS appears only in the server terminal. Resubmit the full form after resend_after seconds to replace an earlier code. This anonymous flow neither uses nor creates login cookies.",
         "summary": "Start customer signup or resend a code",
         "tags": [
           "Customer signup"
@@ -395,8 +395,8 @@
     "/api/v1/auth/customers/signup/verify/": {
       "post": {
         "operationId": "v1_auth_customers_signup_verify_create",
-        "description": "Use the challenge ID returned by signup and the code from the mock SMS. The code expires after 5 minutes and allows 5 incorrect guesses. Success creates a customer, but does not sign them in. Replays are rejected.",
-        "summary": "Verify SMS code and create the customer account",
+        "description": "Call twice with the same challenge ID and phone. First send the SMS code: 202 means an email code was sent. Then send the emailed code: 201 creates the customer, without signing them in. Each code expires after 5 minutes and allows 5 incorrect guesses. Replays are rejected.",
+        "summary": "Verify the SMS code, then the email code, to create the customer account",
         "tags": [
           "Customer signup"
         ],
@@ -429,6 +429,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CustomerIdentity"
+                }
+              }
+            },
+            "description": ""
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupEmailStep"
                 }
               }
             },
@@ -1279,6 +1289,38 @@
           "idle_expires_in",
           "session_id"
         ]
+      },
+      "SignupEmailStep": {
+        "type": "object",
+        "description": "Returned after the SMS code: submit the emailed code to the same verify endpoint.",
+        "properties": {
+          "challenge_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "next_step": {
+            "$ref": "#/components/schemas/NextStepEnum"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "detail",
+          "expires_in",
+          "next_step"
+        ]
+      },
+      "NextStepEnum": {
+        "enum": [
+          "email"
+        ],
+        "type": "string",
+        "description": "* `email` - email"
       }
     },
     "securitySchemes": {

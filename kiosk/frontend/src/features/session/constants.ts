@@ -1,2 +1,0 @@
-export const SESSION_DURATION_MS = 10 * 60 * 1000
-export const WARNING_BEFORE_EXPIRY_MS = 60 * 1000

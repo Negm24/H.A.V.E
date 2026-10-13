@@ -22,12 +22,12 @@ PK = primary key; FK = foreign key; NULL = optional. Crow's-foot endpoints show 
 
 ## Accepted rules
 
-- Separate customer, doctor, and privately provisioned owner profiles share users identity. Exactly one matching subtype must exist per user, created atomically. Each subtype requires its own non-null credential hash. OWNER is not publicly registerable and supports restricted Django admin only.
+- Separate customer, doctor, and privately provisioned owner profiles share users identity. Exactly one matching subtype must exist per user, created atomically. Each subtype requires its own non-null credential hash. OWNER is not publicly registerable and uses only the owner-only API endpoints.
 - User PK example: HAV-C887-000000000001; doctor uses D and owner uses O. The final three phone digits are captured at creation, a database sequence supplies the numeric suffix, and the PK enforces uniqueness. IDs never change after phone/name edits and never authorize access.
 - Phone and case-insensitive email are each unique per account type, not globally. Hub/Terminal authenticate CUSTOMER; Advisor authenticates DOCTOR. Prescription phone lookup searches customers only.
-- Doctor accounts require owner approval, strong password, and TOTP enrollment before clinical access. The authenticator is an existing external app, not another H.A.V.E frontend.
+- Doctor accounts require owner approval, strong password, and TOTP enrollment before clinical access. The authenticator is an existing external app, not another H.A.V.E frontend. Owner rejection stores the optional reason in `doctors.rejection_reason`, emails it to the applicant (it is also shown at sign-in), erases the application's personal data (users names/phone/email/verification times; doctors license/specialty/clinic), keeps the users and doctors rows with the ID, status, reviewer, time and password hash, increments `doctors.rejection_count`, and stores keyed HMAC-SHA-256 hashes in `doctors.phone_hash` / `email_hash`. A rejected doctor signs in through the phone hash. Re-signup matching either hash reuses the same rows (personal data restored, hashes cleared, PENDING) while the count is below three; three or more rejections block signup.
 - Refresh-token rows belong only to HUB/ADVISOR sessions. Store hashes, not raw tokens. Remember Me selects fixed 7-day expiry, otherwise 1 day; rotation preserves that absolute deadline and retains revocation/replacement evidence. Access tokens last 15 minutes. PostgreSQL is authoritative; Redis supports fast revocation checks.
-- Public Terminal sessions use Redis: 120-second inactivity and 10-minute absolute maximum from guest session start, no Remember Me or persistent refresh token. `/me/` does not renew activity. Django admin uses native server sessions with 10-minute inactivity and 2-hour absolute maximum. Django-managed session/migration/permission metadata is framework infrastructure, omitted from the business ERD.
+- Public Terminal sessions use Redis: 240-second inactivity and 15-minute absolute maximum from guest session start, no Remember Me or persistent refresh token. `/me/` does not renew activity. Owner endpoints use native server sessions with 10-minute inactivity and 2-hour absolute maximum. Django-managed session/migration/permission metadata is framework infrastructure, omitted from the business ERD.
 - A prescription may exist without a customer FK. Its assigned patient_phone_number never changes with account edits. After verified exact-phone claim, working first/last names and DOB are overwritten by the customer identity/profile, even if the doctor's manual entries differ. Retain the issued snapshot separately; it is not the current displayed identity. Phone ownership is the deliberately simplified academic assignment rule, not clinical identity verification.
 - Clinical prescription status is ISSUED/REVOKED/SUPERSEDED; claim status is separate. Expiry and remaining quantities are derived, not maintained through another status worker.
 - Product quantity means saleable packs. Prescription line total authorization is quantity_per_fill * (refills_allowed + 1); confirmed dispensed quantities determine the balance. No refill-interval enforcement is inferred.
@@ -69,12 +69,13 @@ PK = primary key; FK = foreign key; NULL = optional. Crow's-foot endpoints show 
 |---|---|---|
 | `id` | varchar(23) NOT NULL | PK |
 | `account_type` | CUSTOMER  /  DOCTOR  /  OWNER |  |
-| `first_name` | varchar(100) NOT NULL |  |
-| `last_name` | varchar(100) NOT NULL |  |
-| `phone_number` | varchar(16) NOT NULL |  |
-| `email` | varchar(254) NOT NULL |  |
+| `first_name` | varchar(100) NOT NULL (blank for a rejected doctor) |  |
+| `last_name` | varchar(100) NOT NULL (blank for a rejected doctor) |  |
+| `phone_number` | varchar(16) NULL only for a rejected doctor |  |
+| `email` | varchar(254) NULL only for a rejected doctor |  |
 | `phone_country_code` | char(2) NOT NULL |  |
 | `phone_verified_at` | timestamptz NULL |  |
+| `email_verified_at` | timestamptz NULL |  |
 | `is_disabled` | boolean DEFAULT false |  |
 | `is_staff` | boolean DEFAULT false |  |
 | `created_at` | timestamptz NOT NULL |  |
@@ -102,14 +103,17 @@ PK = primary key; FK = foreign key; NULL = optional. Crow's-foot endpoints show 
 |---|---|---|
 | `user_id` | varchar(23) NOT NULL | PK, FK |
 | `password_hash` | varchar(255) NOT NULL |  |
-| `professional_license_number` | varchar(100) UNIQUE |  |
+| `professional_license_number` | varchar(100) UNIQUE NULL (NULL when rejected) |  |
 | `specialty` | varchar(100) NOT NULL |  |
 | `clinic_name` | varchar(200) NOT NULL |  |
 | `clinic_address` | text NOT NULL |  |
 | `approval_status` | PENDING  /  APPROVED  /  REJECTED |  |
 | `reviewed_by_owner_id` | varchar(23) NULL | FK |
 | `reviewed_at` | timestamptz NULL |  |
-| `rejection_reason` | text NULL |  |
+| `rejection_reason` | text NULL (latest rejection; kept after re-signup for the owner's history) |  |
+| `rejection_count` | smallint DEFAULT 0 |  |
+| `phone_hash` | char(64) NULL, indexed (keyed HMAC-SHA-256, set only while REJECTED) |  |
+| `email_hash` | char(64) NULL, indexed (keyed HMAC-SHA-256, set only while REJECTED) |  |
 | `mfa_secret_encrypted` | text NULL until enrollment |  |
 | `mfa_enrolled_at` | timestamptz NULL |  |
 | `credential_changed_at` | timestamptz NOT NULL |  |

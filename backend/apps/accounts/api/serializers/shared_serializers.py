@@ -48,6 +48,15 @@ class RecoveryChallengeOutputSerializer(serializers.Serializer):
     detail = serializers.CharField()
 
 
+@extend_schema_serializer(component_name="SignupEmailStep")
+class SignupEmailStepOutputSerializer(serializers.Serializer):
+    """Returned after the SMS code: submit the emailed code to the same verify endpoint."""
+    challenge_id = serializers.UUIDField()
+    next_step = serializers.ChoiceField(choices=["email"])
+    expires_in = serializers.IntegerField()
+    detail = serializers.CharField()
+
+
 class RecoveryProofOutputSerializer(serializers.Serializer):
     reset_token = serializers.CharField()
     expires_in = serializers.IntegerField()

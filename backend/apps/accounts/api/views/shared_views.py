@@ -11,6 +11,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from config import openapi
 from apps.accounts.security.errors import AuthError
 
 from ..serializers.shared_serializers import CsrfTokenOutputSerializer, ErrorOutputSerializer
@@ -22,7 +23,7 @@ class CsrfTokenView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["Owner authentication"], responses=CsrfTokenOutputSerializer,
+        tags=[openapi.SHARED_CSRF], responses=CsrfTokenOutputSerializer,
         summary="Get a CSRF token",
         description="Keep the response cookie and send csrf_token as X-CSRFToken on POST requests. This is not a login token.",
     )
@@ -54,6 +55,11 @@ class CustomerSessionView(APIView):
 
 def source(request):
     return request.META.get("REMOTE_ADDR") or "unknown"
+
+
+def signup_error_response(exc):
+    headers = {"Retry-After": str(exc.retry_after)} if exc.retry_after else {}
+    return Response({"detail": exc.detail}, status=exc.status, headers=headers)
 
 
 @method_decorator(sensitive_post_parameters(

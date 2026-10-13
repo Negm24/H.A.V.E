@@ -18,7 +18,7 @@ AutoPharm will use a **modular monolith** architecture with three independent Re
 | H.A.V.E Terminal (kiosk) | React + Vite |
 | H.A.V.E Advisor (doctor) | React + Vite |
 | H.A.V.E Hub (customer) | React + Vite |
-| Owner approval dashboard | Small restricted Django dashboard; doctor approval only |
+| Owner doctor approval | Owner-only REST endpoints in Django (session + CSRF); doctor approval only, for a future owner app |
 | Frontend language | TypeScript only for application and shared-package source code |
 | Styling | Tailwind CSS plus a shared AutoPharm design system |
 | Backend | Python + Django + Django REST Framework |
@@ -93,7 +93,7 @@ It shares AutoPharm's visual identity, but it has:
 
 Its initial scope is deliberately narrow:
 
-- Doctor signup, owner-dashboard approval, login, and MFA (login MFA remains separate from signup approval).
+- Doctor signup (phone and email verification), owner approval through owner-only endpoints, login, and MFA (login MFA remains separate from signup approval).
 - Patient identity and phone-number entry, without requiring an existing customer account.
 - Structured prescription issue as one doctor action.
 - Prescription revocation.
@@ -104,13 +104,13 @@ Advisor connects to Terminal and Hub only through the central backend. An issued
 
 Advisor submits a structured prescription—not a PDF or image upload—as the authoritative clinical record. The payload contains the intended patient's identifying details and canonical phone number, doctor, clinic, issue and expiry timestamps, medicine identifiers, dosage instructions, quantities, refill rules, and signature metadata. The customer-account link is established only after a safe claim. A rendered PDF may be generated for reading, but it is never the source of truth.
 
-No clinical assistant, delegated draft, or invitation flow is part of Advisor. A small secured owner-only approval dashboard is served by the central Django backend, not a fourth public frontend or the deferred Operation app. The owner receives a signup notification, reviews the application in the dashboard, and approves or rejects it directly. No activation-code exchange or approval-code table is required. A restricted Django admin view is the preferred starting point; expose only the approval functionality, not general platform editing. Owner credentials are provisioned outside public signup. Activation and prescribing authorization are enforced by Django.
+No clinical assistant, delegated draft, or invitation flow is part of Advisor. Owner-only doctor-approval endpoints are served by the central Django backend for a future owner application; they are not a fourth public frontend or the deferred Operation app. The owner receives a signup notification, lists pending applications, views an application with the number of times the applicant was previously rejected, and approves or rejects it. Rejection stores the owner's optional reason with the decision, emails it to the applicant, erases the application's personal data, and keeps the user and doctor records with the decision and reason, the password hash, a rejection counter, and keyed HMAC-SHA-256 hashes of the phone and email. A rejected doctor sees the status at sign-in and may sign up again, reusing the same records, until the third rejection (requirements FR-82c, FR-82e to FR-82g, PDPL storage limitation). No activation-code exchange or approval-code table is required. Expose only the approval functionality, not general platform editing. Owner credentials are provisioned outside public signup. Activation and prescribing authorization are enforced by Django.
 
 An approved doctor may look up a customer by exact canonical phone number to autofill minimum patient identity fields. Without an existing customer, the doctor enters them manually. For the academic build, verified control of the exact assigned phone plus explicit claim permits linking even when manually entered names/DOB differ. Linked customer names and DOB replace working/displayed values; the originally assigned prescription phone is never overwritten from the account. Retain the issued snapshot separately. Phone verification is not proof of clinical identity; document the real-world misassignment risk.
 
 ### 3.3 H.A.V.E Hub
 
-Hub is the customer-facing React + Vite application for use away from a kiosk. It uses the same central customer account as Terminal, with its own non-kiosk session policy. It provides at-home signup and phone verification, prescription claim and viewing, order and receipt history, nearby Terminal discovery, and per-Terminal catalogue/stock browsing. Stock shown remotely is timestamped and advisory until a backend reservation is confirmed.
+Hub is the customer-facing React + Vite application for use away from a kiosk. It uses the same central customer account as Terminal, with its own non-kiosk session policy. It is the only place customers sign up: signup verifies the phone by SMS code and then the email by emailed code. It also provides prescription claim and viewing, order and receipt history, nearby Terminal discovery, and per-Terminal catalogue/stock browsing. Stock shown remotely is timestamped and advisory until a backend reservation is confirmed.
 
 Hub will let customers save payment methods through a provider-hosted capture flow. Only provider tokens and display-safe metadata reach Django; no card number or security code reaches Hub, Django, or PostgreSQL. In the academic implementation the provider flow is simulated without real card credentials. A saved method still requires a customer-approved, amount-specific checkout and any provider-required verification.
 
@@ -308,7 +308,7 @@ backend/
     integrations/
 ```
 
-This is a possible domain decomposition, not a commitment to one Django app or table per line. A small owner-only doctor-approval dashboard is in scope, but a general operations/admin frontend, clinical-assistant subsystem, and technician-maintenance app are not. Hardware collaborators own maintenance mode.
+This is a possible domain decomposition, not a commitment to one Django app or table per line. Owner-only doctor-approval endpoints are in scope, but a general operations/admin frontend, clinical-assistant subsystem, and technician-maintenance app are not. Hardware collaborators own maintenance mode.
 
 Microservices are explicitly rejected for the graduation-project scope. They would add deployment, distributed authentication, network failure, logging, and transaction complexity without providing a useful benefit to a five-person team.
 
@@ -772,7 +772,7 @@ Every critical job should carry:
 - Exponential backoff.
 - Last-error details.
 - A terminal failed/dead-letter state.
-- Visibility through structured logs and internal diagnostics; the owner dashboard is limited to doctor approvals.
+- Visibility through structured logs and internal diagnostics; the owner endpoints are limited to doctor approvals.
 
 Celery is a delivery mechanism, not the source of truth. Critical work must first be represented by a durable database record.
 
@@ -855,7 +855,7 @@ The central backend owns all authentication and authorization. Different actors 
 ### 11.1 Terminal customer
 
 - Mobile number and four-digit PIN.
-- SMS signup verification. PIN recovery is available in Hub only, not Terminal.
+- No signup at the Terminal: accounts are created in Hub (FR-31). PIN recovery is available in Hub only, not Terminal.
 - Short-lived session bound to terminal and kiosk session.
 - Server-side lockout and rate limiting.
 - No access to Advisor doctor endpoints.
@@ -863,7 +863,7 @@ The central backend owns all authentication and authorization. Different actors 
 
 ### 11.2 Hub customer
 
-- The same central customer account, mobile number, and PIN as Terminal; signup and phone verification may happen at home.
+- The same central customer account, mobile number, and PIN as Terminal. Signup happens only in Hub and verifies the phone (SMS code) and then the email (emailed code) through the same verification endpoint before the account is created.
 - A Hub session policy suited to a personal device, separate from the short-lived public-Terminal session.
 - No doctor endpoints and no automatic authorization of a Terminal payment merely because Hub is signed in.
 - Saved payment references are scoped to the customer account and usable only through an explicitly approved checkout.
@@ -873,8 +873,8 @@ The central backend owns all authentication and authorization. Different actors 
 ### 11.3 Advisor doctor
 
 - Public doctor signup creates a pending account with identity/contact and professional details plus a strong password.
-- Signup sends an application notification to the configured owner email. The owner approves or rejects through the secured owner-only dashboard; no activation code is required.
-- Pending sign-in shows **Waiting for Approval** without doctor-function access. Only an owner-authorized approval activates the account.
+- Signup sends an application notification to the configured owner email. The owner approves or rejects through the secured owner-only endpoints; no activation code is required.
+- Sign-in reflects the application status: pending shows **Waiting for Approval** without doctor-function access; only an owner-authorized approval activates the account; rejected shows the rejection with the owner's reason and, under the limit, an option to sign up again (the count is not shown). Rejection sends the applicant a rejection email, erases personal data, and keeps the records with the password hash, a rejection counter, and keyed hashes of the phone and email; a rejected doctor's sign-in is matched through the phone hash. Signup checks the hashes after phone and email verification: fewer than three rejections reuse the same records and return to pending, three or more are refused.
 - Doctor login uses TOTP MFA with an existing authenticator app. Advisor supplies enrollment and code-entry screens; no fourth frontend is built. Store the enrollment secret encrypted, not as a temporary email OTP.
 - Only an active authorized doctor can issue or revoke a prescription; recent authentication or reauthentication is required for issuing.
 - No assistant, organization-admin, delegated draft, or simulated professional-registry flow.
@@ -895,9 +895,9 @@ Hub and Advisor shall use 15-minute access tokens and PostgreSQL refresh-token r
 - Protect browser refresh credentials with Secure, HttpOnly cookies and appropriate SameSite/CSRF controls; access tokens should not become persistent localStorage credentials.
 - Redis failures shall not bypass expiry or revocation. Use authoritative PostgreSQL fallback for personal-app token validity where available; fail closed when a required temporary Terminal session or security challenge cannot be verified.
 
-Terminal sessions have 120-second inactivity expiry and a fixed 10-minute maximum from guest session start, no Remember Me, and no long-lived refresh credential. Customer login rotates the session token without restarting the absolute clock. Backend-enforced expiry is independent of the 15-minute personal-app access-token lifetime. Background polling/refresh and `/me/` do not count as user activity. An in-flight irreversible operation may finish safely while personal-screen access is locked; expiry does not authorize another purchase or abandon reconciliation.
+Terminal sessions have 240-second inactivity expiry and a fixed 15-minute maximum from guest session start, no Remember Me, and no long-lived refresh credential. Customer login rotates the session token without restarting the absolute clock. Backend-enforced expiry is independent of the 15-minute personal-app access-token lifetime. Background polling/refresh and `/me/` do not count as user activity. An in-flight irreversible operation may finish safely while personal-screen access is locked; expiry does not authorize another purchase or abandon reconciliation.
 
-The accepted dashboard is restricted Django admin with native server-side Django sessions, not JWT access/refresh tokens. Enforce 10-minute inactivity expiry and a 2-hour absolute maximum with no Remember Me. A privately provisioned owner profile holds its password hash; the shared identity is staff-enabled, and backend permissions limit the dashboard to doctor approval. Django session records and framework metadata are infrastructure, distinct from Hub/Advisor refresh-token records.
+The owner endpoints use native server-side Django sessions, not JWT access/refresh tokens, with CSRF protection on state-changing requests. Enforce 10-minute inactivity expiry and a 2-hour absolute maximum with no Remember Me. A privately provisioned owner profile holds its password hash; the shared identity is staff-enabled, and backend permissions limit the owner endpoints to doctor approval. Django session records and framework metadata are infrastructure, distinct from Hub/Advisor refresh-token records.
 
 ### 11.5 Terminal identity
 
@@ -985,7 +985,7 @@ The backend must tolerate duplicated events and process each event ID once. Conf
 
 All services use structured JSON logs with correlation IDs spanning API request, order, payment, hardware command, dispense, background job, and reconciliation event.
 
-The software team shall inspect operational signals through logs, metrics, and development diagnostics. The small owner-dashboard scope is doctor approval, not general operations:
+The software team shall inspect operational signals through logs, metrics, and development diagnostics. The owner endpoints' scope is doctor approval, not general operations:
 
 - Backend and database health.
 - Terminal heartbeat and last-seen time.
@@ -1080,8 +1080,8 @@ The frontend development servers may run directly on developer machines for fast
 At minimum, automated tests should cover:
 
 - Patient authentication and lockout.
-- Customer signup through both Terminal and Hub, with one central account.
-- Doctor signup, owner notification, pending sign-in, owner-only dashboard access, approval/rejection, and prescribing-access enforcement.
+- Customer signup through Hub with phone and email verification, used from both Hub and Terminal through one central account.
+- Doctor signup with phone and email verification, owner notification, pending sign-in, owner-only endpoint access, approval/rejection, rejected-applicant data erasure and hashed re-signup limit, and prescribing-access enforcement.
 - Prescribing-permission enforcement.
 - Issue of an unclaimed prescription before any customer account exists.
 - Verified exact-phone claim checks, account-priority name/DOB replacement, unchanged assignment phone, and rejection of duplicate/conflicting or disputed claims.
@@ -1204,7 +1204,7 @@ The version should be available in:
 5. Create the shared design tokens and core UI components.
 6. Create Terminal, Advisor, and Hub React shells, with shared design tokens and API contracts. Terminal adds Arabic/English, RTL, and explicit offline capability guards.
 7. Implement customer accounts, phone verification, Terminal sessions, and Hub sessions.
-8. Implement doctor signup, owner-only approval dashboard, pending state, the agreed login-MFA policy, and prescribing authorization.
+8. Implement doctor signup, owner-only approval endpoints, pending state, the agreed login-MFA policy, and prescribing authorization.
 9. Implement phone-addressed prescription issue, secure claim, retrieval, and revocation.
 10. Implement catalogue, per-Terminal inventory, location lookup, cart, reservations, and safe local catalogue snapshots.
 11. Implement order, payment (including simulated provider-backed saved methods), and dispensing process states with idempotency and compensation.

@@ -1,11 +1,11 @@
-import time
-from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from drf_spectacular.utils import (
     OpenApiExample,
+    OpenApiParameter,
     OpenApiResponse,
     extend_schema,
     extend_schema_view,
@@ -15,10 +15,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from config import openapi
+from apps.accounts.middlewares.owner_session_middleware import start_owner_session_clock
 from apps.accounts.security.permissions import IsOwner
-from apps.accounts.services.owner_services import password_reset
+from apps.accounts.services.owner_services import doctor_review, password_reset
 
 from ..serializers.owner_serializers import (
+    DoctorApplicationOutputSerializer,
+    DoctorDecisionInputSerializer,
     OwnerIdentityOutputSerializer,
     OwnerLoginInputSerializer,
     OwnerPasswordResetCompleteInputSerializer,
@@ -40,7 +44,7 @@ class OwnerLoginView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["Owner authentication"], request=OwnerLoginInputSerializer,
+        tags=[openapi.OWNER_SESSION], request=OwnerLoginInputSerializer,
         responses={
             200: OwnerIdentityOutputSerializer,
             400: OpenApiResponse(description="Invalid or missing input fields."),
@@ -77,12 +81,7 @@ class OwnerLoginView(APIView):
             )
 
         login(request._request, user)
-        now = time.time()
-        request.session["owner_started_at"] = now
-        request.session["owner_last_activity_at"] = now
-        request.session.set_expiry(min(
-            settings.OWNER_SESSION_IDLE_SECONDS, settings.OWNER_SESSION_MAX_SECONDS,
-        ))
+        start_owner_session_clock(request._request)
         return Response(OwnerIdentityOutputSerializer(user).data)
 
 
@@ -91,7 +90,7 @@ class OwnerMeView(APIView):
     permission_classes = [IsOwner]
 
     @extend_schema(
-        tags=["Owner authentication"],
+        tags=[openapi.OWNER_SESSION],
         responses={200: OwnerIdentityOutputSerializer, 403: ErrorOutputSerializer},
         summary="Check the signed-in owner",
         description="Uses the session cookie set at login. Run manually; polling counts as activity.",
@@ -105,7 +104,7 @@ class OwnerLogoutView(APIView):
     permission_classes = [IsOwner]
 
     @extend_schema(
-        tags=["Owner authentication"], request=None,
+        tags=[openapi.OWNER_SESSION], request=None,
         responses={204: OpenApiResponse(description="Session deleted."), 403: ErrorOutputSerializer},
         summary="Sign out the current owner session",
     )
@@ -115,7 +114,7 @@ class OwnerLogoutView(APIView):
 
 
 @extend_schema_view(post=extend_schema(
-    tags=["Owner authentication"], request=RecoveryRequestInputSerializer, responses={202: RecoveryChallengeOutputSerializer, **ERRORS},
+    tags=[openapi.OWNER_PASSWORD_RECOVERY], request=RecoveryRequestInputSerializer, responses={202: RecoveryChallengeOutputSerializer, **ERRORS},
     summary="Request owner password reset",
 ))
 class OwnerPasswordResetRequestView(RecoveryActionView):
@@ -125,7 +124,7 @@ class OwnerPasswordResetRequestView(RecoveryActionView):
 
 
 @extend_schema_view(post=extend_schema(
-    tags=["Owner authentication"], request=RecoveryVerifyInputSerializer, responses={200: RecoveryProofOutputSerializer, **ERRORS},
+    tags=[openapi.OWNER_PASSWORD_RECOVERY], request=RecoveryVerifyInputSerializer, responses={200: RecoveryProofOutputSerializer, **ERRORS},
     summary="Verify owner password reset",
 ))
 class OwnerPasswordResetVerifyView(RecoveryActionView):
@@ -135,10 +134,82 @@ class OwnerPasswordResetVerifyView(RecoveryActionView):
 
 
 @extend_schema_view(post=extend_schema(
-    tags=["Owner authentication"], request=OwnerPasswordResetCompleteInputSerializer, responses={200: ErrorOutputSerializer, **ERRORS},
+    tags=[openapi.OWNER_PASSWORD_RECOVERY], request=OwnerPasswordResetCompleteInputSerializer, responses={200: ErrorOutputSerializer, **ERRORS},
     summary="Complete owner password reset (sign in again afterward)",
 ))
 class OwnerPasswordResetCompleteView(RecoveryActionView):
     serializer_class = OwnerPasswordResetCompleteInputSerializer
     operation = staticmethod(password_reset.complete_password_reset)
     response_status = 200
+
+
+REVIEW_ERRORS = {"not_found": 404, "not_pending": 409, "forbidden": 403}
+
+
+def review_error_response(exc):
+    return Response({"detail": " ".join(exc.messages)}, status=REVIEW_ERRORS.get(exc.code, 400))
+
+
+@method_decorator(never_cache, name="dispatch")
+class OwnerDoctorListView(APIView):
+    permission_classes = [IsOwner]
+
+    @extend_schema(
+        tags=[openapi.OWNER_DOCTOR_APPLICATIONS],
+        parameters=[OpenApiParameter("status", enum=["PENDING", "APPROVED", "REJECTED"], default="PENDING",
+                                     description="Which applications to list. Oldest first.")],
+        responses={200: DoctorApplicationOutputSerializer(many=True), 400: ErrorOutputSerializer,
+                   403: ErrorOutputSerializer},
+        summary="List doctor applications (pending by default)",
+        description="Uses the owner session cookie from owner login; no bearer token.",
+    )
+    def get(self, request):
+        try:
+            doctors = doctor_review.list_doctor_applications(status=request.query_params.get("status", "PENDING"))
+        except DjangoValidationError as exc:
+            return review_error_response(exc)
+        return Response(DoctorApplicationOutputSerializer(doctors, many=True).data)
+
+
+@method_decorator(never_cache, name="dispatch")
+class OwnerDoctorDetailView(APIView):
+    permission_classes = [IsOwner]
+
+    @extend_schema(
+        tags=[openapi.OWNER_DOCTOR_APPLICATIONS],
+        responses={200: DoctorApplicationOutputSerializer, 403: ErrorOutputSerializer, 404: ErrorOutputSerializer},
+        summary="Get one doctor application with times previously rejected",
+    )
+    def get(self, request, doctor_id):
+        try:
+            doctor = doctor_review.get_doctor_application(doctor_id=doctor_id)
+        except DjangoValidationError as exc:
+            return review_error_response(exc)
+        return Response(DoctorApplicationOutputSerializer(doctor).data)
+
+
+@method_decorator(never_cache, name="dispatch")
+@method_decorator(sensitive_post_parameters("reason"), name="dispatch")
+class OwnerDoctorDecisionView(APIView):
+    permission_classes = [IsOwner]
+
+    @extend_schema(
+        tags=[openapi.OWNER_DOCTOR_APPLICATIONS], request=DoctorDecisionInputSerializer,
+        responses={200: DoctorApplicationOutputSerializer, 400: OpenApiResponse(description="Invalid input."),
+                   403: ErrorOutputSerializer, 404: ErrorOutputSerializer, 409: ErrorOutputSerializer},
+        summary="Approve or reject a pending doctor application",
+        description=("Approve activates the account (not a login). Reject stores the optional reason, "
+                     "emails it to the doctor (who also sees it at Advisor sign-in), erases the "
+                     "application's personal data and keeps keyed hashes and a rejection counter "
+                     "(FR-82e). Needs the X-CSRFToken header."),
+        examples=[OpenApiExample("Reject", request_only=True,
+                                 value={"decision": "reject", "reason": "License could not be verified."})],
+    )
+    def post(self, request, doctor_id):
+        serializer = DoctorDecisionInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            doctor = doctor_review.decide(doctor_id=doctor_id, owner=request.user, **serializer.validated_data)
+        except DjangoValidationError as exc:
+            return review_error_response(exc)
+        return Response(DoctorApplicationOutputSerializer(doctor).data)

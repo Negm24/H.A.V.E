@@ -1,0 +1,35 @@
+{
+  "name": "@have/shared",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./styles": {
+      "types": "./src/styles/styles.d.ts",
+      "default": "./src/styles/index.css"
+    },
+    "./ui": "./src/ui/AppSurface.tsx",
+    "./api": "./src/api/http.ts",
+    "./api/terminal": "./src/api/terminal.ts",
+    "./api/customer": "./src/api/customer.ts",
+    "./auth/session": "./src/auth/cookie-session.ts",
+    "./auth/browser-lock": "./src/auth/browser-lock.ts",
+    "./auth/input": "./src/auth/input.ts",
+    "./ui/controls": "./src/ui/controls.tsx",
+    "./ui/forms": "./src/ui/forms.tsx",
+    "./i18n": "./src/i18n/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/noto-sans-arabic": "5.3.0",
+    "i18next": "26.4.3",
+    "react-i18next": "17.0.16"
+  },
+  "peerDependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}

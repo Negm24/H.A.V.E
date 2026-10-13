@@ -6,6 +6,9 @@
 *.key
 *.p12
 *.pfx
+.secrets/
+frontend/test-results/
+frontend/playwright-report/
 
 # TypeScript frontend dependencies and generated output
 node_modules/

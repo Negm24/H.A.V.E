@@ -1,0 +1,14 @@
+packages:
+  - kiosk
+  - hub
+  - advisor
+  - admin
+  - shared
+
+minimumReleaseAgeExclude:
+  - '@types/node@24.19.2'
+  - i18next@26.4.3
+
+# Explicitly allow only the dependency build step needed by the frontend toolchain.
+onlyBuiltDependencies:
+  - esbuild

@@ -1,0 +1,14 @@
+{
+  "title": "Sign in", "phone": "Egyptian phone number", "pin": "Four-digit PIN", "enterPin": "Enter PIN", "changePhone": "Change number",
+  "signIn": "Sign in", "signingIn": "Signing in…", "phoneInvalid": "Enter a valid Egyptian mobile number.", "pinInvalid": "Enter four digits.",
+  "hubHelp": "Create an account or reset your PIN in H.A.V.E Hub.", "keypad": "Numeric keypad", "clear": "Clear", "backspace": "Delete last digit",
+  "qrAlternative": "Or sign in with H.A.V.E Hub QR code",
+  "qrTitle": "Sign in with H.A.V.E Hub", "qrInstructions": "Use your own phone to securely approve this Terminal login.",
+  "qrStep1": "Sign in to H.A.V.E Hub on your phone.", "qrStep2": "Scan the QR displayed here.", "qrStep3": "Check the Terminal details and approve the login in Hub.",
+  "generate": "Generate QR", "regenerate": "Generate a new QR", "generating": "Generating…", "qrExpiry": "QR expires in {{count}} seconds.", "retryIn": "Try again in {{count}} seconds.",
+  "qrStates": {
+    "ready": "Generate a QR to begin.", "waiting_for_scan": "Waiting for your phone to scan…", "waiting_for_confirmation": "Scanned. Approve this login in Hub.",
+    "approved": "Approved. Signing you in…", "rejected": "Login rejected in Hub. You can generate a new QR.", "completed": "Login completed.",
+    "expired": "This QR expired or is no longer valid. Generate a new one.", "unavailable": "QR login could not be completed. You can try again."
+  }
+}

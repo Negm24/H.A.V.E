@@ -14,6 +14,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from config import openapi
 from apps.accounts.security.authentication import HubAuthentication, bearer_token
 from apps.accounts.services.customer_services import pin_reset, qr_login
 from apps.accounts.services.customer_services.hub_sessions import (
@@ -46,13 +47,9 @@ from ..serializers.shared_serializers import (
     RecoveryProofOutputSerializer,
     RecoveryRequestInputSerializer,
     RecoveryVerifyInputSerializer,
+    SignupEmailStepOutputSerializer,
 )
-from .shared_views import CustomerSessionView, ERRORS, RecoveryActionView, source
-
-
-def signup_error_response(exc):
-    headers = {"Retry-After": str(exc.retry_after)} if exc.retry_after else {}
-    return Response({"detail": exc.detail}, status=exc.status, headers=headers)
+from .shared_views import CustomerSessionView, ERRORS, RecoveryActionView, signup_error_response, source
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -62,9 +59,9 @@ class CustomerSignupView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["Customer Hub"], request=CustomerSignupInputSerializer,
+        tags=[openapi.HUB_SIGNUP], request=CustomerSignupInputSerializer,
         summary="Start customer signup or resend a code",
-        description=("For Hub and Terminal. No account is created until verification. "
+        description=("Hub only. No account is created until the phone and email are verified. "
                      "Dates use DD-MM-YYYY. Local mock SMS appears only in the server terminal. "
                      "Resubmit the full form after resend_after seconds to replace an earlier code. "
                      "This anonymous flow neither uses nor creates login cookies."),
@@ -95,12 +92,13 @@ class CustomerSignupVerificationView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        tags=["Customer Hub"], request=CustomerSignupVerificationInputSerializer,
-        summary="Verify SMS code and create the customer account",
-        description=("Use the challenge ID returned by signup and the code from the mock SMS. "
-                     "The code expires after 5 minutes and allows 5 incorrect guesses. "
-                     "Success creates a customer, but does not sign them in. Replays are rejected."),
-        responses={201: CustomerIdentityOutputSerializer,
+        tags=[openapi.HUB_SIGNUP], request=CustomerSignupVerificationInputSerializer,
+        summary="Verify the SMS code, then the email code, to create the customer account",
+        description=("Call twice with the same challenge ID and phone. First send the SMS code: "
+                     "202 means an email code was sent. Then send the emailed code: 201 creates the "
+                     "customer, without signing them in. Each code expires after 5 minutes and allows "
+                     "5 incorrect guesses. Replays are rejected."),
+        responses={201: CustomerIdentityOutputSerializer, 202: SignupEmailStepOutputSerializer,
                    400: OpenApiResponse(description="Invalid input, wrong/expired/used code."),
                    409: ErrorOutputSerializer, 429: ErrorOutputSerializer, 503: ErrorOutputSerializer},
     )
@@ -108,11 +106,13 @@ class CustomerSignupVerificationView(APIView):
         serializer = CustomerSignupVerificationInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
-            user = verify_customer_signup(
+            email_step, user = verify_customer_signup(
                 **serializer.validated_data, source=request.META.get("REMOTE_ADDR") or "unknown",
             )
         except SignupError as exc:
             return signup_error_response(exc)
+        if email_step:
+            return Response(email_step, status=202)
         return Response(CustomerIdentityOutputSerializer(user).data, status=201)
 
 
@@ -129,7 +129,7 @@ def hub_response(result):
 
 
 class CustomerHubLoginView(CustomerSessionView):
-    @extend_schema(tags=["Customer Hub"], request=CustomerHubLoginInputSerializer,
+    @extend_schema(tags=[openapi.HUB_SESSION], request=CustomerHubLoginInputSerializer,
                    responses={200: CustomerHubSessionOutputSerializer, **ERRORS},
                    summary="Customer Hub login (phone + PIN)")
     def post(self, request):
@@ -147,7 +147,7 @@ class CustomerHubLoginView(CustomerSessionView):
 
 
 class CustomerHubRefreshView(CustomerSessionView):
-    @extend_schema(tags=["Customer Hub"], request=None, responses={200: CustomerHubSessionOutputSerializer, **ERRORS},
+    @extend_schema(tags=[openapi.HUB_SESSION], request=None, responses={200: CustomerHubSessionOutputSerializer, **ERRORS},
                    summary="Rotate Hub refresh cookie and issue new access token")
     def post(self, request):
         SessionAuthentication().enforce_csrf(request)
@@ -158,8 +158,9 @@ class CustomerHubRefreshView(CustomerSessionView):
 
 
 class CustomerHubLogoutView(CustomerSessionView):
-    @extend_schema(tags=["Customer Hub"], request=None,
-                   responses={204: OpenApiResponse(description="Hub session revoked."), **ERRORS})
+    @extend_schema(tags=[openapi.HUB_SESSION], request=None,
+                   responses={204: OpenApiResponse(description="Hub session revoked."), **ERRORS},
+                   summary="Sign out of Hub (revoke this refresh session)")
     def post(self, request):
         SessionAuthentication().enforce_csrf(request)
         end_hub_session(request.COOKIES.get(settings.HUB_REFRESH_COOKIE_NAME))
@@ -172,13 +173,14 @@ class CustomerHubMeView(CustomerSessionView):
     authentication_classes = [HubAuthentication]
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(tags=["Customer Hub"], responses={200: CustomerIdentityOutputSerializer, **ERRORS})
+    @extend_schema(tags=[openapi.HUB_SESSION], responses={200: CustomerIdentityOutputSerializer, **ERRORS},
+                   summary="Current Hub customer")
     def get(self, request):
         return Response(CustomerIdentityOutputSerializer(request.user).data)
 
 
 @extend_schema_view(post=extend_schema(
-    tags=["Customer Hub"], request=RecoveryRequestInputSerializer, responses={202: RecoveryChallengeOutputSerializer, **ERRORS},
+    tags=[openapi.HUB_PIN_RECOVERY], request=RecoveryRequestInputSerializer, responses={202: RecoveryChallengeOutputSerializer, **ERRORS},
     summary="Request customer pin reset",
 ))
 class CustomerHubPinResetRequestView(RecoveryActionView):
@@ -188,7 +190,7 @@ class CustomerHubPinResetRequestView(RecoveryActionView):
 
 
 @extend_schema_view(post=extend_schema(
-    tags=["Customer Hub"], request=RecoveryVerifyInputSerializer, responses={200: RecoveryProofOutputSerializer, **ERRORS},
+    tags=[openapi.HUB_PIN_RECOVERY], request=RecoveryVerifyInputSerializer, responses={200: RecoveryProofOutputSerializer, **ERRORS},
     summary="Verify customer pin reset",
 ))
 class CustomerHubPinResetVerifyView(RecoveryActionView):
@@ -198,7 +200,7 @@ class CustomerHubPinResetVerifyView(RecoveryActionView):
 
 
 @extend_schema_view(post=extend_schema(
-    tags=["Customer Hub"], request=CustomerHubPinResetCompleteInputSerializer, responses={200: ErrorOutputSerializer, **ERRORS},
+    tags=[openapi.HUB_PIN_RECOVERY], request=CustomerHubPinResetCompleteInputSerializer, responses={200: ErrorOutputSerializer, **ERRORS},
     summary="Complete customer pin reset (sign in again afterward)",
 ))
 class CustomerHubPinResetCompleteView(RecoveryActionView):
@@ -214,7 +216,7 @@ class CustomerHubQrView(CustomerSessionView):
 
 
 class CustomerHubQrScanView(CustomerHubQrView):
-    @extend_schema(tags=["Customer Hub"], request=CustomerHubQrScanInputSerializer,
+    @extend_schema(tags=[openapi.HUB_QR_APPROVAL], request=CustomerHubQrScanInputSerializer,
                    responses={200: QrStatusOutputSerializer, **ERRORS},
                    summary="Scan the QR displayed by a Terminal (does not approve login)")
     def post(self, request):
@@ -225,14 +227,14 @@ class CustomerHubQrScanView(CustomerHubQrView):
 
 
 class CustomerHubQrStatusView(CustomerHubQrView):
-    @extend_schema(tags=["Customer Hub"], responses={200: QrStatusOutputSerializer, **ERRORS},
+    @extend_schema(tags=[openapi.HUB_QR_APPROVAL], responses={200: QrStatusOutputSerializer, **ERRORS},
                    summary="Check your scanned QR request without renewing its expiry")
     def get(self, request, challenge_id):
         return Response(qr_login.hub_qr_status(challenge_id=challenge_id, access_token=bearer_token(request)))
 
 
 class CustomerHubQrConfirmView(CustomerHubQrView):
-    @extend_schema(tags=["Customer Hub"], request=CustomerHubQrConfirmInputSerializer,
+    @extend_schema(tags=[openapi.HUB_QR_APPROVAL], request=CustomerHubQrConfirmInputSerializer,
                    responses={200: QrStatusOutputSerializer, **ERRORS},
                    summary="Explicitly approve or reject login to the displayed Terminal")
     def post(self, request, challenge_id):

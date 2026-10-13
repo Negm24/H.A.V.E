@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 
+from config import openapi
 from apps.accounts.api.serializers.customer_serializers import CustomerIdentityOutputSerializer
 from apps.accounts.api.serializers.terminal_serializers import CustomerTerminalLoginInputSerializer
 from apps.accounts.api.views.shared_views import CustomerSessionView, ERRORS, source
@@ -20,7 +21,7 @@ class CustomerTerminalLoginView(CustomerSessionView):
     authentication_classes = [TerminalSessionAuthentication]
     permission_classes = [HasTerminalAccess]
 
-    @extend_schema(tags=["Customer Terminal"], request=CustomerTerminalLoginInputSerializer,
+    @extend_schema(tags=[openapi.TERMINAL_CUSTOMER_SIGN_IN], request=CustomerTerminalLoginInputSerializer,
                    responses={200: TerminalSessionOutputSerializer, **ERRORS},
                    summary="Sign in within a Terminal session; replace the session token")
     def post(self, request):
@@ -36,7 +37,7 @@ class CustomerTerminalMeView(CustomerSessionView):
     authentication_classes = [TerminalSessionAuthentication]
     permission_classes = [HasTerminalAccess]
 
-    @extend_schema(tags=["Customer Terminal"], responses={200: CustomerIdentityOutputSerializer, **ERRORS},
+    @extend_schema(tags=[openapi.TERMINAL_CUSTOMER_SIGN_IN], responses={200: CustomerIdentityOutputSerializer, **ERRORS},
                    summary="Current Terminal customer; does NOT renew activity")
     def get(self, request):
         if not request.user.is_authenticated:
@@ -50,7 +51,7 @@ class CustomerTerminalQrView(CustomerSessionView):
 
 
 class CustomerTerminalQrCreateView(CustomerTerminalQrView):
-    @extend_schema(tags=["Customer Terminal"], request=None,
+    @extend_schema(tags=[openapi.TERMINAL_QR_LOGIN], request=None,
                    responses={201: CustomerTerminalQrCreateOutputSerializer, **ERRORS},
                    summary="Generate a QR to display on this guest Terminal")
     def post(self, request):
@@ -59,7 +60,7 @@ class CustomerTerminalQrCreateView(CustomerTerminalQrView):
 
 
 class CustomerTerminalQrStatusView(CustomerTerminalQrView):
-    @extend_schema(tags=["Customer Terminal"], responses={200: QrStatusOutputSerializer, **ERRORS},
+    @extend_schema(tags=[openapi.TERMINAL_QR_LOGIN], responses={200: QrStatusOutputSerializer, **ERRORS},
                    summary="Poll QR approval without renewing Terminal activity")
     def get(self, request, challenge_id):
         return Response(qr_login.terminal_qr_status(terminal=request.auth["terminal"],
@@ -67,7 +68,7 @@ class CustomerTerminalQrStatusView(CustomerTerminalQrView):
 
 
 class CustomerTerminalQrCompleteView(CustomerTerminalQrView):
-    @extend_schema(tags=["Customer Terminal"], request=None,
+    @extend_schema(tags=[openapi.TERMINAL_QR_LOGIN], request=None,
                    responses={200: TerminalSessionOutputSerializer, **ERRORS},
                    summary="Consume approved QR login and replace the guest token")
     def post(self, request, challenge_id):

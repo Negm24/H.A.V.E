@@ -30,6 +30,9 @@ class CustomerSignupTests(TestCase):
         delivery = patch("apps.accounts.services.customer_services.signup._deliver_sms")
         self.sms = delivery.start()
         self.addCleanup(delivery.stop)
+        email = patch("apps.accounts.services.shared_services.signup_verification.send_verification_email")
+        self.email = email.start()
+        self.addCleanup(email.stop)
         self.client = APIClient(enforce_csrf_checks=True)
         self.data = {
             "first_name": "  Ahmed  ", "last_name": "Sherif", "phone_number": "01012345678",
@@ -51,6 +54,15 @@ class CustomerSignupTests(TestCase):
             "code": self.sms.call_args.kwargs["code"],
         } | changes, format="json")
 
+    def email_code(self):
+        return self.email.call_args.kwargs["code"]
+
+    def finish(self, challenge, **changes):
+        """Both verification steps: SMS code (202), then the emailed code."""
+        response = self.verify(challenge, **changes)
+        self.assertEqual(response.status_code, 202, getattr(response, "data", None))
+        return self.verify(challenge, code=self.email_code(), **changes)
+
     def expire_cooldown(self):
         for key in self.redis.scan_iter(match=self.prefix + "signup:cooldown:*"):
             self.redis.delete(key)
@@ -66,6 +78,12 @@ class CustomerSignupTests(TestCase):
         self.assertGreater(self.redis.ttl(_challenge_key(challenge)), 0)
         self.assertNotIn("code", response.json())
         response = self.verify(challenge, first_name="Attacker", account_type="OWNER")
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["next_step"], "email")
+        self.assertFalse(User.objects.exists())
+        self.assertEqual(self.email.call_args.kwargs["email"], "customer@example.test")
+        self.assertEqual(self.verify(challenge).status_code, 400)  # the SMS code is no longer valid
+        response = self.verify(challenge, code=self.email_code(), first_name="Attacker")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()["first_name"], "Ahmed")
         self.assertEqual(response.json()["account_type"], "CUSTOMER")
@@ -76,11 +94,12 @@ class CustomerSignupTests(TestCase):
         self.assertTrue(user.pk.startswith("HAV-C678-"))
         self.assertTrue(user.check_password("4826"))
         self.assertIsNotNone(user.phone_verified_at)
+        self.assertIsNotNone(user.email_verified_at)
         self.assertEqual(Customer.objects.count(), 1)
         self.assertFalse(RefreshToken.objects.exists())
         self.assertNotIn("sessionid", response.cookies)
         self.assertFalse(self.redis.exists(_challenge_key(challenge)))
-        self.assertEqual(self.verify(challenge).status_code, 400)
+        self.assertEqual(self.verify(challenge, code=self.email_code()).status_code, 400)
         self.assertEqual(User.objects.count(), 1)
 
     def test_invalid_input_creates_nothing(self):
@@ -108,7 +127,24 @@ class CustomerSignupTests(TestCase):
         challenge = self.start_signup().json()["challenge_id"]
         correct = self.sms.call_args.kwargs["code"]
         self.assertEqual(self.verify(challenge, code="000000" if correct != "000000" else "111111").status_code, 400)
-        self.assertEqual(self.verify(challenge).status_code, 201)
+        self.assertEqual(self.finish(challenge).status_code, 201)
+
+    def test_email_code_attempt_limit(self):
+        challenge = self.start_signup().json()["challenge_id"]
+        self.assertEqual(self.verify(challenge).status_code, 202)
+        correct = self.email_code()
+        wrong = "000000" if correct != "000000" else "111111"
+        for _ in range(5):
+            self.assertEqual(self.verify(challenge, code=wrong).status_code, 400)
+        self.assertEqual(self.verify(challenge, code=correct).status_code, 400)
+        self.assertFalse(User.objects.exists())
+
+    def test_email_delivery_failure_invalidates_challenge(self):
+        challenge = self.start_signup().json()["challenge_id"]
+        self.email.side_effect = OSError("smtp down")
+        self.assertEqual(self.verify(challenge).status_code, 503)
+        self.assertFalse(self.redis.exists(_challenge_key(challenge)))
+        self.assertFalse(User.objects.exists())
 
     def test_expired_code(self):
         challenge = self.start_signup().json()["challenge_id"]
@@ -119,7 +155,7 @@ class CustomerSignupTests(TestCase):
     def test_phone_binding(self):
         challenge = self.start_signup().json()["challenge_id"]
         self.assertEqual(self.verify(challenge, phone_number="01112345678").status_code, 400)
-        self.assertEqual(self.verify(challenge).status_code, 201)
+        self.assertEqual(self.finish(challenge).status_code, 201)
 
     def test_resend_replaces_old_challenge(self):
         old = self.start_signup().json()["challenge_id"]
@@ -131,7 +167,7 @@ class CustomerSignupTests(TestCase):
         new = self.start_signup().json()["challenge_id"]
         self.assertFalse(self.redis.exists(_challenge_key(old)))
         self.assertEqual(self.verify(old, code=old_code).status_code, 400)
-        self.assertEqual(self.verify(new).status_code, 201)
+        self.assertEqual(self.finish(new).status_code, 201)
 
     def test_phone_send_limit(self):
         for _ in range(5):
@@ -154,10 +190,10 @@ class CustomerSignupTests(TestCase):
         create_customer_account(first_name="Existing", last_name="Customer", phone_number="01012345678",
                                 email="existing@example.test", date_of_birth=date(2000, 1, 1), pin="4826")
         challenge = self.start_signup().json()["challenge_id"]
-        self.assertEqual(self.verify(challenge).status_code, 409)
+        self.assertEqual(self.finish(challenge).status_code, 409)
         self.data["phone_number"] = "01112345678"
         challenge = self.start_signup(email="EXISTING@example.test").json()["challenge_id"]
-        self.assertEqual(self.verify(challenge).status_code, 409)
+        self.assertEqual(self.finish(challenge).status_code, 409)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(Customer.objects.count(), 1)
 
@@ -167,7 +203,7 @@ class CustomerSignupTests(TestCase):
                               professional_license_number="SIGNUP-TEST", specialty="General",
                               clinic_name="Clinic", clinic_address="Address")
         challenge = self.start_signup().json()["challenge_id"]
-        self.assertEqual(self.verify(challenge).status_code, 201)
+        self.assertEqual(self.finish(challenge).status_code, 201)
         self.assertEqual(User.objects.count(), 2)
 
     def test_redis_outage_fails_closed(self):
@@ -189,9 +225,10 @@ class CustomerSignupTests(TestCase):
 
     def test_database_failure_consumes_code_and_creates_nothing(self):
         challenge = self.start_signup().json()["challenge_id"]
+        self.assertEqual(self.verify(challenge).status_code, 202)
         with patch("apps.accounts.services.customer_services.signup._create_customer_from_validated_data", side_effect=DatabaseError):
-            self.assertEqual(self.verify(challenge).status_code, 503)
-        self.assertEqual(self.verify(challenge).status_code, 400)
+            self.assertEqual(self.verify(challenge, code=self.email_code()).status_code, 503)
+        self.assertEqual(self.verify(challenge, code=self.email_code()).status_code, 400)
         self.assertFalse(User.objects.exists())
 
     def test_concurrent_verification_can_consume_code_only_once(self):
@@ -201,7 +238,8 @@ class CustomerSignupTests(TestCase):
         latest_key = _latest_key("+201012345678")
 
         def consume(_):
-            return self.redis.eval(VERIFY_SCRIPT, 2, challenge_key, latest_key, digest, 5)
+            return self.redis.eval(VERIFY_SCRIPT, 2, challenge_key, latest_key, digest, 5,
+                                   _digest(f"{challenge}:000001"), 300)
 
         with ThreadPoolExecutor(max_workers=4) as pool:
             results = list(pool.map(consume, range(4)))
@@ -209,7 +247,7 @@ class CustomerSignupTests(TestCase):
 
     def test_verification_redis_failure_preserves_pending_challenge(self):
         challenge = self.start_signup().json()["challenge_id"]
-        with patch("apps.accounts.services.customer_services.signup._source_limit", side_effect=RedisError):
+        with patch("apps.accounts.services.shared_services.signup_verification._source_limit", side_effect=RedisError):
             self.assertEqual(self.verify(challenge).status_code, 503)
         self.assertFalse(User.objects.exists())
-        self.assertEqual(self.verify(challenge).status_code, 201)
+        self.assertEqual(self.finish(challenge).status_code, 201)

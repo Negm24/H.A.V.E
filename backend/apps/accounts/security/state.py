@@ -143,6 +143,19 @@ def _latest_key(phone_number):
     return auth_key(f"signup:latest:{_digest(phone_number)}")
 
 
+# Doctor signups use their own keys: a customer and a doctor may share a phone.
+def doctor_signup_key(name):
+    return auth_key(f"signup:doctor:{name}")
+
+
+def doctor_challenge_key(challenge_id):
+    return doctor_signup_key(f"challenge:{challenge_id}")
+
+
+def doctor_latest_key(phone_number):
+    return doctor_signup_key(f"latest:{_digest(phone_number)}")
+
+
 def _source_limit(source, action, limit, seconds):
     key = auth_key(f"signup:source:{action}:{_digest(source)}")
     client = get_redis_client()
@@ -167,6 +180,10 @@ redis.call('EXPIRE', KEYS[4], ARGV[1])
 return 0
 """
 
+# Two-stage signup proof on one challenge: the SMS code, then the email code.
+# A correct phone code atomically swaps in the email code (ARGV[3]) and returns
+# {"email", payload}; a correct email code deletes the challenge and returns
+# {"done", payload}. Challenges without a stage (issued earlier) start at phone.
 VERIFY_SCRIPT = """
 if redis.call('GET', KEYS[2]) ~= KEYS[1] then return false end
 local expected = redis.call('HGET', KEYS[1], 'code_hash')
@@ -179,6 +196,22 @@ if expected ~= ARGV[1] then
     return false
 end
 local payload = redis.call('HGET', KEYS[1], 'payload')
+if (redis.call('HGET', KEYS[1], 'stage') or 'phone') == 'phone' then
+    redis.call('HSET', KEYS[1], 'code_hash', ARGV[3], 'stage', 'email', 'attempts', 0)
+    redis.call('EXPIRE', KEYS[1], ARGV[4])
+    redis.call('EXPIRE', KEYS[2], ARGV[4])
+    return {'email', payload}
+end
 redis.call('DEL', KEYS[1], KEYS[2])
-return payload
+return {'done', payload}
 """
+
+
+def verify_signup_code(*, challenge_key, latest_key, challenge_id, code, next_code, max_attempts, seconds):
+    """Run VERIFY_SCRIPT. Returns (stage, payload) or None for a wrong/expired/used code."""
+    result = get_redis_client().eval(
+        VERIFY_SCRIPT, 2, challenge_key, latest_key,
+        _digest(f"{challenge_id}:{code}"), max_attempts,
+        _digest(f"{challenge_id}:{next_code}"), seconds,
+    )
+    return tuple(result) if result else None

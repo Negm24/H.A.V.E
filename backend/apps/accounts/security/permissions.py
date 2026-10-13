@@ -14,3 +14,11 @@ class IsOwner(BasePermission):
 
 def eligible_customer(user):
     return bool(user and user.account_type == "CUSTOMER" and user.is_active and user.phone_verified_at)
+
+
+def eligible_doctor(user):
+    """Advisor access: owner-approved and MFA-enrolled. Approval alone is not login."""
+    return bool(
+        user and user.account_type == "DOCTOR" and user.is_active
+        and user.doctor.approval_status == "APPROVED" and user.doctor.mfa_enrolled_at
+    )

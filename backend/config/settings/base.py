@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import environ
 
+from config import openapi
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parents[2]
 
@@ -72,13 +74,38 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "H.A.V.E Backend API",
-    "DESCRIPTION": "Owners use session cookies. Hub customers use HubBearer JWTs. Terminals require device headers and TerminalBearer session tokens. See AUTH_GUIDE.md.",
+    "DESCRIPTION": (
+        "Groups are named **App · Feature** and listed in the order a client uses them. "
+        "Click a group to expand it; use the filter box to find one.\n\n"
+        "| Calling app | Authorize with |\n|---|---|\n"
+        "| Hub (customer) | **HubBearer** = Hub `access_token` |\n"
+        "| Terminal (kiosk) | **TerminalSerial** + **TerminalKey**, then **TerminalBearer** = `session_token` |\n"
+        "| Advisor (doctor) | **AdvisorBearer** = Advisor `access_token` |\n"
+        "| Owner | Nothing: sign in under *Owner · Session*; the cookie is sent automatically |\n\n"
+        "Paste tokens without the `Bearer ` prefix. Signup, login and recovery need no Authorize; "
+        "this page adds CSRF automatically. Step-by-step walkthroughs: `backend/AUTH_GUIDE.md`."
+    ),
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SERVE_AUTHENTICATION": [],
     "SWAGGER_UI_DIST": "SIDECAR",
     "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
-    "SWAGGER_UI_SETTINGS": {"deepLinking": True, "persistAuthorization": False},
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": False,
+        "docExpansion": "none",  # groups start collapsed
+        "filter": True,  # search box for group names
+        "displayRequestDuration": True,
+        "defaultModelsExpandDepth": -1,  # hide the long schema list; each endpoint still shows its schema
+    },
+    # Group order, descriptions and in-group order live in config/openapi.py (docs only).
+    "TAGS": openapi.TAGS,
+    "SORT_OPERATIONS": openapi.operation_order,
+    # Name the doctor sign-in step enum so the earlier QR "StatusEnum" stays unchanged.
+    "ENUM_NAME_OVERRIDES": {
+        "StatusEnum": ["waiting_for_scan", "waiting_for_confirmation", "approved", "rejected", "completed"],
+        "DoctorLoginStatusEnum": ["WAITING_FOR_APPROVAL", "REJECTED", "MFA_REQUIRED", "MFA_ENROLLMENT_REQUIRED"],
+    },
 }
 
 PASSWORD_HASHERS = [
@@ -208,3 +235,36 @@ RECOVERY_PROOF_SECONDS = 300
 RECOVERY_RESEND_SECONDS = 60
 RECOVERY_MAX_ATTEMPTS = 5
 QR_LOGIN_SECONDS = 90
+
+# Advisor doctors: same personal-app token policy as Hub, separate cookie and audience.
+ADVISOR_ACCESS_SECONDS = 900
+ADVISOR_REFRESH_COOKIE_NAME = "have_advisor_refresh"
+ADVISOR_REFRESH_COOKIE_PATH = "/api/v1/auth/doctors/"
+
+# Doctor signup reuses the customer signup code policy.
+DOCTOR_SIGNUP_CODE_SECONDS = CUSTOMER_SIGNUP_CODE_SECONDS
+DOCTOR_SIGNUP_RESEND_SECONDS = CUSTOMER_SIGNUP_RESEND_SECONDS
+DOCTOR_SIGNUP_MAX_ATTEMPTS = CUSTOMER_SIGNUP_MAX_ATTEMPTS
+# A rejected doctor may sign up again until this many rejections (FR-82f).
+DOCTOR_MAX_REJECTIONS = 3
+
+# Doctor TOTP. The Fernet key encrypts enrolled secrets at rest; losing it
+# makes every enrollment unreadable, so it is separate from DJANGO_SECRET_KEY.
+MFA_ENCRYPTION_KEY = env("MFA_ENCRYPTION_KEY", default="")
+MFA_CHALLENGE_SECONDS = 300
+MFA_MAX_ATTEMPTS = 5
+MFA_ISSUER_NAME = "H.A.V.E Advisor"
+
+# Doctor applications are announced to the owner; review happens in the dashboard.
+OWNER_NOTIFICATION_EMAIL = env("OWNER_NOTIFICATION_EMAIL", default="")
+
+# Real SMTP delivery (signup email codes, rejection emails, owner notifications).
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+# Compose passes unset values as empty strings; Gmail-style SMTP requires sending as the account.
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="") or EMAIL_HOST_USER or "no-reply@have.local"

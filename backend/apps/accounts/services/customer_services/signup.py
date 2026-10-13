@@ -12,9 +12,10 @@ from .registration import _create_customer_from_validated_data
 from apps.accounts.security.errors import AuthError, SignupError
 from apps.accounts.security.tokens import generate_verification_code
 from apps.accounts.services.shared_services.notifications import send_verification_sms
+from apps.accounts.services.shared_services.signup_verification import verify_signup_step
 from apps.accounts.security.state import (
     auth_key, get_redis_client, _digest, _challenge_key, _latest_key,
-    _source_limit, ISSUE_SCRIPT, VERIFY_SCRIPT,
+    _source_limit, ISSUE_SCRIPT,
 )
 
 
@@ -68,22 +69,19 @@ def request_customer_signup(*, data, source):
 
 
 def verify_customer_signup(*, challenge_id, phone_number, code, source):
-    try:
-        _source_limit(source, "verify", 60, 300)
-        raw = get_redis_client().eval(
-            VERIFY_SCRIPT, 2, _challenge_key(challenge_id), _latest_key(phone_number),
-            _digest(f"{challenge_id}:{code}"), settings.CUSTOMER_SIGNUP_MAX_ATTEMPTS,
-        )
-    except RedisError:
-        raise SignupError("Verification is temporarily unavailable. Try again later.", status=503) from None
-    if not raw:
-        raise SignupError("Invalid, expired or already used verification code. Request a new code if needed.")
-    # Consume first: concurrent requests cannot both use the same proof.
-    # If persistence fails, the user must restart signup; never restore a used code.
-    payload = json.loads(raw)
+    """First call: SMS code → 202 email step. Second call: email code → account created."""
+    email_step, payload = verify_signup_step(
+        purpose="CUSTOMER SIGNUP", challenge_key=_challenge_key(challenge_id),
+        latest_key=_latest_key(phone_number), challenge_id=challenge_id, code=code, source=source,
+        seconds=settings.CUSTOMER_SIGNUP_CODE_SECONDS, max_attempts=settings.CUSTOMER_SIGNUP_MAX_ATTEMPTS,
+    )
+    if email_step:
+        return email_step, None
+    # Both codes are consumed: if persistence fails, the user restarts signup;
+    # a used proof is never restored.
     payload["date_of_birth"] = date.fromisoformat(payload["date_of_birth"])
     try:
-        return _create_customer_from_validated_data(**payload)
+        return None, _create_customer_from_validated_data(**payload, email_verified=True)
     except ValidationError:
         raise SignupError("A customer account already uses this phone number or email address.", status=409) from None
     except DatabaseError:

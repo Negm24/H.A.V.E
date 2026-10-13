@@ -16,7 +16,20 @@ new features ship; listed future features are not available endpoints.
 | Customer Hub PIN reset through SMS verification | Implemented |
 | Doctor and owner password reset through SMS verification | Implemented; existing accounts only |
 | Terminal QR displayed for a signed-in Hub customer to scan and confirm | Implemented backend flow |
-| Doctor signup/login, approval dashboard and MFA routes | Not implemented yet |
+| Doctor signup with SMS verification and owner email notification | Implemented |
+| Owner doctor-approval API (list, detail, approve/reject) | Implemented |
+| Signup email verification (customers and doctors, real SMTP) | Implemented |
+| Doctor rejection: PDPL data erasure, hashed re-signup limit | Implemented |
+| Advisor login: password + TOTP authenticator, refresh, logout, me | Implemented |
+| Prescription issue/revoke, lost-authenticator MFA reset | Not implemented yet |
+
+## Finding things in Swagger
+
+http://localhost:8000/api/docs/ groups endpoints as **App · Feature** (Hub, Terminal,
+Advisor, Owner, plus Shared), in the order a client uses them. Groups start collapsed;
+type in the filter box to jump to one. The top of the page shows which **Authorize**
+field each app needs. Grouping and ordering live in `config/openapi.py` and are
+documentation only.
 
 ## Start the project
 
@@ -52,7 +65,7 @@ Enter a strong password at the hidden prompts. Owners cannot sign up publicly.
 ## Owner: Swagger UI
 
 1. Open http://localhost:8000/api/docs/ (the trailing slash is optional for GET).
-2. Expand **POST /api/v1/auth/owners/login/** under **Owner authentication**.
+2. Expand **POST /api/v1/auth/owners/login/** under **Owner · Session**.
 3. Click **Try it out**. Replace both example values with your owner's phone and
    password. Click **Execute**.
 4. Expect HTTP **200** and the owner's ID, account type, and names. Swagger's
@@ -100,21 +113,23 @@ use `localhost` consistently rather than mixing it with `127.0.0.1`.
 - Sessions expire after 10 minutes without owner-route activity, or 2 hours
   from login regardless of activity. Do not poll `/owners/me/` in a background job.
 - Owner login has no Remember Me or JWTs, and creates no refresh-token rows.
-  No public owner signup or admin dashboard is exposed.
+  No public owner signup and no Django admin is exposed; owners review doctors
+  through the owner API below.
 - Local HTTP uses non-Secure cookies; base settings require HTTPS cookies.
 - Swagger and schema URLs are enabled only with DEBUG=True. Swagger assets are
   installed locally, so the docs page does not need a public CDN.
 
 ## Customer signup: Swagger UI
 
-This section covers signup; Hub and Terminal login are documented below. These two public routes
-work for both Hub and Terminal, and neither uses nor creates a login session.
+This section covers signup; Hub and Terminal login are documented below. Signup happens
+in Hub only (Terminal does not create accounts). These public routes neither use nor
+create a login session.
 You do not need owner access, Authorize, cookies, or a CSRF token for this flow.
 No owner session is modified if you happen to already be signed in.
 
 ### 1. Submit the customer details
 
-Open http://localhost:8000/api/docs/ and find **Customer Hub**. Signup and Hub authentication share this section.
+Open http://localhost:8000/api/docs/ and expand **Hub · Customer signup**.
 Expand **POST /api/v1/auth/customers/signup/**, choose **Try it out**, then use:
 
 ```json
@@ -164,7 +179,7 @@ Follow `docker compose logs -f backend`. You will see:
 [MOCK SMS — CUSTOMER SIGNUP] +201012345678 | challenge=<UUID> | code=<six digits>
 ```
 
-No real SMS or email is sent. Copy the six-digit code for your challenge,
+No real SMS is sent. Copy the six-digit code for your challenge,
 including any leading zero. Never put a fixed demo code into the implementation.
 These local console messages are development-only secrets; don't share or
 capture them with real personal information. The code is not in an HTTP response.
@@ -173,19 +188,37 @@ capture them with real personal information. The code is not in an HTTP response
 requires `DEBUG=True`. Without that local setup, sending fails closed with 503
 until a real SMS adapter is implemented. This increment is not real SMS delivery.
 
-### 3. Verify and create the account
+### 3. Verify the phone, then the email
 
-Expand **POST /api/v1/auth/customers/signup/verify/** and submit:
+Verification uses the **same endpoint twice** with the same body shape.
+
+**First call: the SMS code.** Expand **POST /api/v1/auth/customers/signup/verify/** and submit:
 
 ```json
 {
   "challenge_id": "PASTE-THE-UUID-FROM-SIGNUP",
   "phone_number": "01012345678",
-  "code": "PASTE-THE-SIX-DIGIT-CODE"
+  "code": "PASTE-THE-SIX-DIGIT-SMS-CODE"
 }
 ```
 
-Expected **201 Created**, with the new customer's safe identity fields:
+Expected **202 Accepted**:
+
+```json
+{
+  "challenge_id": "<same UUID>",
+  "next_step": "email",
+  "expires_in": 300,
+  "detail": "Phone verified. Enter the code sent to your email to finish signup."
+}
+```
+
+A six-digit code is now emailed to the signup address through the SMTP account in
+`.env` (or printed in `docker compose logs -f backend` when `EMAIL_HOST` is empty).
+The SMS code no longer works.
+
+**Second call: the email code.** Submit the same body with `"code"` set to the
+emailed code. Expected **201 Created**, with the new customer's safe identity fields:
 
 ```json
 {
@@ -201,8 +234,8 @@ Expected **201 Created**, with the new customer's safe identity fields:
 ```
 
 The numeric ID and timestamp will differ. PostgreSQL now contains a `users` row
-and matching `customers` row, created atomically. The customer PIN is hashed,
-and phone verification is recorded. The code is consumed and cannot be reused.
+(with `phone_verified_at` and `email_verified_at`) and a matching `customers` row,
+created atomically. The customer PIN is hashed. Both codes are consumed and cannot be reused.
 Automatic login after signup is intentionally not performed; use a login route below.
 No access token, refresh token or customer login cookie is issued.
 
@@ -222,8 +255,9 @@ with the corrected full form. Changing the phone starts a separate signup.
 Use **No Auth**, **Body > raw > JSON**, and the same JSON bodies above:
 
 1. POST `http://localhost:8000/api/v1/auth/customers/signup/`.
-2. Read the challenge ID from the response and the code from the server terminal.
-3. POST `http://localhost:8000/api/v1/auth/customers/signup/verify/`.
+2. Read the challenge ID from the response and the SMS code from the server terminal.
+3. POST `http://localhost:8000/api/v1/auth/customers/signup/verify/` with the SMS code (202).
+4. POST the same URL again with the emailed code (201).
 
 No CSRF header is required: these endpoints do not act on an authenticated
 browser session and cannot log anyone in. Owner endpoints still require CSRF.
@@ -233,8 +267,9 @@ browser session and cannot log anyone in. Owner endpoints still require CSRF.
 | Test | Expected result |
 | --- | --- |
 | Weak PIN (`1111`, `1234`), invalid phone/email, future or ISO-formatted DOB | 400, no challenge sent |
-| Wrong six-digit code | 400, no account created |
-| Five wrong codes for the same challenge, then the correct code | 400; restart signup |
+| Wrong six-digit code (SMS or email stage) | 400, no account created |
+| Five wrong codes at either stage, then the correct code | 400; restart signup |
+| Send the SMS code again at the email stage | 400 (only the emailed code works) |
 | Wait over five minutes before verification | 400; restart signup |
 | Replay a successfully used code | 400; no second account |
 | Verify with a different phone | 400 |
@@ -246,11 +281,11 @@ browser session and cannot log anyone in. Owner endpoints still require CSRF.
 | Same phone/email belongs only to a doctor | Separate customer account allowed |
 | Redis unavailable | 503; no account created without verification |
 | SMS delivery unavailable/fails | 503; wait and retry or continue as guest |
+| Email code cannot be sent (SMTP down or wrong credentials) | 503 after the SMS step; restart signup |
 
 Both existing and new customer contacts receive the same start response;
-duplicate conflicts are returned only after successful SMS verification. Email
-uniqueness is case-insensitive within account type. Email verification is not
-required by the current customer-signup requirements and is not implemented.
+duplicate conflicts are returned only after both codes are verified. Email
+uniqueness is case-insensitive within account type.
 
 If database creation fails after a correct code was consumed, restart signup
 with a new code. Do not blindly retry verification: consumed proofs are never
@@ -284,7 +319,7 @@ Use an existing SMS-verified customer (create one using signup above if needed).
 An owner/doctor account cannot substitute for a customer account, even when the
 phone number is shared. The examples assume the customer PIN is `4826`.
 
-1. Open http://localhost:8000/api/docs/ and expand **Customer Hub**.
+1. Open http://localhost:8000/api/docs/ and expand **Hub · Customer session**.
 2. Execute **POST /api/v1/auth/customers/hub/login/** with:
 
 ```json
@@ -370,11 +405,11 @@ shared backend `.env`. For this prototype, Postman/Swagger simulate that agent.
 1. Open **Authorize** and fill **TerminalSerial** with `HAVE-TEST-001` and
    **TerminalKey** with the provisioned credential. Leave TerminalBearer empty
    until you create a session. You do not need HubBearer or cookieAuth here.
-2. Under **Terminal sessions**, execute **POST /api/v1/terminals/sessions/**.
+2. Under **Terminal · Guest session**, execute **POST /api/v1/terminals/sessions/**.
    No body or customer is needed. Expect **201** containing `session_id`,
    `session_token`, `token_type`, and `idle_expires_in` (up to 240 seconds with the current settings).
 3. Put this token in **Authorize > TerminalBearer** (no `Bearer ` prefix).
-4. Under **Customer Terminal**, execute **POST /api/v1/auth/customers/terminal/login/**:
+4. Under **Terminal · Customer sign-in**, execute **POST /api/v1/auth/customers/terminal/login/**:
 
 ```json
 {
@@ -490,16 +525,14 @@ These are **anonymous login-page flows**, not settings inside an account. Custom
 PIN recovery exists in **Hub only**. Doctors and owners reset passwords, not PINs.
 No recovery response logs anyone in. Sign in again after success.
 
-Swagger groups signup, Hub login, PIN recovery, and Hub QR actions under
-**Customer Hub**. Password recovery uses **Doctor authentication** and
-**Owner authentication**. Terminal actions remain under **Customer Terminal**.
+In Swagger, use **Hub · PIN recovery**, **Advisor · Password recovery** and
+**Owner · Password recovery**.
 
 ### 1. Prepare an existing account and CSRF
 
 - Customer: use the SMS-verified account created through signup above.
 - Owner: use the privately provisioned owner above. There is no public owner signup.
-- Doctor: use an existing doctor record created through the internal registration
-  service. Doctor signup/login and approval/MFA endpoints are not implemented yet.
+- Doctor: use a doctor created through doctor signup below (any approval status).
   Recovery does not approve a doctor or remove MFA.
 
 In Swagger, refresh `/api/docs/` before testing; it supplies CSRF automatically.
@@ -589,25 +622,13 @@ reset token, so correct the input before its deadline.
   must fail. Log into Hub with the new PIN; the old PIN must fail.
 - Owner: the old owner session must fail `/owners/me/`. Sign in with the new
   password. Recovery creates no replacement session or authentication cookie.
-- Doctor: existing refresh sessions are revoked; approval and MFA stay unchanged.
-  Until doctor login ships, check the changed credential privately in Django shell
-  using `User.check_password()`, not through a nonexistent doctor login route.
+- Doctor: existing Advisor refresh sessions are revoked; approval and MFA stay
+  unchanged. Sign in through `/doctors/login/` with the new password; the old one fails.
 - Reusing the reset token returns **400**. A customer proof cannot reset an owner
   or doctor, even if those accounts share a phone number.
 
-For a private doctor password check without typing a password into shell history:
-
-```powershell
-docker compose exec backend python manage.py shell
-```
-
-```python
-from getpass import getpass
-from apps.accounts.models import User
-doctor = User.objects.get(account_type="DOCTOR", phone_number="+201012345678")  # Your existing doctor's phone
-print(doctor.check_password(getpass("New doctor password: ")))
-exit()
-```
+A pending or rejected doctor can confirm the new password the same way: the correct
+password returns their application status, a wrong one returns 401.
 
 ### Limits and failure handling
 
@@ -731,3 +752,195 @@ No new migrations are needed for recovery/QR. Customer Terminal sessions now
 include the credential version: sessions created before this change must sign in
 again. Existing owner sessions, Hub tokens, and signup challenges keep their
 formats. Recovery intentionally revokes the recovered account's existing sessions.
+
+## Doctor signup: Swagger UI
+
+Doctors apply publicly; the owner approves through the owner API; only then can they
+use Advisor. These two routes need no login, cookies or CSRF, like customer signup.
+
+### 1. Submit the application
+
+Open http://localhost:8000/api/docs/ and expand **Advisor · Doctor signup**.
+Execute **POST /api/v1/auth/doctors/signup/** with fictional details:
+
+```json
+{
+  "first_name": "Mona",
+  "last_name": "Hassan",
+  "phone_number": "01212345678",
+  "email": "doctor@example.test",
+  "password": "REPLACE-WITH-A-STRONG-PASSWORD",
+  "professional_license_number": "EG-MED-12345",
+  "specialty": "Family medicine",
+  "clinic_name": "Demo Clinic",
+  "clinic_address": "12 Example Street, Cairo"
+}
+```
+
+Expect **202** with `challenge_id`, `expires_in: 300`, `resend_after: 60`.
+No account exists yet. Redis holds a password **hash**, never the password.
+
+Input rules: names, phone and email follow customer signup. The password needs
+12+ characters, must not be common, numeric-only or similar to the name/email.
+License, specialty, clinic name and address are required (100/100/200/1000 chars).
+The license number must be unique among doctors.
+
+### 2. Verify the phone, then the email
+
+Read the SMS code from `docker compose logs -f backend`:
+
+```text
+[MOCK SMS — DOCTOR SIGNUP] +201212345678 | challenge=<UUID> | code=<six digits>
+```
+
+Execute **POST /api/v1/auth/doctors/signup/verify/** with `challenge_id`,
+`phone_number` and the SMS `code`. Expect **202** with `next_step: "email"`; a code is
+emailed to the applicant. Call the same endpoint again with the emailed code.
+Expect **201** with the doctor's identity, `approval_status: "PENDING"` and
+`mfa_enrolled: false`. No tokens are issued.
+
+The owner notification goes to `OWNER_NOTIFICATION_EMAIL` (local settings fall back
+to `owner@have.local`). It contains the application ID, name and specialty, never
+the password or hashes. A failed notification never blocks signup.
+
+**Previously rejected applicants** (matched on the keyed hash of the phone **or** the
+email) get **201** on the **same** `HAV-D...` ID, back in PENDING, while they have
+fewer than three rejections. With three, the second call returns **403**.
+
+### Doctor signup failures
+
+| Test | Expected result |
+| --- | --- |
+| Weak/common/similar password, blank professional field, extra field | 400, no code sent |
+| Wrong, expired, replayed code; five wrong guesses at either stage | 400; restart signup |
+| Applicant already rejected three times (phone or email matches) | 403 after both codes |
+| Phone, email or license already used by a doctor | 409 **after** a correct code |
+| Same phone/email belongs only to a customer | Separate doctor account allowed |
+| Resubmit inside 60 seconds | 429 with `Retry-After` |
+| Redis/SMS/email unavailable | 503 |
+
+Doctor and customer pending signups for one phone do not replace each other.
+Per-source limits are shared with customer signup (20 sends / 10 min, 60 verifies / 5 min).
+
+## Owner API: review doctor applications
+
+There is no dashboard UI; a future owner app uses these endpoints. Sign in first with
+**POST /owners/login/** (see the owner sections above). The session cookie authenticates;
+there is no bearer token. Swagger supplies CSRF; in Postman send `X-CSRFToken` on POST.
+
+| Method and path | Purpose |
+| --- | --- |
+| `GET /api/v1/auth/owners/doctors/?status=PENDING` | List applications, oldest first. `status` is `PENDING` (default), `APPROVED` or `REJECTED` |
+| `GET /api/v1/auth/owners/doctors/<doctor_id>/` | Full application, including `times_previously_rejected` |
+| `POST /api/v1/auth/owners/doctors/<doctor_id>/decision/` | `{"decision": "approve"}` or `{"decision": "reject", "reason": "optional"}` |
+
+Only PENDING applications can be decided: deciding again returns **409**, an unknown ID
+**404**, a non-owner or missing CSRF **403**. Owner requests count as owner activity
+(10-minute idle / 2-hour maximum session).
+
+**Approve** records the owner and time and activates the account (it is not a login).
+
+**Reject** (requirements FR-82e to FR-82g, PDPL storage limitation):
+
+1. Stores the optional reason with the decision and emails it to the doctor through SMTP.
+   The doctor also sees it at Advisor sign-in (`rejection_reason`). A failed email does not
+   undo the rejection. The owner detail shows it as `last_rejection_reason`.
+2. Erases personal data: names (blank), phone and email (NULL), license (NULL),
+   specialty and clinic (blank), verification times.
+3. Keeps the ID, status, reviewer, time, password hash, `rejection_count + 1`, and keyed
+   HMAC-SHA-256 hashes of the phone and email (`doctors.phone_hash` / `email_hash`).
+4. Revokes the doctor's Advisor sessions.
+
+The hashes are keyed by `DJANGO_SECRET_KEY`; rotating it stops old rejections from matching.
+Rejected rows in list/detail show empty personal fields. Hashes, password hashes and MFA
+data are never returned.
+
+## Advisor login: password, then authenticator code
+
+Use a doctor from signup. Advisor tokens work like Hub tokens (15-minute access
+JWT, HttpOnly refresh cookie, 1 day or 7 days with `remember_me`) but are separate:
+Hub tokens fail on doctor routes and Advisor tokens fail on Hub routes.
+
+### 1. Password step
+
+Execute **POST /api/v1/auth/doctors/login/** (Swagger supplies CSRF):
+
+```json
+{"phone_number": "01212345678", "password": "YOUR-DOCTOR-PASSWORD", "remember_me": false}
+```
+
+This step never issues tokens. Expect **200** with `status`:
+
+| status | Meaning |
+| --- | --- |
+| `WAITING_FOR_APPROVAL` | The owner has not reviewed the application yet |
+| `REJECTED` | Rejected; `rejection_reason` (may be empty) and `can_reapply: true` means show a sign-up-again button (count not shown) |
+| `MFA_ENROLLMENT_REQUIRED` | Approved, first sign-in: enroll an authenticator |
+| `MFA_REQUIRED` | Approved and enrolled: enter the authenticator code |
+
+The status is revealed only after the correct password. Wrong credentials return
+the generic **401**. A rejected doctor's phone is erased, so sign-in finds them through
+the keyed hash of the phone they type and checks the password hash that was kept.
+
+### 2. Enroll an authenticator (first sign-in only)
+
+`MFA_ENROLLMENT_REQUIRED` also returns `secret` and `otpauth_uri`. Advisor will
+show `otpauth_uri` as a QR code; for testing, add the account manually in Google
+Authenticator, Microsoft Authenticator or similar by typing `secret`
+(time-based, 6 digits, 30 seconds). Without a phone app:
+
+```powershell
+docker compose exec backend python -c "import pyotp; print(pyotp.TOTP('PASTE-SECRET').now())"
+```
+
+The secret is shown only during enrollment and stored encrypted with
+`MFA_ENCRYPTION_KEY` once the first code is accepted.
+
+### 3. Code step
+
+Execute **POST /api/v1/auth/doctors/login/mfa/** within five minutes:
+
+```json
+{"mfa_token": "PASTE-MFA-TOKEN", "code": "123456"}
+```
+
+Expect **200** with `access_token`, `token_type`, `expires_in` and `doctor`, plus
+the HttpOnly `have_advisor_refresh` cookie. In **Authorize**, paste the access token
+into **AdvisorBearer** (no `Bearer ` prefix), then execute **GET /doctors/me/**.
+
+**POST /doctors/refresh/** and **POST /doctors/logout/** behave like their Hub
+equivalents: no body, CSRF required, the browser sends the refresh cookie.
+Replaying an old refresh cookie revokes the session family.
+
+### Advisor login checks
+
+- A code can be used once: reusing it, even in a new sign-in, returns **401**.
+  Wait for the authenticator's next code.
+- Five wrong codes end the sign-in; wrong codes also count toward the doctor's
+  account lockout (5 failures start a 30-second, increasing block).
+- A new password step replaces any earlier unfinished one.
+- A password reset between the two steps invalidates the pending sign-in.
+- Disabling the doctor revokes access on the next request.
+- Password recovery revokes Advisor sessions but keeps approval and MFA enrollment.
+- A missing or wrong `MFA_ENCRYPTION_KEY` returns **503**; it never skips MFA.
+- There is no lost-authenticator reset yet. For a local test account, clear
+  `mfa_secret_encrypted` and `mfa_enrolled_at` in the database to re-enroll.
+
+### Configuration
+
+Optional `.env` values, documented in `.env.example`:
+
+- `MFA_ENCRYPTION_KEY`: Fernet key encrypting TOTP secrets. Local settings fall back
+  to a public development key. Use your own private key anywhere shared; changing it
+  makes every enrolled authenticator unusable.
+- `OWNER_NOTIFICATION_EMAIL`: where application notifications go.
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`,
+  `DEFAULT_FROM_EMAIL`, `EMAIL_TIMEOUT` (and `EMAIL_USE_TLS`, default true): real SMTP
+  for signup email codes, rejection emails and owner notifications. With `EMAIL_HOST`
+  empty, local settings print emails to the backend log instead. For Gmail, use an app
+  password. Restart the backend after changing them: `docker compose up -d backend`.
+
+New dependencies (`pyotp`, `cryptography`) require rebuilding the image once:
+`docker compose up -d --build backend`. Startup applies accounts migration `0005`
+(email verification, rejection hashes and counter) and `0006` (`rejection_reason` restored). The Django admin app was removed;
+an old `django_admin_log` table in a dev database is unused and harmless.

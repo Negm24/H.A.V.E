@@ -17,6 +17,7 @@ from apps.accounts.security.state import (
 )
 from apps.accounts.security.validation import normalize_phone_number
 from apps.accounts.services.customer_services.hub_sessions import authenticate_hub_access
+from apps.accounts.services.doctor_services.advisor_sessions import authenticate_advisor_access
 
 
 # The purpose of this method is to create a dummy password when a login attempt has a not found user phone number to equalize timing difference between a not found user and a found user
@@ -114,6 +115,14 @@ def bearer_token(request):
 class HubAuthentication(BaseAuthentication):
     def authenticate(self, request):
         return authenticate_hub_access(bearer_token(request)), None
+
+    def authenticate_header(self, request):
+        return "Bearer"
+
+
+class AdvisorAuthentication(BaseAuthentication):
+    def authenticate(self, request):
+        return authenticate_advisor_access(bearer_token(request)), None
 
     def authenticate_header(self, request):
         return "Bearer"

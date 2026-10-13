@@ -1,3 +1,39 @@
+x-frontend: &frontend
+  profiles: ["frontend"]
+  image: have-frontend-dev
+  build:
+    context: ./frontend
+    dockerfile: tooling/Dockerfile.dev
+  restart: unless-stopped
+  environment:
+    BACKEND_ORIGIN: http://backend:8000
+    DOCKER_WATCH: "true"
+  # Empty shells can run without the backend; /api requires it to be running.
+  # Every container sees the current workspace source for cross-app checks.
+  volumes:
+    - ./frontend/shared/src:/workspace/shared/src
+    - ./frontend/shared/tsconfig.json:/workspace/shared/tsconfig.json
+    - ./frontend/tooling:/workspace/tooling
+    - ./frontend/tests:/workspace/tests
+    - ./frontend/vitest.config.ts:/workspace/vitest.config.ts
+    - ./frontend/playwright.config.ts:/workspace/playwright.config.ts
+    - ./frontend/kiosk/src:/workspace/kiosk/src
+    - ./frontend/kiosk/index.html:/workspace/kiosk/index.html
+    - ./frontend/kiosk/vite.config.ts:/workspace/kiosk/vite.config.ts
+    - ./frontend/kiosk/tsconfig.json:/workspace/kiosk/tsconfig.json
+    - ./frontend/hub/src:/workspace/hub/src
+    - ./frontend/hub/index.html:/workspace/hub/index.html
+    - ./frontend/hub/vite.config.ts:/workspace/hub/vite.config.ts
+    - ./frontend/hub/tsconfig.json:/workspace/hub/tsconfig.json
+    - ./frontend/advisor/src:/workspace/advisor/src
+    - ./frontend/advisor/index.html:/workspace/advisor/index.html
+    - ./frontend/advisor/vite.config.ts:/workspace/advisor/vite.config.ts
+    - ./frontend/advisor/tsconfig.json:/workspace/advisor/tsconfig.json
+    - ./frontend/admin/src:/workspace/admin/src
+    - ./frontend/admin/index.html:/workspace/admin/index.html
+    - ./frontend/admin/vite.config.ts:/workspace/admin/vite.config.ts
+    - ./frontend/admin/tsconfig.json:/workspace/admin/tsconfig.json
+
 services:
   db:
     image: postgres:18
@@ -43,10 +79,25 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       REDIS_URL: redis://redis:6379/0
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:-}
+      OWNER_NOTIFICATION_EMAIL: ${OWNER_NOTIFICATION_EMAIL:-}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
+      EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-10}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/', timeout=3)"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/', timeout=3)",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -58,15 +109,34 @@ services:
         condition: service_healthy
 
   kiosk:
-    profiles: ["frontend"]
-    build: ./kiosk/frontend
-    restart: unless-stopped
+    <<: *frontend
+    env_file:
+      - ./frontend/.env
     environment:
-      TERMINAL_KEY: ${KIOSK_TERMINAL_KEY:-}
+      BACKEND_ORIGIN: http://backend:8000
+      DOCKER_WATCH: "true"
+    command: ["pnpm", "--filter", "@have/kiosk", "dev"]
     ports:
       - "127.0.0.1:5173:5173"
-    depends_on:
-      - backend
+
+  hub:
+    <<: *frontend
+    command: ["pnpm", "--filter", "@have/hub", "dev"]
+    ports:
+      # - "127.0.0.1:5174:5174"
+      - "5174:5174"
+
+  advisor:
+    <<: *frontend
+    command: ["pnpm", "--filter", "@have/advisor", "dev"]
+    ports:
+      - "127.0.0.1:5175:5175"
+
+  admin:
+    <<: *frontend
+    command: ["pnpm", "--filter", "@have/admin", "dev"]
+    ports:
+      - "127.0.0.1:5176:5176"
 
 volumes:
   postgres_data:

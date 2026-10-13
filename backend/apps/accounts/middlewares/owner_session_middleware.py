@@ -3,6 +3,19 @@ import time
 from django.conf import settings
 from django.contrib.auth import logout
 
+# Explicit owner actions: the owner API routes.
+OWNER_ACTIVITY_PATHS = ("/api/v1/auth/owners/",)
+
+
+def start_owner_session_clock(request):
+    """Call right after an owner login; the middleware ends sessions without it."""
+    now = time.time()
+    request.session["owner_started_at"] = now
+    request.session["owner_last_activity_at"] = now
+    request.session.set_expiry(min(
+        settings.OWNER_SESSION_IDLE_SECONDS, settings.OWNER_SESSION_MAX_SECONDS,
+    ))
+
 
 class OwnerSessionTimeoutMiddleware:
     def __init__(self, get_response):
@@ -21,7 +34,7 @@ class OwnerSessionTimeoutMiddleware:
                 or now - activity >= settings.OWNER_SESSION_IDLE_SECONDS
             ):
                 logout(request)
-            elif request.path.startswith("/api/v1/auth/owners/"):
+            elif request.path.startswith(OWNER_ACTIVITY_PATHS):
                 # These routes are explicit user actions; do not poll /me/.
                 request.session["owner_last_activity_at"] = now
                 request.session.set_expiry(max(1, int(min(

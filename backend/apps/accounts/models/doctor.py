@@ -17,8 +17,10 @@ class Doctor(models.Model):
 
     password_hash = models.CharField(max_length=255)
 
+    # NULL once a rejected application's personal data is erased (FR-82e).
     professional_license_number = models.CharField(
         max_length=100,
+        null=True,
     )
     specialty = models.CharField(max_length=100)
     clinic_name = models.CharField(max_length=200)
@@ -41,10 +43,16 @@ class Doctor(models.Model):
         null=True,
         blank=True,
     )
+    # The owner's latest reason: emailed to the doctor and shown at Advisor sign-in.
     rejection_reason = models.TextField(
         null=True,
         blank=True,
     )
+    rejection_count = models.PositiveSmallIntegerField(default=0)
+
+    # Keyed HMAC-SHA-256 of the erased phone and email, set only while REJECTED.
+    phone_hash = models.CharField(max_length=64, null=True, blank=True, db_index=True)
+    email_hash = models.CharField(max_length=64, null=True, blank=True, db_index=True)
 
     mfa_secret_encrypted = models.TextField(
         null=True,

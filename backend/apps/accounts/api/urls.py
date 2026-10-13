@@ -15,11 +15,21 @@ from .views.customer_views import (
     CustomerSignupView,
 )
 from .views.doctor_views import (
+    DoctorLoginMfaView,
+    DoctorLoginView,
+    DoctorLogoutView,
+    DoctorMeView,
     DoctorPasswordResetCompleteView,
     DoctorPasswordResetRequestView,
     DoctorPasswordResetVerifyView,
+    DoctorRefreshView,
+    DoctorSignupVerificationView,
+    DoctorSignupView,
 )
 from .views.owner_views import (
+    OwnerDoctorDecisionView,
+    OwnerDoctorDetailView,
+    OwnerDoctorListView,
     OwnerLoginView,
     OwnerLogoutView,
     OwnerMeView,
@@ -70,4 +80,18 @@ urlpatterns = [
     path("customers/hub/qr-login/scan/", CustomerHubQrScanView.as_view(), name="hub-qr-scan"),
     path("customers/hub/qr-login/<uuid:challenge_id>/", CustomerHubQrStatusView.as_view(), name="hub-qr-status"),
     path("customers/hub/qr-login/<uuid:challenge_id>/confirm/", CustomerHubQrConfirmView.as_view(), name="hub-qr-confirm"),
+
+    # Advisor doctors: SMS-verified application, then password + TOTP sign-in.
+    path("doctors/signup/", DoctorSignupView.as_view(), name="doctor-signup"),
+    path("doctors/signup/verify/", DoctorSignupVerificationView.as_view(), name="doctor-signup-verify"),
+    path("doctors/login/", DoctorLoginView.as_view(), name="doctor-login"),
+    path("doctors/login/mfa/", DoctorLoginMfaView.as_view(), name="doctor-login-mfa"),
+    path("doctors/refresh/", DoctorRefreshView.as_view(), name="doctor-refresh"),
+    path("doctors/logout/", DoctorLogoutView.as_view(), name="doctor-logout"),
+    path("doctors/me/", DoctorMeView.as_view(), name="doctor-me"),
+
+    # Owner review of doctor applications: owner session cookie + CSRF.
+    path("owners/doctors/", OwnerDoctorListView.as_view(), name="owner-doctors"),
+    path("owners/doctors/<str:doctor_id>/", OwnerDoctorDetailView.as_view(), name="owner-doctor-detail"),
+    path("owners/doctors/<str:doctor_id>/decision/", OwnerDoctorDecisionView.as_view(), name="owner-doctor-decision"),
 ]

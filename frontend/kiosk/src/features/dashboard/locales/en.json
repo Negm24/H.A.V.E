@@ -1,0 +1,6 @@
+{
+  "dashboard": "My account", "hello": "Hello", "signedIn": "Signed in", "intro": "Your account is ready. More services will arrive in future increments.",
+  "profile": "My profile", "profileDescription": "View your account information.", "prescriptions": "My prescriptions", "orders": "Order history", "browse": "Browse medicines", "insurance": "My insurance",
+  "comingLater": "Coming later", "signOut": "Sign out", "readOnly": "Your account information is read-only on this Terminal.",
+  "name": "Full name", "phone": "Phone number", "email": "Email", "dob": "Date of birth", "accountId": "Account ID", "refreshProfile": "Refresh profile"
+}

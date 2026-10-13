@@ -1,0 +1,18 @@
+{
+  "attractTitle": "Your health, within reach.", "attractNote": "Sign in here with your phone and PIN, or use H.A.V.E Hub.",
+  "start": "Touch to start", "chooseLanguage": "Choose your language", "starting": "Starting your session…",
+  "guestHome": "Welcome", "welcome": "What would you like to do?", "guest": "Guest session",
+  "guestIntro": "You can continue as a guest. Sign in when you need your account.",
+  "pinLogin": "Sign in with PIN", "pinDescription": "Use your phone number and four-digit PIN.",
+  "qrLogin": "Sign in with H.A.V.E Hub", "qrDescription": "Scan a QR using your signed-in Hub account.",
+  "browse": "Browse medicines", "guidance": "Product guidance", "comingLater": "Coming later",
+  "back": "Back", "startOver": "Start over", "footer": "Health Access & Vending Everywhere",
+  "warningTitle": "Are you still here?", "warningBody": "Your session is about to end. Continue to keep using this Terminal.",
+  "continue": "Continue session", "end": "End session", "retryIn": "Try again in {{count}} seconds.",
+  "errors": {
+    "credentials": "The phone number or PIN is incorrect, or this account cannot sign in.",
+    "unavailable": "The Terminal service is unavailable. Check the connection or device setup and try again.",
+    "denied": "This request was not allowed. Please start over or ask the project team.",
+    "invalid": "Check the information and try again.", "limited": "Too many attempts. Please wait before trying again."
+  }
+}

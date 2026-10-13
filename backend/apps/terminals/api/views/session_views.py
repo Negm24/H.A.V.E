@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.response import Response
 
+from config import openapi
 from apps.accounts.api.views.shared_views import CustomerSessionView, ERRORS
 from apps.terminals.api.serializers.session_serializers import TerminalSessionOutputSerializer
 from apps.terminals.security.authentication import TerminalSessionAuthentication
@@ -13,7 +14,7 @@ class TerminalStartView(CustomerSessionView):
     permission_classes = [HasTerminalAccess]
     terminal_session_required = False
 
-    @extend_schema(tags=["Terminal sessions"], request=None, responses={201: TerminalSessionOutputSerializer, **ERRORS},
+    @extend_schema(tags=[openapi.TERMINAL_GUEST_SESSION], request=None, responses={201: TerminalSessionOutputSerializer, **ERRORS},
                    summary="Start guest session; replace any previous session on this device")
     def post(self, request):
         state, token = operate(request.auth["terminal"], "start")
@@ -24,7 +25,7 @@ class TerminalActivityView(CustomerSessionView):
     authentication_classes = [TerminalSessionAuthentication]
     permission_classes = [HasTerminalAccess]
 
-    @extend_schema(tags=["Terminal sessions"], request=None, responses={200: TerminalSessionOutputSerializer, **ERRORS},
+    @extend_schema(tags=[openapi.TERMINAL_GUEST_SESSION], request=None, responses={200: TerminalSessionOutputSerializer, **ERRORS},
                    summary="Record explicit user activity (never background polling)")
     def post(self, request):
         state, _ = operate(request.auth["terminal"], "activity", request.auth["raw_token"])
@@ -35,8 +36,9 @@ class TerminalEndView(CustomerSessionView):
     authentication_classes = [TerminalSessionAuthentication]
     permission_classes = [HasTerminalAccess]
 
-    @extend_schema(tags=["Terminal sessions"], request=None,
-                   responses={204: OpenApiResponse(description="Session ended."), **ERRORS})
+    @extend_schema(tags=[openapi.TERMINAL_GUEST_SESSION], request=None,
+                   responses={204: OpenApiResponse(description="Session ended."), **ERRORS},
+                   summary="End the guest session (start over / sign out)")
     def post(self, request):
         operate(request.auth["terminal"], "end", request.auth["raw_token"])
         return Response(status=204)

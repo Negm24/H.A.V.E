@@ -30,8 +30,9 @@ class User(AbstractBaseUser):
     first_name = models.CharField(max_length=32)
     last_name = models.CharField(max_length=32)
 
-    phone_number = models.CharField(max_length=16)
-    email = models.EmailField(max_length=128)
+    # NULL only for a rejected doctor, whose personal data is erased (FR-82e).
+    phone_number = models.CharField(max_length=16, null=True)
+    email = models.EmailField(max_length=128, null=True)
 
     phone_country_code = models.CharField(
         max_length=2,
@@ -39,6 +40,7 @@ class User(AbstractBaseUser):
     )
 
     phone_verified_at = models.DateTimeField(null=True, blank=True)
+    email_verified_at = models.DateTimeField(null=True, blank=True)
 
     is_disabled = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
@@ -74,6 +76,13 @@ class User(AbstractBaseUser):
                     | models.Q(account_type="OWNER")
                 ),
                 name="users_staff_requires_owner",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    (models.Q(phone_number__isnull=False) & models.Q(email__isnull=False))
+                    | models.Q(account_type="DOCTOR")
+                ),
+                name="users_contact_erased_only_for_doctors",
             ),
         ]
 
