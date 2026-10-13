@@ -1,6 +1,6 @@
 # H.A.V.E Terminal — kiosk requirements
 
-Updated: 2026-10-11. Current frontend increment: 2 (authentication and mock dashboard).
+Updated: 2026-10-13. Current frontend: increment 2 plus the approved short symptom-intake demo.
 
 ## How to maintain this document
 
@@ -33,25 +33,42 @@ Guest home has exactly two cards, in this order:
 
 1. **Sign in with PIN**: opens phone entry. This screen also offers
    **Or sign in with H.A.V.E Hub QR code**, opening the existing QR sign-in page.
-2. **Browse medicines — Coming later**: disabled for now. Product guidance will live
-   inside Browse medicines, not in a separate guest-home card.
+2. **Browse medicines**: opens the symptom-assistant entry and a disabled catalogue
+   card. Product guidance lives inside Browse medicines, not in a separate home card.
 
 Signed-in customer home has exactly four cards, in this order:
 
 1. **My profile**: working, real backend identity. Includes **Order history — Coming later**.
 2. **My prescriptions — Coming later**: disabled.
-3. **Browse medicines — Coming later**: disabled; browsing will be available to signed-in
-   customers as well as guests.
+3. **Browse medicines**: opens the same symptom-assistant entry for signed-in customers.
 4. **My insurance — Coming later**: disabled.
 
 There is no Order history card on the customer dashboard. There is no separate
 Sign out button: the shared footer's **Start over** ends either guest or customer
 sessions, clears all personal state and language, and returns to attract.
 
-Browse medicines, guidance, orders/history, prescriptions, insurance, checkout,
-payments, receipts, dispensing and hardware integrations are future work.
-Do not implement their screens, fetch their data, or invent personal records in this increment.
+Catalogue browsing, product recommendations, orders/history, prescriptions, insurance,
+checkout, payments, receipts, dispensing and hardware integrations are future work.
+Do not invent personal records or product/stock data for the intake demo.
 Existing backend authentication/profile operations remain real, not mocked UI responses.
+
+### Approved symptom assistant port — 2026-10-13
+
+- Browse medicines → Symptom assistant is available to guests and signed-in customers.
+- Preserve the previous short card design and question logic: one main symptom,
+  relevant location/feeling, duration, severity, age and combined health history.
+- Usually 7–8 questions; allergy and condition choices add at most two follow-ups.
+  Maximum ten question screens. No text fields or keyboard.
+- Selected cards have a checkmark, pressed state and purple highlight.
+- Warning choices interrupt immediately; correction allows fixing an accidental selection.
+- Editable review shows two answers per page (one when unknown details need extra
+  notice space) so English/Arabic fit without scrolling.
+  Changing a parent answer removes irrelevant follow-ups and stale answers.
+- All answers stay in memory and clear on exit, reset, expiry and reload. Existing
+  session guards, activity handling and backend contracts remain unchanged.
+- Intake only: no diagnosis, medicine selection, inventory integration, dispensing,
+  or pharmacist contact. Catalogue remains disabled. Retained context diagrams mark
+  future interfaces explicitly. Reviewed deterministic product guidance is future work.
 
 ### Screens and sign-in
 
@@ -179,7 +196,8 @@ are called by kiosk. Health is available for testing only; no recurring UI healt
 
 - Both home menus match the exact card counts/order above in English and Arabic.
 - QR remains accessible through phone sign-in and still completes against Django.
-- Browse/guidance/insurance/prescriptions/history remain disabled, with no new business calls.
+- Browse opens the short symptom intake; catalogue/insurance/prescriptions/history remain
+  disabled. No new business API calls are introduced.
 - Order history is inside My profile only. Start over is the single manual ending action.
 - Phone/PIN login, token rotation, real profile, expiry, reset and privacy remain unchanged.
 - All screens and controls fit 1024×600 in both languages.

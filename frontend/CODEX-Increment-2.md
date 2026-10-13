@@ -11,13 +11,13 @@ No backend changes, profile edits, signup, PIN recovery, Remember Me, or hardwar
 
 ### Updated navigation — 2026-10-11
 
-- Guest home has two cards: Sign in with PIN and Browse medicines (Coming later).
+- Guest home has two cards: Sign in with PIN and Browse medicines.
 - The phone-entry page offers "Or sign in with H.A.V.E Hub QR code". QR Back returns here.
-- Product guidance will belong inside Browse medicines, not a separate home card.
+- The approved symptom-intake demo belongs inside Browse medicines, not a separate home card.
 - Customer home has My profile, My prescriptions, Browse medicines, and My insurance.
 - Order history (Coming later) lives inside My profile, not on customer home.
 - Start over is the single manual session-ending action; there is no separate Sign out button.
-- Browse, guidance, prescriptions, insurance, and order-history workflows remain unimplemented.
+- Catalogue, medicine recommendations, prescriptions, insurance and order history remain unimplemented.
 - See kiosk/kiosk-requirements.md for the current kiosk contract and full project baseline.
 
 Navigation verification: 33 unit tests, all package typechecks/four builds, and 11 kiosk
@@ -36,6 +36,22 @@ remain canonical. The PIN page keeps the four masked boxes and adapts the numeri
 beside the form so Back, Start Over and error messages fit on the fixed screen.
 
 ## Code map
+
+### Approved symptom assistant port — 2026-10-13
+
+The previous card-only intake is adapted to this workspace in `kiosk/src/features/symptoms`.
+It preserves 7–8 core questions, at most two conditional history follow-ups, urgent
+interruption, answer editing and branch pruning. Review is paginated for the fixed
+1024×600 surface. English/Arabic copy uses the symptoms JSON namespace. Routes
+`/browse` and `/browse/symptoms` require the existing guest/customer session; answers
+clear on unmount/reset/expiry/reload. No backend calls or recommendation engine are added.
+Both home menus preserve their existing card counts and order; Browse is enabled.
+See `../docs/symptom-assistant.md` for scope and context-diagram paths.
+
+Run `pnpm check` and `pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-symptoms.spec.ts`
+against the running kiosk. Optional `E2E_KIOSK_ORIGIN` selects a local test port;
+`E2E_BROWSER_CHANNEL` selects an installed browser (for example `msedge`). Session
+fixtures exist only in browser tests; the normal app still needs Django/device provisioning.
 
 | Location | Responsibility |
 | --- | --- |

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const origin = 'http://localhost:5173'
+const origin = process.env.E2E_KIOSK_ORIGIN || 'http://localhost:5173'
 const customer = { id: 'HAV-C876-000000000024', account_type: 'CUSTOMER', first_name: 'Kiosk', last_name: 'Tester', phone_number: '+201099998876', email: 'kiosk-tester@example.test', date_of_birth: '24-01-2005', phone_verified_at: '2026-10-10T00:00:00Z' }
 
 async function mockTerminal(page: Page, options: { unavailable?: boolean; rejected?: boolean; shortQr?: boolean } = {}) {
@@ -48,7 +48,7 @@ async function openQrLogin(page: Page) {
 test('guest menu has two cards and QR login belongs to the sign-in page', async ({ page }) => {
   await mockTerminal(page); await start(page)
   await expect(page.locator('.home-card')).toHaveCount(2)
-  await expect(page.getByRole('button', { name: /Browse medicines/ })).toBeDisabled()
+  await expect(page.getByRole('button', { name: /Browse medicines/ })).toBeEnabled()
   await expect(page.getByRole('button', { name: /Product guidance/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /H.A.V.E Hub/ })).toHaveCount(0)
   await openQrLogin(page)
@@ -62,7 +62,7 @@ test('PIN login rotates token, profile is real-shaped/read-only, sign-out clears
   await start(page); await pinLogin(page)
   await expect(page.getByRole('heading', { name: 'Hello Kiosk' })).toBeVisible()
   await expect(page.locator('.home-card')).toHaveCount(4)
-  await expect(page.getByRole('button', { name: /Browse medicines/ })).toBeDisabled()
+  await expect(page.getByRole('button', { name: /Browse medicines/ })).toBeEnabled()
   await expect(page.getByRole('button', { name: /Order history/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0)
   expect(calls.find(call => call.path.endsWith('/terminal/login/'))?.bearer).toBe('Bearer guest-test')

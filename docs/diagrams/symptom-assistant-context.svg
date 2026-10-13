@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="880" viewBox="0 0 1360 880" role="img" aria-labelledby="title desc">
+<title id="title">AutoPharm — Symptom Assistant Context Diagram</title>
+<desc id="desc">The assistant exchanges symptom answers and guidance with the user, medicine data with the catalogue and stock backend, review information with a pharmacist, and session information with the kiosk application. Recommendation and review integrations are planned.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#6755a0"/></marker></defs>
+<rect width="1360" height="880" fill="#f6f7fc"/>
+<style>text{font-family:Arial,sans-serif;fill:#27283b}.title{font-size:34px;font-weight:700}.subtitle{font-size:18px;fill:#65677d}.node-title{font-size:22px;font-weight:700}.detail{font-size:17px;fill:#565b70}.flow{font-size:16px;fill:#4b3d72}.central{fill:white}.white-detail{fill:#eeebff;font-size:18px}</style>
+<text x="48" y="52" class="title">Your part: the symptom assistant</text>
+<text x="48" y="83" class="subtitle">System context • AutoPharm / H.A.V.E • proposed scope, including planned integrations</text>
+<rect x="40" y="350" width="280" height="170" rx="16" fill="white" stroke="#bbb6d4" stroke-width="2" />
+<text x="180.0" y="386" class="node-title" text-anchor="middle">
+<tspan x="180.0" dy="0">User / customer</tspan>
+</text>
+<text x="180.0" y="418" class="detail" text-anchor="middle">
+<tspan x="180.0" dy="0">Taps symptom cards</tspan>
+<tspan x="180.0" dy="25">Answers safety and</tspan>
+<tspan x="180.0" dy="25">medical-history questions</tspan>
+</text>
+<rect x="1040" y="350" width="280" height="170" rx="16" fill="white" stroke="#bbb6d4" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1180.0" y="386" class="node-title" text-anchor="middle">
+<tspan x="1180.0" dy="0">Catalogue &amp; stock backend</tspan>
+</text>
+<text x="1180.0" y="418" class="detail" text-anchor="middle">
+<tspan x="1180.0" dy="0">Medicine information</tspan>
+<tspan x="1180.0" dy="25">Current kiosk availability</tspan>
+<tspan x="1180.0" dy="25">Planned integration</tspan>
+</text>
+<rect x="460" y="125" width="440" height="110" rx="16" fill="white" stroke="#bbb6d4" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="680.0" y="161" class="node-title" text-anchor="middle">
+<tspan x="680.0" dy="0">Pharmacist / clinical reviewer</tspan>
+</text>
+<text x="680.0" y="193" class="detail" text-anchor="middle">
+<tspan x="680.0" dy="0">Reviews rules and escalated cases • planned</tspan>
+</text>
+<rect x="460" y="690" width="440" height="110" rx="16" fill="white" stroke="#bbb6d4" stroke-width="2" />
+<text x="680.0" y="726" class="node-title" text-anchor="middle">
+<tspan x="680.0" dy="0">Kiosk application</tspan>
+</text>
+<text x="680.0" y="758" class="detail" text-anchor="middle">
+<tspan x="680.0" dy="0">Hosts your feature and manages sessions</tspan>
+</text>
+<rect x="460" y="350" width="440" height="220" rx="24" fill="#5d5294" stroke="#423a6a" stroke-width="3"/>
+<text x="680" y="392" class="node-title central" text-anchor="middle">
+<tspan x="680" dy="0">SYMPTOM ASSISTANT</tspan>
+</text>
+<text x="680" y="431" class="white-detail" text-anchor="middle">
+<tspan x="680" dy="0">Your system boundary</tspan>
+<tspan x="680" dy="29">Card questions and follow-ups</tspan>
+<tspan x="680" dy="29">Safety checks and review</tspan>
+<tspan x="680" dy="29">Stock-aware recommendations (planned)</tspan>
+</text>
+<path d="M320 385 L460 385" fill="none" stroke="#6755a0" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="320.0" y="327" width="138" height="52" rx="5" fill="#f6f7fc"/>
+<text x="389" y="345" class="flow" text-anchor="middle">
+<tspan x="389" dy="0">Symptoms, age,</tspan>
+<tspan x="389" dy="22">history and choices</tspan>
+</text>
+<path d="M460 490 L320 490" fill="none" stroke="#6755a0" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="315.0" y="492" width="150" height="52" rx="5" fill="#f6f7fc"/>
+<text x="390" y="510" class="flow" text-anchor="middle">
+<tspan x="390" dy="0">Follow-up cards,</tspan>
+<tspan x="390" dy="22">guidance / escalation</tspan>
+</text>
+<path d="M900 385 L1040 385" fill="none" stroke="#6755a0" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="900.0" y="327" width="140" height="52" rx="5" fill="#f6f7fc"/>
+<text x="970" y="345" class="flow" text-anchor="middle">
+<tspan x="970" dy="0">Medicine / stock</tspan>
+<tspan x="970" dy="22">lookup request</tspan>
+</text>
+<path d="M1040 490 L900 490" fill="none" stroke="#6755a0" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="900.0" y="492" width="140" height="52" rx="5" fill="#f6f7fc"/>
+<text x="970" y="510" class="flow" text-anchor="middle">
+<tspan x="970" dy="0">Medicine data</tspan>
+<tspan x="970" dy="22">and availability</tspan>
+</text>
+<path d="M585 235 L585 350" fill="none" stroke="#6755a0" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="500.0" y="268" width="170" height="52" rx="5" fill="#f6f7fc"/>
+<text x="585" y="286" class="flow" text-anchor="middle">
+<tspan x="585" dy="0">Reviewed rules</tspan>
+<tspan x="585" dy="22">and advice</tspan>
+</text>
+<path d="M775 350 L775 235" fill="none" stroke="#6755a0" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="690.0" y="268" width="170" height="52" rx="5" fill="#f6f7fc"/>
+<text x="775" y="286" class="flow" text-anchor="middle">
+<tspan x="775" dy="0">Escalation /</tspan>
+<tspan x="775" dy="22">review request</tspan>
+</text>
+<path d="M585 690 L585 570" fill="none" stroke="#6755a0" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="500.0" y="606" width="170" height="52" rx="5" fill="#f6f7fc"/>
+<text x="585" y="624" class="flow" text-anchor="middle">
+<tspan x="585" dy="0">Start, language</tspan>
+<tspan x="585" dy="22">and session reset</tspan>
+</text>
+<path d="M775 570 L775 690" fill="none" stroke="#6755a0" stroke-width="2.2" marker-end="url(#arrow)"/>
+<rect x="690.0" y="606" width="170" height="52" rx="5" fill="#f6f7fc"/>
+<text x="775" y="624" class="flow" text-anchor="middle">
+<tspan x="775" dy="0">Completion /</tspan>
+<tspan x="775" dy="22">exit status</tspan>
+</text>
+<text x="48" y="842" class="subtitle" text-anchor="start">
+<tspan x="48" dy="0">Dashed boxes = planned integrations. Payment, prescriptions, login and dispensing are outside your feature.</tspan>
+</text>
+</svg>

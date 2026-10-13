@@ -1,0 +1,18 @@
+flowchart LR
+    User["User / customer"]
+    Assistant(["Symptom assistant<br/>Card questions · safety checks · review<br/>Stock-aware recommendations: planned"])
+    Inventory["Catalogue & kiosk stock backend<br/>Planned integration"]
+    Reviewer["Pharmacist / clinical reviewer<br/>Planned review and escalation"]
+    Kiosk["Kiosk application<br/>Session and language management"]
+    User -->|"Symptoms, age, history and choices"| Assistant
+    Assistant -->|"Follow-up cards, guidance and escalation"| User
+    Assistant -->|"Medicine and stock lookup request"| Inventory
+    Inventory -->|"Medicine data and availability"| Assistant
+    Reviewer -->|"Reviewed rules and advice"| Assistant
+    Assistant -->|"Escalation / review request"| Reviewer
+    Kiosk -->|"Start, language and session reset"| Assistant
+    Assistant -->|"Completion / exit status"| Kiosk
+    classDef main fill:#5d5294,color:#fff,stroke:#423a6a,stroke-width:3px;
+    classDef planned fill:#fff,stroke:#8c81af,stroke-dasharray:5 5;
+    class Assistant main;
+    class Inventory,Reviewer planned;
