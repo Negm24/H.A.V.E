@@ -11,7 +11,7 @@ export function DashboardPage() {
   return <KioskFrame title={t('dashboard')}><div className="page-heading"><h1>{t('hello')} <bdi>{state.customer?.first_name}</bdi></h1><span className="identity-badge">{t('signedIn')}</span></div>
     <p className="page-intro">{t('intro')}</p><div className="home-grid">
       <Button className="home-card" onClick={() => navigate('/profile')}><span className="card-icon">◉</span><strong>{t('profile')}</strong><span>{t('profileDescription')}</span></Button>
-      {['prescriptions','browse','insurance'].map(name => <Button className="home-card" disabled key={name}><strong>{t(name)}</strong><span>{t('comingLater')}</span></Button>)}
+      {['prescriptions','browse','insurance'].map(name => <Button className="home-card" disabled={name !== 'browse'} onClick={name === 'browse' ? () => navigate('/browse') : undefined} key={name}><strong>{t(name)}</strong><span>{t(name === 'browse' ? 'symptoms:assistant_intro' : 'comingLater')}</span></Button>)}
     </div>
   </KioskFrame>
 }

@@ -9,9 +9,11 @@ import authEn from './features/auth/locales/en.json'
 import authAr from './features/auth/locales/ar.json'
 import dashboardEn from './features/dashboard/locales/en.json'
 import dashboardAr from './features/dashboard/locales/ar.json'
+import symptomsEn from './features/symptoms/locales/en.json'
+import symptomsAr from './features/symptoms/locales/ar.json'
 
 const i18n = await createAppI18n('kiosk')
-for (const [namespace, en, ar] of [['session', sessionEn, sessionAr], ['auth', authEn, authAr], ['dashboard', dashboardEn, dashboardAr]] as const) {
+for (const [namespace, en, ar] of [['session', sessionEn, sessionAr], ['auth', authEn, authAr], ['dashboard', dashboardEn, dashboardAr], ['symptoms', symptomsEn, symptomsAr]] as const) {
   i18n.addResourceBundle('en', namespace, en)
   i18n.addResourceBundle('ar', namespace, ar)
 }

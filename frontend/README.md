@@ -8,6 +8,17 @@ QR approval through Swagger/Postman, session timing, and the code map.
 See [Kiosk requirements](kiosk/kiosk-requirements.md) for the current navigation/design
 and the complete project requirements snapshot. Keep it updated with kiosk changes.
 
+The approved short symptom-intake demo is now available from guest/customer
+**Browse medicines → Symptom assistant**. It preserves the earlier card design,
+adaptive questions and editable review, using the current session/layout architecture.
+See [Symptom assistant](../docs/symptom-assistant.md) for scope and verification.
+Catalogue and medicine selection remain future work.
+
+With kiosk running, check the port using `pnpm check` and
+`pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-symptoms.spec.ts`.
+Set `E2E_KIOSK_ORIGIN` for a different local port and `E2E_BROWSER_CHANNEL=msedge`
+when using an installed Edge. Normal guest-session startup still requires the backend.
+
 ## Run in Docker
 
 From the repository root:
