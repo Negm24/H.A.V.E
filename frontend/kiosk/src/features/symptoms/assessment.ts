@@ -20,8 +20,8 @@ export const copy = {
   emergencyBody: c("your_answer_includes_a_warning_sign_stop_using_the_kiosk_and_cont"),
   matched: c("you_selected"),
   reviewBody: c("check_your_answers_before_finishing"),
-  reviewCaution: c("demo_only_no_medicine_selected_a_pharmacist_must_confirm_allergie"),
-  incomplete: c("some_details_are_unknown_tell_the_pharmacist_before_choosing_a_me"),
+  reviewCaution: c("questionnaire_only"),
+  incomplete: c("unknown_details"),
   limits: c("university_demo_answers_stay_in_this_session_no_automated_dispens"),
 }
 const has = (a: Answers, id: string, value: string) => a[id]?.includes(value) ?? false
@@ -106,7 +106,10 @@ export function selectAnswer(a: Answers, question: Question, value: string): Ans
   if (!option) return a
   const current = a[question.id] ?? []
   const values = question.kind === 'single' ? [value] : current.includes(value) ? current.filter(item => item !== value) : option.exclusive ? [value] : [...current.filter(item => !question.options.find(opt => opt.id === item)?.exclusive), value]
-  return prune({ ...a, [question.id]: values })
+  const updated = { ...a, [question.id]: values }
+  // Safety choices depend on the main symptom, including shared none/unknown IDs.
+  if (question.id === 'areas' && a.areas?.[0] !== values[0]) delete updated.urgent
+  return prune(updated)
 }
 export function prune(a: Answers): Answers {
   const allowed = new Map(questions(a).map(question => [question.id, question]))

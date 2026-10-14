@@ -8,16 +8,11 @@ QR approval through Swagger/Postman, session timing, and the code map.
 See [Kiosk requirements](kiosk/kiosk-requirements.md) for the current navigation/design
 and the complete project requirements snapshot. Keep it updated with kiosk changes.
 
-The approved short symptom-intake demo is now available from guest/customer
-**Browse medicines → Symptom assistant**. It preserves the earlier card design,
-adaptive questions and editable review, using the current session/layout architecture.
-See [Symptom assistant](../docs/symptom-assistant.md) for scope and verification.
-Catalogue and medicine selection remain future work.
-
-With kiosk running, check the port using `pnpm check` and
-`pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-symptoms.spec.ts`.
-Set `E2E_KIOSK_ORIGIN` for a different local port and `E2E_BROWSER_CHANNEL=msedge`
-when using an installed Edge. Normal guest-session startup still requires the backend.
+The questionnaire-only symptom guide opens from guest/customer **Browse medicines →
+Need help choosing?** in a modal. It uses existing session/language handling, shared
+controls and in-memory answers that clear on close/reset/expiry. Medicine browsing,
+search, inventory and recommendation output remain future work.
+See [the Terminal guide](CODEX-Increment-2.md) for feature instructions and Docker checks.
 
 ## Run in Docker
 
@@ -52,7 +47,13 @@ Source edits in an app's src/ appear immediately; shared/src edits reach all fou
 All four source trees are mounted in each container so workspace-wide checks
 always inspect your latest edits, not copies from the previous image build.
 No local Node, pnpm, or Windows node_modules is required for the Docker workflow.
-Dependencies live inside the common image. Rebuild after manifest/lockfile changes.
+Dependencies live inside the common image. Rebuild and recreate frontend containers
+after manifest/lockfile changes; normal source edits use hot reload. Use pnpm inside
+frontend containers and uv inside the backend container. For example:
+
+```powershell
+docker compose exec backend uv run --no-sync python manage.py check
+```
 
 ```powershell
 docker compose logs -f hub
@@ -92,27 +93,6 @@ docker compose exec -e E2E_DOCKER=true kiosk pnpm test:e2e
 
 The browser install is test tooling only, not an application dependency. Reinstall
 it if the container is recreated. It does not change the frontend image or host OS.
-
-## Optional Windows workflow
-
-Use Node 24 (at least 24.11.1) and pnpm 11.25.0. From frontend/:
-
-```powershell
-pnpm install --frozen-lockfile
-pnpm --filter @have/hub dev
-```
-
-Stop that app's Docker container first to free its port. Local Vite proxies to
-http://127.0.0.1:8000; Docker Vite proxies to http://backend:8000.
-No new .env file or secret is required for Increment 1.
-Increment 2 adds only the kiosk's server-side serial and key in `frontend/.env`;
-see its guide before running the kiosk locally on Windows.
-
-```powershell
-pnpm check
-pnpm exec playwright install chromium
-pnpm test:e2e
-```
 
 ## Organization
 
@@ -155,14 +135,6 @@ To include live Django PIN/QR tests using the documented local fixtures:
 
 ```powershell
 docker compose exec -e E2E_DOCKER=true -e E2E_REAL=true kiosk pnpm test:e2e
-```
-
-On Windows, an already installed Chrome can also run the tests without a browser download:
-
-```powershell
-$env:E2E_BROWSER_CHANNEL = "chrome"
-$env:E2E_REAL = "true"
-pnpm test:e2e
 ```
 
 Verification started Django without its migrate startup command. No development

@@ -19,8 +19,6 @@
   "your_answer_includes_a_warning_sign_stop_using_the_kiosk_and_cont": "تتضمن إجابتك علامة إنذار. توقف عن استخدام الجهاز واتصل بخدمات الطوارئ المحلية أو اطلب المساعدة من شخص قريب الآن. لا يستطيع هذا الجهاز تقييم أو علاج الحالات الطارئة.",
   "you_selected": "لقد اخترت:",
   "check_your_answers_before_finishing": "راجع إجاباتك قبل الانتهاء.",
-  "demo_only_no_medicine_selected_a_pharmacist_must_confirm_allergie": "نموذج تجريبي فقط. لم يتم اختيار دواء. يجب أن يؤكد الصيدلي الحساسية والأدوية ومدى ملاءمة العلاج.",
-  "some_details_are_unknown_tell_the_pharmacist_before_choosing_a_me": "بعض التفاصيل غير معروفة. أخبر الصيدلي قبل اختيار أي دواء.",
   "university_demo_answers_stay_in_this_session_no_automated_dispens": "نموذج جامعي تجريبي · تبقى الإجابات في هذه الجلسة · لا يوجد صرف تلقائي",
   "trouble_breathing_mouth_or_throat_swelling": "صعوبة التنفس أو تورم الفم أو الحلق",
   "fainting_new_weakness_or_trouble_speaking": "إغماء أو ضعف جديد أو صعوبة الكلام",
@@ -119,7 +117,7 @@
   "breathing_trouble_swelling_fainting": "صعوبة التنفس أو تورم أو إغماء",
   "stomach_upset": "اضطراب المعدة",
   "another_reaction": "تفاعل آخر",
-  "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the": "فكر في تفاعل سابق. سيحتاج الصيدلي إلى التأكد من اسم الدواء.",
+  "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the": "فكّر في تفاعل سابق. اختر البطاقات التي تصف ما حدث.",
   "which_conditions_apply": "ما الأمراض التي تنطبق؟",
   "heart_blood_pressure": "القلب أو ضغط الدم",
   "asthma_lung_disease": "الربو أو أمراض الرئة",
@@ -136,5 +134,10 @@
   "previous": "السابق",
   "next_page": "الصفحة التالية",
   "previous_page": "الصفحة السابقة",
-  "page": "الصفحة {{current}} من {{total}}"
+  "page": "الصفحة {{current}} من {{total}}",
+  "need_help": "هل تحتاج مساعدة في الاختيار؟",
+  "close_guide": "إغلاق الاستبيان",
+  "browse_pending": "تصفح الأدوية سيُضاف لاحقًا. يمكنك تجربة استبيان الأعراض هنا.",
+  "questionnaire_only": "استبيان فقط. لا يتم اختيار دواء أو التوصية به.",
+  "unknown_details": "بعض الإجابات غير مؤكدة. يمكنك تعديلها أدناه."
 }

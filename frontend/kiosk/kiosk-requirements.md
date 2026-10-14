@@ -1,6 +1,10 @@
 # H.A.V.E Terminal — kiosk requirements
 
+Updated: 2026-10-11. Current frontend increment: 2 (authentication and mock dashboard).
+
 Updated: 2026-10-13. Current frontend: increment 2 plus the approved short symptom-intake demo.
+
+Updated: 2026-10-14. Questionnaire-only modal and safety-answer reset; see the appended update below.
 
 ## How to maintain this document
 
@@ -33,14 +37,14 @@ Guest home has exactly two cards, in this order:
 
 1. **Sign in with PIN**: opens phone entry. This screen also offers
    **Or sign in with H.A.V.E Hub QR code**, opening the existing QR sign-in page.
-2. **Browse medicines**: opens the symptom-assistant entry and a disabled catalogue
-   card. Product guidance lives inside Browse medicines, not in a separate home card.
+2. **Browse medicines**: opens the questionnaire modal entry point. Medicine browsing
+   remains future work; symptom guidance belongs inside Browse, not in a separate home card.
 
 Signed-in customer home has exactly four cards, in this order:
 
 1. **My profile**: working, real backend identity. Includes **Order history — Coming later**.
 2. **My prescriptions — Coming later**: disabled.
-3. **Browse medicines**: opens the same symptom-assistant entry for signed-in customers.
+3. **Browse medicines**: opens the same questionnaire modal entry point for signed-in customers.
 4. **My insurance — Coming later**: disabled.
 
 There is no Order history card on the customer dashboard. There is no separate
@@ -54,7 +58,8 @@ Existing backend authentication/profile operations remain real, not mocked UI re
 
 ### Approved symptom assistant port — 2026-10-13
 
-- Browse medicines → Symptom assistant is available to guests and signed-in customers.
+- The short symptom intake was added for guests and signed-in customers; its original
+  separate-page entry is superseded by the modal update below.
 - Preserve the previous short card design and question logic: one main symptom,
   relevant location/feeling, duration, severity, age and combined health history.
 - Usually 7–8 questions; allergy and condition choices add at most two follow-ups.
@@ -67,8 +72,33 @@ Existing backend authentication/profile operations remain real, not mocked UI re
 - All answers stay in memory and clear on exit, reset, expiry and reload. Existing
   session guards, activity handling and backend contracts remain unchanged.
 - Intake only: no diagnosis, medicine selection, inventory integration, dispensing,
-  or pharmacist contact. Catalogue remains disabled. Retained context diagrams mark
-  future interfaces explicitly. Reviewed deterministic product guidance is future work.
+  or pharmacist contact. Medicine browsing and product guidance are future work.
+
+### Questionnaire-only modal update — 2026-10-14
+
+- Current flow: Browse medicines → **Need help choosing?** → symptom-guide modal.
+  Only guarded `/browse` remains; no separate questionnaire page/route.
+- Reuse the existing backend session lifecycle/activity and selected session language.
+  No independent session, timers, language selection or persistence is introduced.
+- Close guide, Escape and Previous on the first question close the modal and discard
+  all answers. Closing does not end the existing guest/customer session.
+- Start over inside the modal uses the existing session reset; it clears customer identity,
+  language and answers. Expiry/reload also clear answers. The existing inactivity dialog
+  has focus priority; the questionnaire becomes inert while that warning is displayed.
+- Changing the main symptom clears ALL prior safety checklist choices, even shared
+  None/Not sure choices, and invalidates obsolete location/feeling branches. The new
+  safety checklist must be answered before summary; unrelated answers are preserved.
+- Reuse shared tokens, Button and Dialog; feature-specific styles are in
+  `features/symptoms/styles/symptoms.css`. General kiosk layouts remain in app/kiosk.css.
+- Future Browse: search bar, six initially visible medicine cards and scrolling to the
+  remaining medicines. These are design requirements only, not implemented here.
+- This PR has no medicine cards/search, inventory integration, medicine recommendations,
+  AI API, dispensing or pharmacist/clinical-review integration. Summary reviews answers only.
+- Regression coverage includes symptom edit/new safety checklist/summary, signed-in
+  customer Start over, modal close/reopen, warning/expiry, and unchanged auth scenarios.
+- Run and test through Docker using the commands in CODEX-Increment-2.md: pnpm runs
+  in frontend containers; uv runs in backend. Dependency changes require rebuilding the
+  frontend image; mounted source edits hot-reload without rebuilding.
 
 ### Screens and sign-in
 
@@ -171,7 +201,7 @@ Each physical device has its own private configuration.
 
 Docker loads frontend/.env only into kiosk. Recreate kiosk after configuration changes:
 docker compose --profile frontend up -d --force-recreate kiosk.
-No image rebuild is needed for changed values. Local Vite reads the same file server-side.
+No image rebuild is needed for changed values. Vite reads the file server-side in Docker.
 
 The proxy is currently development-only, localhost-bound with method/path/origin checks.
 The future hardware Python agent owns the same credential boundary; no hardware work now.

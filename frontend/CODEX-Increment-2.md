@@ -37,21 +37,47 @@ beside the form so Back, Start Over and error messages fit on the fixed screen.
 
 ## Code map
 
-### Approved symptom assistant port — 2026-10-13
+### Symptom questionnaire modal — 2026-10-14
 
-The previous card-only intake is adapted to this workspace in `kiosk/src/features/symptoms`.
-It preserves 7–8 core questions, at most two conditional history follow-ups, urgent
-interruption, answer editing and branch pruning. Review is paginated for the fixed
-1024×600 surface. English/Arabic copy uses the symptoms JSON namespace. Routes
-`/browse` and `/browse/symptoms` require the existing guest/customer session; answers
-clear on unmount/reset/expiry/reload. No backend calls or recommendation engine are added.
-Both home menus preserve their existing card counts and order; Browse is enabled.
-See `../docs/symptom-assistant.md` for scope and context-diagram paths.
+Only the short card-only questionnaire and its modal entry point are implemented.
+Guests and customers open **Browse medicines → Need help choosing?** at guarded
+`/browse`. The questionnaire uses the shared Dialog and existing session/i18n
+handling; there is no separate questionnaire route, language selector or session.
+It retains 7–8 core questions and up to two conditional history follow-ups, urgent
+interruption and an editable, paginated answer summary. No text entry is required.
+Changing the main symptom clears its safety answer (including None/Not sure), removes
+obsolete location/feeling answers and requires the new checklist before summary.
+Unrelated duration, severity, age and applicable history answers are preserved.
+Closing the dialog (Close guide, Escape or first-question Previous) unmounts it and
+clears answers. Start over calls the existing session reset, clearing customer identity,
+language and questionnaire state; session expiry and reload also discard answers.
+The existing inactivity warning takes focus and temporarily makes the questionnaire inert.
 
-Run `pnpm check` and `pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-symptoms.spec.ts`
-against the running kiosk. Optional `E2E_KIOSK_ORIGIN` selects a local test port;
-`E2E_BROWSER_CHANNEL` selects an installed browser (for example `msedge`). Session
-fixtures exist only in browser tests; the normal app still needs Django/device provisioning.
+Future Browse design: search bar, six initially visible medicine cards, scrolling for
+the remaining medicines and the same Need help choosing? button. Search, medicine
+browsing, inventory, recommendations, model/API and pharmacist/clinical-review
+integration are NOT implemented by this PR. The summary contains answers only.
+
+Feature styles live in `kiosk/src/features/symptoms/styles/symptoms.css`;
+shared tokens/buttons/dialog appearance remain in `shared/src/styles` and shared UI.
+General kiosk layouts remain in `kiosk/src/app/kiosk.css`.
+
+Run from the repository root with Docker and the configured kiosk service:
+
+```powershell
+docker compose --profile frontend up -d --build kiosk hub advisor admin
+docker compose exec kiosk pnpm check
+docker compose exec -u root kiosk pnpm exec playwright install --with-deps chromium
+docker compose exec kiosk pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-symptoms.spec.ts
+```
+
+The two targeted browser suites use API fixtures by default; they test the real frontend
+without replacing its production session handling. With the dedicated backend fixtures,
+enable live authentication checks using `-e E2E_DOCKER=true -e E2E_REAL=true` before
+`kiosk` in the last command. Other frontend containers and backend must be running.
+Dependency/manifest/lockfile changes require rebuilding the shared frontend image and
+recreating frontend containers. Normal mounted source edits use Vite hot reload.
+Keep pnpm inside frontend containers and uv inside the backend container.
 
 | Location | Responsibility |
 | --- | --- |
@@ -121,7 +147,7 @@ or Start Over, never an automatic mutation retry.
 ## Private device setup
 
 Store TERMINAL_SERIAL and TERMINAL_KEY in frontend/.env. React never reads them.
-Compose loads this file only into the kiosk service; local Vite loads it server-side.
+Compose loads this file only into the kiosk service; Vite reads it server-side in Docker.
 The file is Git-ignored, excluded from Docker builds, and blocked by Vite's file server.
 Never use VITE_* for credentials. The root .env remains backend/Compose configuration.
 
@@ -149,7 +175,7 @@ Start the existing backend/db/Redis using the backend's normal setup, then provi
 one new Terminal (do not rotate or overwrite another person's device):
 
 ```powershell
-docker compose exec backend python manage.py provision_terminal --serial HAVE-DEV-001 --name "Frontend Test Terminal" --address-en "Local development" --address-ar "تطوير محلي" --latitude 30.0444 --longitude 31.2357
+docker compose exec backend uv run --no-sync python manage.py provision_terminal --serial HAVE-DEV-001 --name "Frontend Test Terminal" --address-en "Local development" --address-ar "تطوير محلي" --latitude 30.0444 --longitude 31.2357
 Copy-Item frontend/.env.example frontend/.env
 ```
 
@@ -170,12 +196,6 @@ No default device identity is injected. Configure both values in frontend/.env.
 Create a customer using backend/AUTH_GUIDE.md signup/SMS/email steps. Databases and
 credentials are local to each developer; do not commit/share the private .env.
 After changing it, run docker compose --profile frontend up -d --force-recreate kiosk.
-
-For optional Windows Vite, stop the kiosk container and run from frontend/:
-
-```powershell
-pnpm --filter @have/kiosk dev
-```
 
 ## Manual testing
 
@@ -234,15 +254,25 @@ checks against the dedicated device/customer above. Do not enable it against per
 accounts or a Terminal somebody else is currently using. Fixture records are kept for
 manual testing; Hub smoke-test sessions are logged out afterward.
 
-Refresh generated types from the current schema (from frontend/ on Windows):
+Refresh generated types inside Docker:
 
 ```powershell
-pnpm exec openapi-typescript "http://localhost:8000/api/schema/?format=json" -o shared/src/api/generated.d.ts
+docker compose exec kiosk pnpm exec openapi-typescript "http://localhost:5173/api/schema/?format=json" -o shared/src/api/generated.d.ts
 ```
 
 In the kiosk container use http://localhost:5173/api/schema/?format=json through its
 existing proxy, preserving the browser Host that Django already allows. Generated declarations have no runtime code;
 the eight explicit request wrappers still control which endpoints this app calls.
+
+## Questionnaire revision verification — 2026-10-14
+
+- All five package TypeScript checks, 57 unit tests and all four independent builds passed.
+- Both targeted kiosk browser suites passed: 18 checks, including modal close/reopen,
+  symptom edit/new safety checklist/summary, customer reset and warning/expiry.
+- Two live-backend authentication checks were skipped because Django is not running.
+- Docker is not installed on the revision machine. The user approved local-tool
+  verification for this revision only; the documented run/test workflow remains Docker.
+- The root project requirements snapshot and existing authentication tests are preserved.
 
 ## Verification — 2026-10-10
 

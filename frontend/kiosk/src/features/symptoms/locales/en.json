@@ -19,8 +19,6 @@
   "your_answer_includes_a_warning_sign_stop_using_the_kiosk_and_cont": "Your answer includes a warning sign. Stop using the kiosk and contact local emergency services or ask someone nearby for help now. This kiosk cannot assess or treat an emergency.",
   "you_selected": "You selected:",
   "check_your_answers_before_finishing": "Check your answers before finishing.",
-  "demo_only_no_medicine_selected_a_pharmacist_must_confirm_allergie": "Demo only. No medicine selected. A pharmacist must confirm allergies, medicines and suitability.",
-  "some_details_are_unknown_tell_the_pharmacist_before_choosing_a_me": "Some details are unknown. Tell the pharmacist before choosing a medicine.",
   "university_demo_answers_stay_in_this_session_no_automated_dispens": "University demo · answers stay in this session · no automated dispensing",
   "trouble_breathing_mouth_or_throat_swelling": "Trouble breathing / mouth or throat swelling",
   "fainting_new_weakness_or_trouble_speaking": "Fainting / new weakness or trouble speaking",
@@ -119,7 +117,7 @@
   "breathing_trouble_swelling_fainting": "Breathing trouble / swelling / fainting",
   "stomach_upset": "Stomach upset",
   "another_reaction": "Another reaction",
-  "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the": "Think about a past reaction. A pharmacist will need to confirm the medicine.",
+  "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the": "Think about a past reaction. Choose the cards that describe what happened.",
   "which_conditions_apply": "Which conditions apply?",
   "heart_blood_pressure": "Heart / blood pressure",
   "asthma_lung_disease": "Asthma / lung disease",
@@ -136,5 +134,10 @@
   "previous": "Previous",
   "next_page": "Next page",
   "previous_page": "Previous page",
-  "page": "Page {{current}} of {{total}}"
+  "page": "Page {{current}} of {{total}}",
+  "need_help": "Need help choosing?",
+  "close_guide": "Close guide",
+  "browse_pending": "Medicine browsing is coming later. You can try the symptom questionnaire here.",
+  "questionnaire_only": "Questionnaire only. No medicine is selected or recommended.",
+  "unknown_details": "Some answers are uncertain. You can edit them below."
 }

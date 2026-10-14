@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { useTranslation } from '@have/shared/i18n'
-import { Button } from '@have/shared/ui/controls'
-import { useNavigate } from 'react-router-dom'
-import { KioskFrame } from '../../../layouts/KioskFrame'
-import { SymptomCard } from '../components/SymptomCard'
+import { Button, Dialog } from '@have/shared/ui/controls'
+import { useSession } from '../../session/hooks/use-session'
+import { SymptomCard } from './SymptomCard'
 import { answered, copy, emergency, prune, questions, selectAnswer, type Answers } from '../assessment'
-import '../symptoms.css'
+import '../styles/symptoms.css'
 
-export function SymptomsPage() {
+export function SymptomsModal({ onClose }: { onClose: () => void }) {
   const { t, i18n } = useTranslation('symptoms')
-  const navigate = useNavigate()
+  const { controller, state } = useSession()
+  const { t: sessionText } = useTranslation('session')
+  const warning = state.remaining > 0 && state.remaining <= 30
   const [answers, setAnswers] = useState<Answers>({})
   const [currentId, setCurrentId] = useState('areas')
   const [review, setReview] = useState(false)
@@ -28,20 +29,20 @@ export function SymptomsPage() {
     if (!answered(question, answers)) return
     if (editing || index === list.length - 1) {
       const missing = list.find(item => !answered(item, answers))
-      setEditing(false)
-      if (missing) setCurrentId(missing.id)
-      else { setReviewPage(0); setReview(true) }
+      if (missing) { setEditing(true); setCurrentId(missing.id) }
+      else { setEditing(false); setReviewPage(0); setReview(true) }
     } else setCurrentId(list[index + 1].id)
   }
   const back = () => {
     if (editing) { setEditing(false); const missing = list.find(item => !answered(item, answers)); if (missing) setCurrentId(missing.id); else setReview(true) }
     else if (index > 0) setCurrentId(list[index - 1].id)
-    else navigate('/browse')
+    else onClose()
   }
   const heading = stop ? t(copy.emergencyTitle) : review ? t(copy.review) : t(question.title)
-  return <KioskFrame title={stop ? t(copy.emergencyTitle) : review ? t(copy.review) : `${t(copy.step)} ${numbers.format(index + 1)} / ${numbers.format(list.length)}`} back="/browse">
+  return <Dialog title={heading} role="dialog" className="symptom-modal" backdropClassName="symptom-modal-backdrop" onClose={onClose} inert={warning}>
+    <div className="symptom-modal-toolbar"><span>{!stop && !review && `${t(copy.step)} ${numbers.format(index + 1)} / ${numbers.format(list.length)}`}</span><Button onClick={onClose}>{t('close_guide')}</Button><Button variant="danger" onClick={() => controller.reset()}>{sessionText('startOver')}</Button></div>
     <div className="symptom-flow">
-      <div><h1 key={heading} tabIndex={-1} aria-live="polite">{heading}</h1><p className="symptom-intro">{stop ? t(copy.emergencyBody) : review ? t(copy.reviewBody) : t(question.hint ?? (question.kind === 'multi' ? copy.multi : copy.single))}</p></div>
+      <div><p className="symptom-intro">{stop ? t(copy.emergencyBody) : review ? t(copy.reviewBody) : t(question.hint ?? (question.kind === 'multi' ? copy.multi : copy.single))}</p></div>
       {stop ? <>
         <div role="alert" className="symptom-urgent"><strong>{t(copy.matched)}</strong><ul>{stop.labels.map(label => <li key={label}>{t(label)}</li>)}</ul></div>
         <Button onClick={() => { const cleared = { ...answers }; delete cleared[stop.question.id]; setAnswers(prune(cleared)); setCurrentId(stop.question.id); setReview(false) }}>{t(copy.correct)}</Button>
@@ -52,7 +53,7 @@ export function SymptomsPage() {
           <dt>{t(item.title)}</dt><dd>{(answers[item.id] ?? []).map(value => t(item.options.find(option => option.id === value)!.label)).join(i18n.dir() === 'rtl' ? '، ' : ', ')}</dd>
           <Button aria-label={`${t(copy.edit)}: ${t(item.title)}`} onClick={() => { setCurrentId(item.id); setReview(false); setEditing(true) }}>{t(copy.edit)}</Button>
         </div>)}</dl>
-        <div className="symptom-actions"><Button disabled={page === 0} onClick={() => setReviewPage(page - 1)}>{t('previous_page')}</Button><span>{t('page', { current: numbers.format(page + 1), total: numbers.format(pages) })}</span><Button disabled={page === pages - 1} onClick={() => setReviewPage(page + 1)}>{t('next_page')}</Button><Button variant="primary" onClick={() => navigate('/browse')}>{t(copy.menu)}</Button></div>
+        <div className="symptom-actions"><Button disabled={page === 0} onClick={() => setReviewPage(page - 1)}>{t('previous_page')}</Button><span>{t('page', { current: numbers.format(page + 1), total: numbers.format(pages) })}</span><Button disabled={page === pages - 1} onClick={() => setReviewPage(page + 1)}>{t('next_page')}</Button><Button variant="primary" onClick={onClose}>{t('close_guide')}</Button></div>
       </> : <>
         <div role="group" aria-label={t(question.title)} className={`symptom-grid${question.id === 'areas' ? ' areas' : ''}`}>
           {question.options.map((option, optionIndex) => <SymptomCard key={option.id} label={t(option.label)} icon={question.id === 'areas' ? ['◉', '◒', '◓', '◐', '◑', '⌾', '◉', '?'][optionIndex] : undefined} selected={answers[question.id]?.includes(option.id) ?? false} onSelect={() => setAnswers(current => selectAnswer(current, question, option.id))} />)}
@@ -61,5 +62,5 @@ export function SymptomsPage() {
         <div className="symptom-progress" aria-hidden="true"><div style={{ width: `${((index + 1) / list.length) * 100}%` }} /></div>
       </>}
     </div>
-  </KioskFrame>
+  </Dialog>
 }

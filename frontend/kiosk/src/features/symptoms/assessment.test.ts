@@ -39,6 +39,18 @@ describe('short card-only intake', () => {
     expect(a.history).toEqual(['allergy', 'condition'])
     expect(selectAnswer(a, q, 'unknown').history).toEqual(['unknown'])
   })
+  it('clears the safety checklist when the main symptom changes, preserving unrelated answers', () => {
+    for (const safety of [['none'], ['unknown'], ['breathing']]) {
+      const previous: Answers = { areas: ['head'], urgent: safety, 'head.location': ['front'], 'head.feel': ['ache'], duration: ['today'], severity: ['mild'], age: ['adult'], history: ['allergy'], 'allergy.reaction': ['rash'] }
+      const changed = selectAnswer(previous, questions(previous)[0], 'chest')
+      expect(changed.urgent).toBeUndefined()
+      expect(answered(questions(changed).find(q => q.id === 'urgent')!, changed)).toBe(false)
+      expect(changed['head.location']).toBeUndefined()
+      expect(changed['head.feel']).toBeUndefined()
+      expect(changed).toMatchObject({ areas: ['chest'], duration: ['today'], severity: ['mild'], age: ['adult'], history: ['allergy'], 'allergy.reaction': ['rash'] })
+      expect(selectAnswer(previous, questions(previous)[0], 'head').urgent).toEqual(safety)
+    }
+  })
   it('stops immediately for every displayed emergency choice', () => {
     for (const area of areas) for (const q of questions({ areas: [area] })) {
       for (const option of q.options.filter(o => o.urgent)) {
