@@ -9,6 +9,7 @@ import { ProfilePage } from '../features/dashboard/pages/ProfilePage'
 import { useSession } from '../features/session/hooks/use-session'
 import { useEffect } from 'react'
 import { useTranslation } from '@have/shared/i18n'
+import { BrowsePage } from '../features/symptoms/pages/BrowsePage'
 
 export function AppRoutes() {
   const { state } = useSession()
@@ -17,6 +18,7 @@ export function AppRoutes() {
   const home = state.phase === 'guest' ? '/guest' : state.phase === 'customer' ? '/dashboard'
     : state.phase === 'language' || state.phase === 'starting' ? '/language' : '/'
   return <Routes>
+    <Route path="/browse" element={state.phase === 'guest' || state.phase === 'customer' ? <BrowsePage /> : <Navigate to={home} replace />} />
     <Route path="/" element={home === '/' ? <AttractPage /> : <Navigate to={home} replace />} />
     <Route path="/language" element={home === '/language' ? <LanguagePage /> : <Navigate to={home} replace />} />
     <Route path="/guest" element={state.phase === 'guest' ? <GuestHomePage /> : <Navigate to={home} replace />} />
