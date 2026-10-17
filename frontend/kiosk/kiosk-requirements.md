@@ -703,3 +703,27 @@ Paid Hub orders reserve their selected machine for 24 hours from confirmed payme
 
 <!-- END PROJECT REQUIREMENTS SNAPSHOT -->
 
+
+
+## Free local HTTPS purchase testing — 2026-10-17
+
+This supersedes the historical localhost-return and earlier tunnel instructions.
+Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
+apps. Kiosk requires the local test-access password; Hub remains reachable for signed
+Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
+Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
+Only exact configured hosts are trusted, device keys stay server-side, and cookies
+over the tunnels are Secure. Database records, purchase policies and session timings
+are unchanged. No migration, real charge, Git commit or push is part of this update.
+
+See [start/configure/test/stop instructions](../README.md#free-https-purchase-testing--2026-10-17).
+Restarting either tunnel changes its URL; update root .env and recreate apps without
+restarting the other tunnel. Do not recreate tunnels while a payment is in flight.
+
+Updated: 2026-10-17 (test-access correction). The unreliable Cloudflare email gate
+is replaced by a server-only password gate, configured through root .env
+KIOSK_TEST_ACCESS_PASSWORD. It precedes all public Vite assets, API and WebSocket
+access. Its four-hour Secure/HttpOnly/Lax cookie preserves the simulator path and
+Kashier return without restoring customer auth. Localhost, device credentials,
+customer/session/cart/payment behavior and the full project snapshot are unchanged.
+

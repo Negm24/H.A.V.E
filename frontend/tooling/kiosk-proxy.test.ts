@@ -43,7 +43,7 @@ it('selects only an exact unique configured simulator; rejects serials, missing 
   expect(resolveTerminalCredentials({ ...simulatorConfig, TERMINAL_SERIAL: 'legacy', TERMINAL_KEY: 'legacy-key' })).toBeUndefined()
 })
 
-async function proxyResponse(contentType = 'application/json', configured = true, simulator?: string) {
+async function proxyResponse(contentType = 'application/json', configured = true, simulator?: string, publicRequest = false) {
   vi.stubEnv('TERMINAL_SERIAL', 'TEST-001')
   vi.stubEnv('TERMINAL_KEY', configured ? 'test-installation-secret' : '')
   const calls: IncomingHttpHeaders[] = []
@@ -63,6 +63,13 @@ async function proxyResponse(contentType = 'application/json', configured = true
   const req = Readable.from([]) as IncomingMessage
   req.url = '/api/v1/terminals/sessions/'; req.method = 'POST'
   req.headers = { host: 'localhost:5173', origin: 'http://localhost:5173', cookie: 'sessionid=owner', 'x-terminal-key': 'spoof', 'x-terminal-serial': 'spoof' }
+  if (publicRequest) {
+    vi.stubEnv('KIOSK_PUBLIC_HOST', 'test-kiosk.trycloudflare.com')
+    req.headers.host = 'test-kiosk.trycloudflare.com'
+    req.headers.origin = 'https://test-kiosk.trycloudflare.com'
+    req.headers['x-have-forwarded-proto'] = 'spoofed'
+    req.headers['x-forwarded-proto'] = 'http'
+  }
   if (simulator !== undefined) req.headers['x-terminal-simulator'] = simulator
   let body = '', status = 200
   const res = {
@@ -92,6 +99,16 @@ it('missing configuration fails closed without forwarding a request', async () =
 it('does not relay debug HTML from Django', async () => {
   const { status, body } = await proxyResponse('text/html')
   expect(status).toBe(503); expect(body).not.toContain('<html>')
+})
+
+it('forwards only the trusted HTTPS marker for an exact public Kiosk request', async () => {
+  const { calls, body } = await proxyResponse('application/json', true, firstId, true)
+  expect(calls[0]?.['x-have-forwarded-proto']).toBe('https')
+  expect(calls[0]?.['x-forwarded-proto']).toBeUndefined()
+  expect(calls[0]?.host).toBe('test-kiosk.trycloudflare.com')
+  expect(calls[0]?.['x-terminal-key']).toBe('first-private-key')
+  expect(calls[0]?.cookie).toBeUndefined()
+  expect(body).not.toContain('first-private-key')
 })
 
 it('routes two simulator selectors to different server-held credentials without leaking the selector upstream', async () => {

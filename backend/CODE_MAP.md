@@ -1,5 +1,16 @@
 # Backend code map
 
+## Local HTTPS test tunnels — 2026-10-17
+
+- `config/settings/tunnels.py` is an opt-in development settings module: exact
+  public hosts/CSRF origins, debug disabled, existing database/Redis configuration.
+- `config/tunnel_middleware.py` recognizes the private frontend proxy's HTTPS
+  marker only on configured hosts and secures response cookies; localhost stays HTTP.
+- Payment `checkout_base_url()` validates Hub/Kiosk origins before writes. Hub
+  remains the public signed-webhook destination; Kiosk returns directly to its
+  own locally password-protected tunnel. No payment policy or schema migration changes.
+- Startup, env values and stop commands: `frontend/README.md`, free HTTPS testing.
+
 ## Bug-fix checkpoint — 2026-10-17
 
 Terminal `security/state.py` discards guest cart fields in the same atomic PIN/QR

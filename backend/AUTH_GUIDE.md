@@ -27,7 +27,7 @@ deterministic browser cases** and **8 live Django/PostgreSQL/Redis cases** passe
 All four app builds/typechecks, OpenAPI validation and no-migration-drift checks
 passed. Existing large-chunk build advisories remain non-blocking. Private secret
 values were absent from publishable text and Terminal keys from browser bundles.
-The existing ngrok tunnel reconnected and its public health request returned OK
+The previous tunnel reconnected and its public health request returned OK
 after applying explicit DNS resolvers; this does not guarantee an ISP never drops
 future connections. No new payment, refund or return bridge was used by these checks.
 
@@ -1009,10 +1009,9 @@ This section supersedes the earlier shared-cart and no-checkout examples. No liv
 
 ### Start everything (PowerShell, repository root)
 
-Keep KASHIER_DEFAULT_TEST_KEY, KASHIER_SECRET_KEY, KASHIER_MERCHANT_ID and PAYMENTS_PUBLIC_BASE_URL in root .env only. The public URL is your existing Hub ngrok HTTPS origin, without a trailing slash. Quote literal dollar signs in secret values with single quotes; never paste secrets in chat. Provider API hosts and checkout URL mode are fixed to test.
+Keep KASHIER_DEFAULT_TEST_KEY, KASHIER_SECRET_KEY and KASHIER_MERCHANT_ID in root .env only. Set PAYMENTS_PUBLIC_BASE_URL to the Hub HTTPS tunnel origin and KIOSK_PUBLIC_BASE_URL to the separate Kiosk HTTPS origin. Start with the two-tunnel instructions linked in the latest section below. Quote literal dollar signs in secret values with single quotes; never paste secrets in chat. Provider API hosts and checkout URL mode are fixed to test.
 
 ~~~powershell
-docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d --build db redis backend order-worker kiosk hub hub-tunnel
 docker compose exec backend python manage.py migrate
 docker compose ps
 ~~~
@@ -1021,7 +1020,7 @@ The migrations are already applied on this machine. Do not reset volumes or reru
 
 ### Hub: choose a machine, buy, then collect
 
-1. Open http://localhost:5174 (or the existing ngrok HTTPS URL), sign in, then Browse medicines. Choose HAVE Mark I/II FIRST. Only that machine's catalogue and stock appear.
+1. For purchase testing, open the Hub HTTPS tunnel URL (not localhost), sign in, then Browse medicines. Choose HAVE Mark I/II FIRST. Only that machine's catalogue and stock appear. Cookies belong to the public origin used to start checkout.
 2. Add an available OTC product. Quantities above two work when stock permits; NULL product max_quantity_per_order means stock-only. Prescription checkout remains blocked.
 3. Open Cart → Checkout. Check the collection machine, EGP total and required receipt email. Click Pay securely with Kashier. H.A.V.E never has PAN/CVV fields.
 4. Use ONLY official sandbox test cards on the hosted page. The current provider test guide is https://developers.kashier.io/docs/get-started/testing (intentional expiry values are scenario triggers, not actual card expiry). Approved example: 5123450000000008, CVV 100, expiry 06/25; decline 05/25, timeout 08/28, unknown 05/37. Never use a real card. Save the test card during this Hub purchase if Kashier offers its save option.
@@ -1086,3 +1085,41 @@ Provider references: https://developers.kashier.io/docs/accept-payments/payment-
 - All five frontend packages typecheck; all four applications build independently. Vite reports non-blocking bundle-size warnings for Hub/kiosk.
 - Swagger validates without warnings and `makemigrations --check --dry-run` reports no changes. All purchase migrations are applied on this development database.
 - Backend and order-worker were restarted with the rotated configuration and final code. Existing data/credentials were preserved, apart from the explicitly cancelled unpaid diagnostic order and its released reservation. No Git commit or push was made.
+
+
+## Free local HTTPS purchase testing — 2026-10-17
+
+This supersedes the historical localhost-return and earlier tunnel instructions.
+Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
+apps. Kiosk requires the local test-access password; Hub remains reachable for signed
+Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
+Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
+Only exact configured hosts are trusted, device keys stay server-side, and cookies
+over the tunnels are Secure. Database records, purchase policies and session timings
+are unchanged. No migration, real charge, Git commit or push is part of this update.
+
+See [start/configure/test/stop instructions](../frontend/README.md#free-https-purchase-testing--2026-10-17).
+Restarting either tunnel changes its URL; update root .env and recreate apps without
+restarting the other tunnel. Do not recreate tunnels while a payment is in flight.
+
+### HTTPS verification — 2026-10-17
+
+All 282 backend tests, 79 frontend unit tests and 87 Docker browser tests passed;
+all app builds/typechecks, OpenAPI validation and migration-drift checks passed.
+Public Hub health/login/secure-cookie refresh/logout work. Public unsigned webhooks
+are rejected; anonymous Kiosk access reaches Cloudflare's email gate, not the app.
+Email-code completion and actual card submission/hosted return remain manual; no
+card payment or verification email was submitted by these checks. The existing
+payment/refund/receipt logic and records are preserved.
+
+### Test-access correction — 2026-10-17
+
+The email-gate check above was anonymous-only. Real email-authenticated asset loads
+failed because Cloudflare redirected them back to its login broker. A local
+password gate now replaces that unreliable external session. Use the generated
+KIOSK_TEST_ACCESS_PASSWORD in private root .env (not a customer PIN); do not share
+the value in chat. Unlocking preserves the simulator/receipt path and issues a
+host-only Secure/HttpOnly/Lax cookie valid for four hours. Kiosk restart/password
+change requires unlocking again. Hub's webhook remains reachable and all H.A.V.E
+customer/device/payment authentication stays unchanged. See the frontend README
+for current URLs/configuration procedure; do not reuse the retired Kiosk hostname.

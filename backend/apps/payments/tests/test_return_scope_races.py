@@ -21,7 +21,7 @@ from apps.terminals.services.inventory_services import set_stock
 
 
 SANDBOX = dict(KASHIER_DEFAULT_TEST_KEY="sandbox-test", KASHIER_SECRET_KEY="sandbox-test",
-    KASHIER_MERCHANT_ID="MID-TEST", PAYMENTS_PUBLIC_BASE_URL="https://test.example",
+    KASHIER_MERCHANT_ID="MID-TEST", PAYMENTS_PUBLIC_BASE_URL="https://test.example", KIOSK_PUBLIC_BASE_URL="https://kiosk.example",
     PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 
 

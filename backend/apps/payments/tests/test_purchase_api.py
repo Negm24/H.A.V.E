@@ -14,7 +14,7 @@ from apps.orders.services.order_services import mark_paid
 from apps.carts.services.cart_services import change_cart, get_cart
 
 
-@override_settings(KASHIER_DEFAULT_TEST_KEY="sandbox-test", KASHIER_SECRET_KEY="sandbox-test", KASHIER_MERCHANT_ID="MID-TEST", PAYMENTS_PUBLIC_BASE_URL="https://test.example")
+@override_settings(KASHIER_DEFAULT_TEST_KEY="sandbox-test", KASHIER_SECRET_KEY="sandbox-test", KASHIER_MERCHANT_ID="MID-TEST", PAYMENTS_PUBLIC_BASE_URL="https://test.example", KIOSK_PUBLIC_BASE_URL="https://kiosk.example")
 class PurchaseApiTests(SessionFixtures, TestCase):
     def setUp(self):
         self.setup_sessions()
@@ -61,6 +61,27 @@ class PurchaseApiTests(SessionFixtures, TestCase):
         end = self.terminal_call("post", f"orders/{order_id}/result/end/", token=False)
         self.assertEqual(end.status_code, 204)
         self.assertEqual(self.terminal_call("get", f"orders/{order_id}/result/", token=False).status_code, 401)
+
+    def test_missing_kiosk_origin_rejects_before_order_reservation_or_provider_call(self):
+        version = self.add()
+        with override_settings(KIOSK_PUBLIC_BASE_URL=""), patch.object(provider, "create_session") as create:
+            response = self.checkout(version)
+        self.assertEqual(response.status_code, 503)
+        self.assertFalse(Order.objects.exists())
+        self.assertFalse(PaymentTransaction.objects.exists())
+        create.assert_not_called()
+
+    def test_https_return_uses_kiosk_origin_and_scoped_secure_cookie(self):
+        version = self.add()
+        selector = "a" * 32
+        with patch.object(provider, "create_session", return_value=("https-session", "https://payments.kashier.io/session/https-session?mode=test")) as create:
+            response = self.checkout(version, return_simulator_id=selector)
+        self.assertEqual(response.status_code, 200, response.data)
+        order_id = response.data["order"]["id"]
+        self.assertEqual(create.call_args.args[1], f"https://kiosk.example/payment-return?order_id={order_id}&terminal={selector}")
+        cookie = next(iter(response.cookies.values()))
+        self.assertTrue(cookie["httponly"])
+        self.assertEqual(cookie["path"], f"/api/v1/terminals/orders/{order_id}/")
 
     def test_signedin_no_saved_card_blocks_before_reservation_and_lookup_outage503(self):
         self.token = self.terminal_login(self.token).data["session_token"]

@@ -10,7 +10,7 @@ from apps.payments.services import kashier_services
 
 
 def checkout_order(*, user, terminal, raw_token, session_id, data, channel):
-    kashier_services.configuration()
+    kashier_services.checkout_base_url(channel)
     customer = user.customer if user.is_authenticated else None
     email = data.get("email") or (user.email if customer else "")
     print_requested = data["print_requested"] if customer else True

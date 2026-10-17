@@ -33,10 +33,30 @@ class ProviderUnavailable(AuthError):
 def configuration():
     values = (settings.KASHIER_DEFAULT_TEST_KEY, settings.KASHIER_SECRET_KEY,
               settings.KASHIER_MERCHANT_ID, settings.PAYMENTS_PUBLIC_BASE_URL)
-    url = urlparse(values[3])
-    if not all(values) or url.scheme != "https" or not url.hostname or url.username or url.query or url.fragment:
+    if not all(values) or not valid_public_origin(values[3]):
         raise AuthError("Test checkout is not configured. Set the Kashier keys, merchant ID and public HTTPS base URL.", 503)
     return values
+
+
+def valid_public_origin(value):
+    """A configured HTTPS origin, never a browser-supplied redirect destination."""
+    try:
+        url = urlparse(value)
+        return (url.scheme == "https" and bool(url.hostname) and not url.username and not url.password
+                and url.path in ("", "/") and not url.query and not url.fragment
+                and url.port in (None, 443) and url.hostname not in ("localhost", "127.0.0.1", "::1")
+                and not any(char.isspace() for char in value))
+    except ValueError:
+        return False
+
+
+def checkout_base_url(channel):
+    """Validate before cart/stock/payment writes; each app keeps its own origin."""
+    _, _, _, hub_origin = configuration()
+    origin = settings.KIOSK_PUBLIC_BASE_URL if channel == "TERMINAL" else hub_origin
+    if not valid_public_origin(origin):
+        raise AuthError("Test checkout is not configured. Set KIOSK_PUBLIC_BASE_URL to the Kiosk HTTPS tunnel origin.", 503)
+    return origin.rstrip("/")
 
 
 def _call(host, path, *, method="GET", body=None, headers=None, allow_no_cards=False):

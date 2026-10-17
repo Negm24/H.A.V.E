@@ -19,7 +19,7 @@ from . import kashier_services as provider
 
 
 def start_checkout(order, *, simulator_id=""):
-    provider.configuration()
+    public = provider.checkout_base_url(order.channel)
     if simulator_id and (len(simulator_id) != 32 or any(c not in "0123456789abcdef" for c in simulator_id)):
         raise AuthError("Invalid Terminal simulator selector.", 400)
     raw_ticket = secrets.token_urlsafe(32) if order.channel == "TERMINAL" else ""
@@ -54,11 +54,10 @@ def start_checkout(order, *, simulator_id=""):
         payment.save()
         order.payment_uncertain = True
         order.save(update_fields=["payment_uncertain"])
-    public = settings.PAYMENTS_PUBLIC_BASE_URL
     if order.channel == "HUB":
         return_url = f"{public}/orders/{order.pk}?payment=return"
     else:
-        return_url = "http://localhost:5173/payment-return?" + urlencode({"order_id": str(order.pk), "terminal": simulator_id})
+        return_url = public + "/payment-return?" + urlencode({"order_id": str(order.pk), "terminal": simulator_id})
     try:
         session_id, checkout_url = provider.create_session(order, return_url)
     except provider.ProviderUnavailable as exc:

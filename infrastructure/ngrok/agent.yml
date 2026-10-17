@@ -1,7 +1,0 @@
-version: 3
-agent:
-  # Bypass intermittent Docker/ISP DNS failures for the ngrok control connection.
-  # The upstream name `hub` still resolves through Docker's service network.
-  dns_resolver_ips:
-    - "1.1.1.1"
-    - "1.0.0.1"

@@ -24,7 +24,7 @@ from apps.terminals.services.session_services import operate
 
 
 @override_settings(KASHIER_DEFAULT_TEST_KEY="sandbox-api-test", KASHIER_SECRET_KEY="sandbox-secret-test",
-    KASHIER_MERCHANT_ID="MID-TEST", PAYMENTS_PUBLIC_BASE_URL="https://test.example")
+    KASHIER_MERCHANT_ID="MID-TEST", PAYMENTS_PUBLIC_BASE_URL="https://test.example", KIOSK_PUBLIC_BASE_URL="https://kiosk.example")
 class PaymentTests(TestCase):
     def setUp(self):
         domain.OrderTests.setUp(self)
@@ -339,12 +339,14 @@ class PaymentTests(TestCase):
     def test_session_payload_guest_isolation_and_testonly_url(self):
         order = self.reserve(customer=None, channel="TERMINAL", print_requested=True)
         with patch.object(provider, "_call", return_value={"_id": "abc", "sessionUrl": "https://payments.kashier.io/session/abc?mode=test"}) as call:
-            provider.create_session(order, "http://localhost:5173/payment-return")
+            provider.create_session(order, "https://kiosk.example/payment-return")
         body = call.call_args.kwargs["body"]
         self.assertFalse(body["retrieveSavedCard"])
         self.assertNotIn("reference", body["customer"])
         self.assertNotIn("saveCard", body)
         self.assertFalse(body["manualCapture"])
+        self.assertEqual(body["merchantRedirect"], "https://kiosk.example/payment-return")
+        self.assertEqual(body["serverWebhook"], "https://test.example/api/v1/payments/kashier/webhook/")
         # Live sandbox validation rejects this documented-but-unsupported field.
         self.assertNotIn("mode", body)
         self.assertEqual(call.call_args.args[:2], ("https://test-api.kashier.io", "/v3/payment/sessions"))

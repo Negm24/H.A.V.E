@@ -486,10 +486,9 @@ Paid Hub orders reserve their selected machine for 24 hours from confirmed payme
 - Camera stops on successful decode, hiding, navigation and logout. Pending status
   polls every two seconds with one request in flight; background work never renews
   Terminal activity. Regenerate QR at the Terminal after expiry as needed.
-- Phone testing uses optional ngrok HTTPS only. No LAN certificate setup/image picker.
-  Root .env holds NGROK_AUTHTOKEN and the discovered HUB_TUNNEL_HOST. Neither goes
-  into VITE_* or browser bundles. The tunnel exposes the development app temporarily;
-  request inspection is disabled. No new traffic/auth/rate-limit policy is added.
+- Phone testing uses optional Cloudflare Quick Tunnel HTTPS only. No LAN certificate setup/image picker.
+  Exact hosts stay in root .env, never VITE_* or browser bundles. The two tunnels
+  expose the development apps temporarily; only Kiosk has a local test-password gate.
 - Hub receives no Terminal serial/key. Device credentials stay kiosk-server-only.
 - Shared API, input/UI and session mechanisms are reused without merging role flows.
   Apps never import each other; camera decoding loads only when requested.
@@ -540,4 +539,21 @@ snapshot is maintained from root requirements separately.
   visible only within the basket to which they already belong.
 - No Hub basket is shared with any guest or signed-in Terminal session. Signing
   out preserves saved Hub baskets until their one-day modification expiry.
+
+
+
+## Free local HTTPS purchase testing — 2026-10-17
+
+This supersedes the historical localhost-return and earlier tunnel instructions.
+Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
+apps. Kiosk requires the local test-access password; Hub remains reachable for signed
+Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
+Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
+Only exact configured hosts are trusted, device keys stay server-side, and cookies
+over the tunnels are Secure. Database records, purchase policies and session timings
+are unchanged. No migration, real charge, Git commit or push is part of this update.
+
+See [start/configure/test/stop instructions](../README.md#free-https-purchase-testing--2026-10-17).
+Restarting either tunnel changes its URL; update root .env and recreate apps without
+restarting the other tunnel. Do not recreate tunnels while a payment is in flight.
 

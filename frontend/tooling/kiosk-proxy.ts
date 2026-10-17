@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { request as httpRequest, type IncomingMessage, type ServerResponse, type IncomingHttpHeaders } from 'node:http'
 import { request as httpsRequest } from 'node:https'
 import { loadEnv, type Plugin } from 'vite'
+import { requestOrigin } from './tunnel-origin.ts'
 
 const methods = new Map([
   ['/api/v1/terminals/sessions/', 'POST'],
@@ -28,9 +29,10 @@ export function terminalMethod(path: string): string | undefined {
 
 export function trustedKioskRequest(req: Pick<IncomingMessage, 'headers' | 'method'>): boolean {
   const host = req.headers.host
-  if (host !== 'localhost:5173' && host !== '127.0.0.1:5173') return false
+  const expectedOrigin = requestOrigin(host, 5173)
+  if (!expectedOrigin) return false
   const origin = req.headers.origin
-  const sameOrigin = origin === `http://${host}`
+  const sameOrigin = origin === expectedOrigin
   if (req.method !== 'GET') return sameOrigin
   return sameOrigin || (!origin && req.headers['sec-fetch-site'] === 'same-origin')
 }
@@ -106,6 +108,7 @@ export function kioskProxy(testCredentials?: Record<string, string>): Plugin {
             'X-Terminal-Serial': serial, 'X-Terminal-Key': key,
           })
           if (req.headers.authorization) headers.set('Authorization', req.headers.authorization)
+          if (requestOrigin(req.headers.host, 5173)?.startsWith('https://')) headers.set('X-Have-Forwarded-Proto', 'https')
           // Only order-scoped HttpOnly result cookies cross this private boundary.
           // General Hub/owner cookies must never be forwarded to device routes.
           const resultCookie = req.headers.cookie?.split(';').map(item => item.trim()).filter(item => /^have_payment_[a-f0-9]{32}=/.test(item)).join('; ')

@@ -6,7 +6,7 @@ DEBUG = True
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-# Exact optional ngrok HTTPS origin for Hub camera testing; no wildcard trust.
+# Optional explicit development CSRF origins; tunnel settings derive exact origins.
 CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
 
 # Development-only SMS simulation. Never enable for real deployments.

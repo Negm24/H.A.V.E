@@ -1,9 +1,5 @@
 # H.A.V.E — Django backend
 
-Cloudflare frontend build setup for Hub and Kiosk is documented in
-[frontend/README.md](frontend/README.md#cloudflare-frontend-builds--2026-10-17).
-It publishes frontend assets only; backend/device connectivity is a separate step.
-
 The backend includes owner authentication, customer signup, Hub login/refresh/logout, and Terminal guest/customer sessions. PostgreSQL, Redis, and Django run through Docker Compose.
 
 ## Bug-fix checkpoint — 2026-10-17
@@ -13,7 +9,7 @@ notes. Successful Terminal PIN/QR login now discards guest items; the customer s
 with an empty session basket while Hub baskets remain independent. Confirmed checkout
 validation failures release unpaid reservations; uncertain outcomes are reconciled
 without creating another charge. No public-to-local payment-return bridge is included.
-Kashier may still reject the local Terminal return URL until hosting is designed.
+The later free HTTPS testing section replaces the historical local return URL.
 
 Private `.env`, Cloudflare `.dev.vars`, `.wrangler` state, credentials, database dumps
 and generated build/test output are Git-ignored. Deployable source configuration is
@@ -24,7 +20,7 @@ device proxy and Docker backend/worker still need an explicit deployment arrange
 
 Hub and kiosk now browse the PostgreSQL catalogue. Hub shows timestamped, network-wide advisory stock without a Terminal picker; kiosk shows its own machine. One Redis cart per customer is shared across both, expiring one day after an actual change (`CART_DATA_EXPIRY=86400` in root `.env`). Guest baskets remain temporary. Logout clears local identity but preserves saved baskets; conflicting guest/saved baskets require a choice immediately after Terminal login. No new migrations are needed for this update. Purchasing, paid orders and Terminal collection remain unimplemented requirements.
 
-Start the apps with `docker compose --profile frontend up -d --build`. Open Hub at http://localhost:5174 and kiosk at http://localhost:5173. Existing ngrok users should keep using the override commands in [the Hub guide](frontend/CODEX-Increment-3.md) to preserve their exact public Host/CSRF configuration. The catalogue/cart code map and manual cross-app tests are in that guide and [frontend/README.md](frontend/README.md).
+Start the apps with `docker compose --profile frontend up -d --build`. Open Hub at http://localhost:5174 and kiosk at http://localhost:5173. For purchase/phone HTTPS testing, follow the [two-tunnel procedure](frontend/README.md#free-https-purchase-testing--2026-10-17). The catalogue/cart code map and manual cross-app tests are in the increment guides and frontend README.
 
 ## Start locally
 
@@ -100,8 +96,23 @@ Hub now selects a collection Terminal before Browse medicines. Hub carts are sep
 Orders and allocated stock reservations are durable PostgreSQL records. Paid Hub orders must be collected from their chosen machine within 24 hours; expiry releases allocations and queues a full refund plus email notices. An order-worker handles reconciliation and retries without holding stock locks over provider/SMTP requests.
 
 ~~~powershell
-docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d --build db redis backend order-worker kiosk hub hub-tunnel
 docker compose exec backend python manage.py migrate
 ~~~
 
-Root .env requires KASHIER_DEFAULT_TEST_KEY, KASHIER_SECRET_KEY, KASHIER_MERCHANT_ID and PAYMENTS_PUBLIC_BASE_URL (existing ngrok HTTPS origin). Keys are backend/worker-only, never frontend variables. See [the complete purchase test walkthrough](backend/AUTH_GUIDE.md#kashier-test-purchases-and-collection--2026-10-17). No physical printing, ETA, real money or direct card entry in H.A.V.E.
+Root .env requires KASHIER_DEFAULT_TEST_KEY, KASHIER_SECRET_KEY, KASHIER_MERCHANT_ID, PAYMENTS_PUBLIC_BASE_URL (Hub tunnel origin) and KIOSK_PUBLIC_BASE_URL (Kiosk tunnel origin). Start using the two-tunnel procedure below before migrating/testing; existing migrations need no reset. Keys are backend/worker-only, never frontend variables. See [the complete purchase test walkthrough](backend/AUTH_GUIDE.md#kashier-test-purchases-and-collection--2026-10-17). No physical printing, ETA, real money or direct card entry in H.A.V.E.
+
+
+## Free local HTTPS purchase testing — 2026-10-17
+
+This supersedes the historical localhost-return and earlier tunnel instructions.
+Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
+apps. Kiosk requires the local test-access password; Hub remains reachable for signed
+Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
+Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
+Only exact configured hosts are trusted, device keys stay server-side, and cookies
+over the tunnels are Secure. Database records, purchase policies and session timings
+are unchanged. No migration, real charge, Git commit or push is part of this update.
+
+See [start/configure/test/stop instructions](frontend/README.md#free-https-purchase-testing--2026-10-17).
+Restarting either tunnel changes its URL; update root .env and recreate apps without
+restarting the other tunnel. Do not recreate tunnels while a payment is in flight.

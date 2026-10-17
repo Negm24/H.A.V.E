@@ -1,13 +1,5 @@
 # Increment 2 — Terminal authentication and mock customer dashboard
 
-## Cloudflare frontend build configuration — 2026-10-17
-
-`kiosk/wrangler.jsonc` defines the `autopharm-have-kiosk` static-assets deployment,
-with `dist` relative to that config and React SPA navigation fallback. Use the
-workspace-root build settings in frontend/README.md; no app behavior, API paths,
-device authentication or local Docker proxy changes are made. Public deployment
-of static assets does not deploy the private device agent or authorize a physical
-Terminal. Do not upload device keys or expose the local simulator as a public relay.
 
 ## Bug-fix checkpoint — 2026-10-17
 
@@ -550,3 +542,37 @@ the shared Docker test-tunnel instructions when Hub access is needed from kiosk.
   only its own session basket; reset and fresh re-login found it empty, without
   modifying Hub baskets. Original fixture Hub quantities were restored and test
   sessions ended. No payment-provider purchase was attempted by this run.
+
+
+## Free local HTTPS purchase testing — 2026-10-17
+
+This supersedes the historical localhost-return and earlier tunnel instructions.
+Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
+apps. Kiosk requires the local test-access password; Hub remains reachable for signed
+Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
+Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
+Only exact configured hosts are trusted, device keys stay server-side, and cookies
+over the tunnels are Secure. Database records, purchase policies and session timings
+are unchanged. No migration, real charge, Git commit or push is part of this update.
+
+See [start/configure/test/stop instructions](README.md#free-https-purchase-testing--2026-10-17).
+Restarting either tunnel changes its URL; update root .env and recreate apps without
+restarting the other tunnel. Do not recreate tunnels while a payment is in flight.
+
+### Kiosk test-access correction — 2026-10-17
+
+The Quick Tunnel email session proved unreliable after real verification: scripts
+were redirected back to Cloudflare login and blocked as cross-origin resources.
+`tooling/kiosk-test-gate.ts` now protects public documents, modules, API requests
+and WebSocket upgrades before the device proxy. Unlock with KIOSK_TEST_ACCESS_PASSWORD
+from private root .env, not a customer PIN. A signed, host-only HttpOnly/Secure/Lax
+cookie lasts four hours without extending customer authentication. Password changes
+or Kiosk server restart require unlocking again; localhost remains unchanged.
+No external authentication service, customer-auth policy, CORS wildcard, new
+dependency, database migration, payment or device credential change is introduced.
+
+Verified: 84 unit tests, 39 affected browser cases, all workspace typechecks/four
+builds; separate real public unlock/reload/catalogue/reset check passed with no
+JavaScript/CORS errors. Two optional live-auth browser cases were not enabled in
+the affected suite. Existing device credentials and purchase records are preserved;
+no card payment, Git commit or push was performed.

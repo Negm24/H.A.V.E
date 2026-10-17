@@ -1,12 +1,5 @@
 # Increment 3 — H.A.V.E Hub authentication
 
-## Cloudflare frontend build configuration — 2026-10-17
-
-`hub/wrangler.jsonc` defines `autopharm-have`, publishing only Hub `dist` assets
-with SPA navigation fallback. frontend/README.md documents the exact Workers build
-settings and pinned Node/pnpm versions. The configuration does not deploy Django
-or replace Vite's development API proxy. A reachable backend and approved same-origin
-API routing are still required; no backend secrets belong in frontend variables.
 
 ## Bug-fix checkpoint — 2026-10-17
 
@@ -14,11 +7,7 @@ Hub's per-customer/per-machine baskets remain unchanged. Terminal PIN/QR login n
 discards its guest basket instead of carrying it into customer browsing; it never
 reads/adopts Hub items. This supersedes the historical preservation statements below.
 
-The optional existing ngrok service reads `infrastructure/ngrok/agent.yml` for
-explicit control-plane DNS resolvers and restarts unless intentionally stopped.
-It retains pooling, disabled request inspection, TLS and CRL checks. No return-address
-bridge or Cloudflare deployment is introduced. Recreate only the running tunnel:
-`docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d --no-deps --force-recreate hub-tunnel`.
+The former tunnel setup is superseded by the free two-tunnel update below.
 
 Verification: 275 backend, 74 unit and 87 browser checks passed (including eight
 live-fixture cases); all app typechecks/builds and OpenAPI validation passed.
@@ -166,61 +155,9 @@ Backend health is proxied through each app's own `/api`. No health polling is ad
 The camera works on localhost. A phone's plain HTTP LAN address does NOT provide a
 secure camera context. Docker's 172.x address is not the laptop's Wi-Fi address.
 
-## Phone camera: ngrok only
+## Phone camera: free HTTPS tunnels
 
-The selected approach is an optional ngrok Docker service, not certificates/mkcert,
-LAN HTTP, image uploading or a QR-image picker. ngrok chooses your account's stable
-development domain automatically. See https://ngrok.com/agent-setup/prompt.md.
-
-1. Create/sign in to your ngrok account. Copy the authtoken privately into root `.env`:
-
-   ```dotenv
-   NGROK_AUTHTOKEN=your_private_authtoken
-   ```
-
-2. Start ONLY the tunnel for the already-running Hub:
-
-   ```powershell
-   docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d --no-deps hub-tunnel
-   docker compose -f compose.yaml -f compose.hub-tunnel.yaml logs hub-tunnel
-   ```
-
-3. The `started tunnel` log has an HTTPS URL. Put its hostname (no `https://`, no
-   slash) in root `.env`, for example `HUB_TUNNEL_HOST=example.ngrok-free.app`.
-   Then apply its exact Host/CSRF allowlist:
-
-   ```powershell
-   docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d --no-deps backend hub hub-tunnel
-   ```
-
-4. Open that HTTPS URL on your phone. Accept ngrok's browser notice if shown, sign
-   in, open **Sign in to kiosk**, and allow the camera. No extra frontend/backend
-   URL settings are needed: requests use this same HTTPS origin and Hub's proxy.
-
-5. Verify the public proxy (replace the example hostname):
-
-   ```powershell
-   Invoke-RestMethod -Uri https://example.ngrok-free.app/api/v1/health/ -TimeoutSec 15
-   ```
-
-   Expected: `status: ok`. A camera permission denial is separate from connectivity.
-
-6. Stop the temporary public exposure after testing:
-
-   ```powershell
-   docker compose -f compose.yaml -f compose.hub-tunnel.yaml stop hub-tunnel
-   ```
-
-   To remove the public-host development allowlist too, recreate backend/Hub using
-   the base Compose file only. Do not run `down -v`.
-
-This exposes the development Hub and its proxied API publicly while running.
-Use test accounts, do not share the URL broadly, and do not treat Vite/runserver as
-production hosting. No new ngrok auth/rate-limit policy is added. Request inspection
-is disabled to avoid retaining PINs, codes and tokens in its local request inspector.
-The authtoken is supplied only to the tunnel container, never browser code or Git.
-No wildcard hosts/CSRF trust, no database reset and no new migration are introduced.
-If ngrok reports ERR_NGROK_15013, create the free development domain in its dashboard.
+Use the current [two-tunnel instructions](README.md#free-https-purchase-testing--2026-10-17).
 
 ## Endpoints used
 
@@ -295,7 +232,7 @@ operations fail closed instead of risking refresh reuse across tabs.
 ## Real phone-to-kiosk QR test
 
 1. Keep the local kiosk open. Start → language → Sign in with PIN → Hub QR alternative → Generate QR.
-2. On your signed-in Hub phone at the HTTPS ngrok URL, choose Sign in to kiosk → Start camera.
+2. On your signed-in Hub phone at the Hub HTTPS tunnel URL, choose Sign in to kiosk → Start camera.
 3. Point the camera at the displayed QR. Scanning claims it but does NOT approve it.
    Camera tracks stop after decoding. Only decoded text is submitted, never camera frames.
 4. Review the Terminal name, serial and localized address. Choose Approve login.
@@ -341,15 +278,15 @@ The backend suite uses an isolated test database; no development data is reset.
 - 143 existing backend tests pass in the isolated test database.
 - Django checks pass; `makemigrations --check --dry-run` reports no changes.
 - Desktop dashboard and Arabic mobile profile screenshots were visually inspected.
-- Private ngrok/device keys were checked against all four built apps: none found.
+- Private tunnel/device configuration were checked against all four built apps: none found.
 - QR decoder is lazy-loaded when the camera starts. Vite has a non-blocking size
   advisory for the roughly 513 KB main Hub chunk; builds still pass.
 - No backend authentication logic, endpoint path, database design, migration or
   development data reset was introduced. The only backend edit is the optional,
-  exact development CSRF-origin setting for the ngrok public hostname.
-- ngrok Compose configuration validates. The tunnel was NOT started: the security
+  exact development CSRF-origin setting for the configured public hostname.
+- The former tunnel Compose configuration validated. The tunnel was NOT started: the security
   review blocked public exposure pending explicit confirmation. No public URL or
-  physical-phone camera check is claimed. The authtoken remains private in root .env.
+  physical-phone camera check was claimed. This is historical; see the new tunnel setup below.
 - SMTP inbox delivery and a physical phone scanning the real kiosk remain manual
   acceptance checks. Local browser camera tests use real decoding from simulated frames.
 
@@ -374,7 +311,7 @@ The backend suite uses an isolated test database; no development data is reset.
 - Swagger validates with zero warnings/errors. `makemigrations --check --dry-run`
   reports no changes. The running cart default is 86400 seconds. Device credentials
   are absent from all four browser bundles; private env files remain Git-ignored.
-- Existing ngrok configuration/tunnel was preserved, not newly authorized or
+- The previous tunnel configuration was preserved, not newly authorized or
   redesigned by this increment. Physical-phone camera and SMTP delivery were not
   retested here. No new purchase/order/collection code, migrations, commit or push.
 
@@ -439,3 +376,19 @@ only after the customer confirms, using current prices/stock and a version check
 Use the Docker commands/configuration in `frontend/README.md` and the backend purchase
 guide. Provider credentials stay server-side; no `VITE_*` payment secrets, browser
 token/cart storage, database reset, or production payment mode is introduced.
+
+
+## Free local HTTPS purchase testing — 2026-10-17
+
+This supersedes the historical localhost-return and earlier tunnel instructions.
+Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
+apps. Kiosk requires the local test-access password; Hub remains reachable for signed
+Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
+Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
+Only exact configured hosts are trusted, device keys stay server-side, and cookies
+over the tunnels are Secure. Database records, purchase policies and session timings
+are unchanged. No migration, real charge, Git commit or push is part of this update.
+
+See [start/configure/test/stop instructions](README.md#free-https-purchase-testing--2026-10-17).
+Restarting either tunnel changes its URL; update root .env and recreate apps without
+restarting the other tunnel. Do not recreate tunnels while a payment is in flight.

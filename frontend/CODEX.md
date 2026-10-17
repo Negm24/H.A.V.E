@@ -3,7 +3,8 @@
 Bug-fix checkpoint — 2026-10-17: Successful Terminal PIN/QR login discards guest
 items and starts empty, without changing the original session maximum. This
 supersedes earlier basket-preservation notes; independent Hub carts remain intact.
-No public-to-local payment-return bridge or Cloudflare deployment is included.
+No public-to-local payment-return bridge is included. The later free HTTPS tunnel
+testing setup is documented in README.md; this is not a hosted deployment.
 
 Read [CODEX-Increment-1.md](CODEX-Increment-1.md) before modifying a frontend app.
 It records the preserved design, shared structure, backend boundaries, and acceptance criteria.

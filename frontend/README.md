@@ -1,51 +1,5 @@
 # H.A.V.E frontend
 
-## Cloudflare frontend builds — 2026-10-17
-
-These settings fix the repository-root `Could not detect a directory containing
-static files` error. This is **Workers Builds + Static Assets**, not Cloudflare
-Pages. Create two independent Workers from this GitHub repository and `main`:
-
-| Setting | Hub | Kiosk |
-| --- | --- | --- |
-| Worker/project name | `autopharm-have` | `autopharm-have-kiosk` |
-| Root directory | `frontend` | `frontend` |
-| Build command | `pnpm install --frozen-lockfile && pnpm --filter @have/hub build` | `pnpm install --frozen-lockfile && pnpm --filter @have/kiosk build` |
-| Deploy command | `npx wrangler@4.151.1 deploy --config hub/wrangler.jsonc` | `npx wrangler@4.151.1 deploy --config kiosk/wrangler.jsonc` |
-
-Use `main` as the production branch. Leave non-production/preview branch builds
-disabled for this first setup; their commands must also select the corresponding
-Wrangler config before enabling them later.
-
-For both Workers, set these **Build variables**, not frontend secrets:
-
-```dotenv
-NODE_VERSION=24.11.1
-PNPM_VERSION=11.25.0
-SKIP_DEPENDENCY_INSTALL=true
-```
-
-The explicit build command performs the frozen install. Keep the workspace root
-`frontend`, not `frontend/hub` or `frontend/kiosk`, so the shared package and lockfile
-remain available. In the existing Worker, open Settings → Build, save the settings,
-then retry the failed build. Create the second Worker with its own name/commands.
-Each config publishes only its app's `dist` and supports refreshing React routes.
-
-**This step publishes frontend assets only.** Vite's development `/api` proxy and
-kiosk credential injection do not run in a static deployment. No API gateway,
-Django/PostgreSQL/Redis/worker hosting, device agent, or payment-return bridge is
-configured here. Login, stock, cart and checkout need that separate backend/device
-connection before these can be called working hosted apps. Do not use a successful
-static deployment as evidence of working payments.
-
-Do not copy backend `.env`, Terminal keys, database passwords, or Kashier keys into
-Cloudflare build variables, `VITE_*`, source files, or public assets. The private
-local multi-Terminal simulator remains loopback-only. The local Docker workflow is
-unchanged, and generated `dist`/`.wrangler` output stays Git-ignored.
-
-Validation: both app builds/typechecks and pinned Wrangler 4.151.1 dry runs passed.
-Wrangler located each app's actual `dist` and accepted its asset/SPA configuration.
-Dry runs upload nothing; no successful cloud deployment or API connection is claimed.
 
 ## Egypt-market sample stock — 2026-10-16
 
@@ -123,11 +77,7 @@ Preserve `frontend/.env` device credentials. Rebuild because shared exports chan
 docker compose --profile frontend up -d --build backend kiosk hub advisor admin
 ```
 
-If using the existing ngrok setup, keep its exact host allowlist instead:
-
-```powershell
-docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d --build backend kiosk hub advisor admin
-```
+Use the two-tunnel instructions below for public HTTPS testing.
 
 Do not delete volumes or rotate credentials. Shared source changes hot-reload normally;
 manifest/export changes require rebuild. See [Hub guide](CODEX-Increment-3.md) for
@@ -288,7 +238,7 @@ isolation checks also passed.
 `pnpm check` checks all packages, runs shared/session/proxy unit tests, and builds all
 four applications. Browser tests cover the kiosk flows plus the other app shells.
 Increment 3 adds Hub signup, PIN recovery, sessions, profile and real QR scanning.
-See [the Hub guide](CODEX-Increment-3.md) for manual testing and optional ngrok phone access.
+See [the Hub guide](CODEX-Increment-3.md) for manual testing and optional HTTPS phone access.
 To include live Django PIN/QR tests using the documented local fixtures:
 
 ```powershell
@@ -318,9 +268,7 @@ Verified: 47 unit tests, 41 browser tests (including real Hub/kiosk integration)
 143 backend regression tests, all packages' TypeScript checks, four builds and
 no new migrations. Screenshots checked English/Arabic responsive layouts.
 
-Phone camera testing uses the optional `compose.hub-tunnel.yaml` ngrok setup only.
-Add NGROK_AUTHTOKEN privately to root .env; the running tunnel supplies its public
-hostname. The public tunnel is not yet running, pending exposure confirmation.
+For current HTTPS phone testing, use the two-tunnel procedure below.
 
 ## Verification update — 2026-10-16
 
@@ -362,3 +310,167 @@ Browser live tests use dedicated local accounts/Terminals and no provider charge
 - Actual captured test payments, enrollment, refunds and SMTP inbox delivery remain
   manual account-specific acceptance checks in ../backend/AUTH_GUIDE.md. Printing
   and dispensing remain explicitly simulated. No commit or push was made.
+
+
+## Free HTTPS purchase testing — 2026-10-17
+
+This replaces the previous tunnel setup and the abandoned static-hosting experiment.
+Both apps still run on your laptop in Docker. No account, domain, API token or paid
+hosting is needed. The optional `compose.tunnels.yaml` uses the verified pinned
+`cloudflare/cloudflared:2026.10.1` image, HTTP/2 transport and two independent
+Quick Tunnels. No database/Redis ports or tunnel-management ports are published
+by this override. Existing loopback SQLTools ports in the base file remain local.
+
+### First start / after tunnel recreation
+
+1. In the private root `.env`, set a strong test-access password (16+ characters).
+   Do not overwrite an existing env file or change its database/payment secrets:
+
+   ```dotenv
+   KIOSK_TEST_ACCESS_PASSWORD=replace-with-a-long-random-private-password
+   HUB_TUNNEL_HOST=
+   KIOSK_TUNNEL_HOST=
+   PAYMENTS_PUBLIC_BASE_URL=
+   KIOSK_PUBLIC_BASE_URL=
+   ```
+
+   Device serials/keys/simulator selectors remain in private `frontend/.env`.
+   No tunnel account token is needed. The password belongs to the local Kiosk
+   test-access gate, not H.A.V.E customer login. Never put it in VITE_* variables,
+   frontend/.env, chat or Git. This machine already has a generated value in root .env.
+
+2. Start the local apps, then the two tunnels (PowerShell, repository root):
+
+   ```powershell
+   docker compose --profile frontend up -d db redis backend kiosk hub
+   docker compose -f compose.yaml -f compose.tunnels.yaml --profile tunnel up -d --no-deps hub-tunnel kiosk-tunnel
+   docker compose -f compose.yaml -f compose.tunnels.yaml logs --tail 40 hub-tunnel kiosk-tunnel
+   ```
+
+   On a fresh clone add `--build` to the first command. Do not rebuild/recreate
+   tunnels just to edit app source. The tunnel logs print two different HTTPS
+   `trycloudflare.com` URLs; identify each by its service name.
+
+3. Copy those exact public values into root `.env`:
+
+   ```dotenv
+   HUB_TUNNEL_HOST=actual-hub-name.trycloudflare.com
+   KIOSK_TUNNEL_HOST=actual-kiosk-name.trycloudflare.com
+   PAYMENTS_PUBLIC_BASE_URL=https://actual-hub-name.trycloudflare.com
+   KIOSK_PUBLIC_BASE_URL=https://actual-kiosk-name.trycloudflare.com
+   ```
+
+   Host entries have no scheme/port/path. Base URLs are full HTTPS origins.
+   Keep your existing Kashier TEST keys/merchant ID and SMTP settings unchanged.
+
+4. Apply the app configuration WITHOUT restarting the tunnels:
+
+   ```powershell
+   docker compose -f compose.yaml -f compose.tunnels.yaml --profile frontend up -d --no-deps --force-recreate backend kiosk hub
+   docker compose -f compose.yaml -f compose.tunnels.yaml up -d --no-deps --force-recreate order-worker
+   ```
+
+   Wait for backend health before testing. Source edits hot-reload. Environment
+   changes require recreating the affected apps/worker, not the tunnel containers.
+
+### What to open and verify
+
+- Hub: its generated HTTPS URL. `/api/v1/health/` must return `{"status":"ok"}`
+  without an interactive gate. Hub camera scanning now has an HTTPS context.
+- Kiosk: its generated URL plus `/?terminal=YOUR_EXISTING_SIMULATOR_ID`. Enter the
+  root .env KIOSK_TEST_ACCESS_PASSWORD on **Unlock test Kiosk**, then use the app. The
+  existing selector chooses the device; it is not a device key or substitute for
+  password gate. Do not share simulator links or use real patient data.
+- Anonymous Kiosk navigation must show the local unlock form, not the app. Scripts,
+  APIs and WebSocket upgrades fail with 401 until unlocked, without login redirects.
+  The gate runs before the device proxy and all Vite assets. Hub never uses this gate.
+- The gate uses a signed, host-only Secure/HttpOnly/SameSite=Lax cookie with a fixed
+  four-hour lifetime. It survives Kashier's top-level return but never restores a
+  customer session. Restarting Kiosk or changing the password invalidates the gate
+  cookie; unlock again. Localhost remains unchanged. Unlock POST requires matching
+  Origin, bounds its input, limits attempts and never echoes/logs the password.
+- Anonymous Kiosk requests must not reach the app/device
+  API. Hub must never supply device credentials. Kiosk trusts only the configured
+  exact HTTPS host and matching Origin/Fetch Metadata, plus its existing fixed
+  Terminal-route/method allowlist.
+- Browser API calls remain same-origin. Private frontend proxies strip client
+  forwarding headers and supply an internal HTTPS marker. Django tunnel settings
+  trust that marker only on exact configured hosts, secure cookies over HTTPS and
+  disable debug tracebacks. Local HTTP remains supported. Tunnel mode intentionally
+  omits Swagger/debug routes; use base Compose mode for localhost Swagger.
+- Start a new checkout from the public app origin, not localhost: cookies set on
+  localhost cannot authorize a result on the public Kiosk origin. Terminal returns
+  go directly to its own HTTPS `/payment-return`, retaining order/simulator IDs;
+  there is no public-to-local bridge and no general customer-login restoration.
+- Hub returns go to its owned order page. Kashier webhook URL is
+  `https://HUB_HOST/api/v1/payments/kashier/webhook/`. It remains unauthenticated
+  at the tunnel layer, with HMAC/provider verification enforced by Django.
+- Follow the existing backend AUTH_GUIDE purchase walkthrough. First save a test
+  card during a Hub purchase, then test a signed-in Kiosk purchase. Guests require
+  email and simulated printing. H.A.V.E never accepts raw card details.
+- Enter only Kashier's current sandbox test data on Kashier's own page; if a listed
+  historical expiry is rejected by its hosted form, use its **use testing data**
+  control/current provider guidance rather than a real card. Payment capture,
+  saving cards, emails and refunds require manual provider/account acceptance.
+
+### Stop, restart and limitations
+
+```powershell
+docker compose -f compose.yaml -f compose.tunnels.yaml stop hub-tunnel kiosk-tunnel
+docker compose -f compose.yaml -f compose.tunnels.yaml logs --tail 50 hub-tunnel kiosk-tunnel backend order-worker
+```
+
+Keep the laptop, Docker and both tunnels running until all test checkouts finish.
+A tunnel process restart/recreation creates a new hostname: repeat discovery,
+env update and app recreation. Existing checkout return/webhook URLs are immutable
+provider-session data; changing env does not repair them. Do not open duplicate
+payments to compensate for an uncertain result. The worker reconciles stored
+provider references; inspect the original order.
+
+Quick Tunnels have no uptime guarantee, allow 200 in-flight requests each, and
+do not support SSE (the current apps use ordinary requests/polling, not SSE).
+Kiosk API tests should use localhost or an unlocked browser, never remove the
+password gate to make a test work. It is development protection, not fleet device auth.
+
+To return completely to localhost mode, stop both tunnels and recreate
+`backend order-worker kiosk hub` with the base Compose file and frontend profile.
+Local Swagger returns at `http://localhost:8000/api/docs/`. Purchase integration
+still requires the public HTTPS origins. Never use `down -v`.
+
+Reference: https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/
+
+### Password-gate correction — 2026-10-17
+
+Cloudflare's Quick Tunnel email sessions failed during real use: asset requests
+were redirected to its login broker, appearing as CORS failures. This matches
+https://github.com/cloudflare/cloudflared/issues/1752 . The earlier anonymous-gate
+check below did not prove a completed email session remained usable. The local
+password gate supersedes that email setup. No Django CORS relaxation, public device
+key, customer-auth change or payment change is involved. Hub's URL is unchanged;
+only Kiosk's tunnel was recreated, and its configured payment return origin updated.
+
+Password-gate verification: all 84 unit tests, all workspace typechecks and four
+app builds passed. The affected browser suite passed 39 cases; two optional local
+live-auth cases were not enabled in that run. A separate real public-browser check
+passed wrong-password rejection, successful unlock, secure-cookie attributes, module
+loading after eight seconds, reload, a real guest catalogue and Start over, with no
+page JavaScript/CORS errors. Anonymous modules/APIs remain blocked. Password/device
+keys were absent from all four browser bundles. No payment was submitted.
+
+### Verified checkpoint — 2026-10-17
+
+- 282 backend tests, 79 frontend unit tests, and all 87 Docker browser tests passed.
+  All workspace typechecks/four app builds, OpenAPI validation and no-migration-drift
+  checks passed. The existing large-bundle advisories are non-blocking.
+- Both tunnels connected using HTTP/2. Public Hub health, login, Secure/HttpOnly/
+  Strict refresh cookies, reload restoration and logout passed with the fictional
+  Kiosk Tester account. An unsigned public webhook was rejected by Django.
+- Anonymous Kiosk requests redirect to login.trycloudflare.com/authorize and show
+  Cloudflare Access's email form, not the app. Completing the permitted-email code,
+  returning from a real Kashier checkout and actual card/provider outcomes remain
+  user-operated acceptance checks. No verification email or card payment was
+  submitted by this verification.
+- Old tunnel configuration/container/image and account-token env entry were
+  removed. Remote Workers applications remain untouched. Existing PostgreSQL data,
+  device/payment credentials and requirement snapshots were preserved. No commit,
+  push, database reset or schema migration was made.
