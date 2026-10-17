@@ -1,5 +1,13 @@
 # Increment 3 — H.A.V.E Hub authentication
 
+## Cloudflare frontend build configuration — 2026-10-17
+
+`hub/wrangler.jsonc` defines `autopharm-have`, publishing only Hub `dist` assets
+with SPA navigation fallback. frontend/README.md documents the exact Workers build
+settings and pinned Node/pnpm versions. The configuration does not deploy Django
+or replace Vite's development API proxy. A reachable backend and approved same-origin
+API routing are still required; no backend secrets belong in frontend variables.
+
 ## Bug-fix checkpoint — 2026-10-17
 
 Hub's per-customer/per-machine baskets remain unchanged. Terminal PIN/QR login now

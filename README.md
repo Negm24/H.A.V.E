@@ -1,5 +1,9 @@
 # H.A.V.E — Django backend
 
+Cloudflare frontend build setup for Hub and Kiosk is documented in
+[frontend/README.md](frontend/README.md#cloudflare-frontend-builds--2026-10-17).
+It publishes frontend assets only; backend/device connectivity is a separate step.
+
 The backend includes owner authentication, customer signup, Hub login/refresh/logout, and Terminal guest/customer sessions. PostgreSQL, Redis, and Django run through Docker Compose.
 
 ## Bug-fix checkpoint — 2026-10-17

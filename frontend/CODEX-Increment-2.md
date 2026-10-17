@@ -1,5 +1,14 @@
 # Increment 2 — Terminal authentication and mock customer dashboard
 
+## Cloudflare frontend build configuration — 2026-10-17
+
+`kiosk/wrangler.jsonc` defines the `autopharm-have-kiosk` static-assets deployment,
+with `dist` relative to that config and React SPA navigation fallback. Use the
+workspace-root build settings in frontend/README.md; no app behavior, API paths,
+device authentication or local Docker proxy changes are made. Public deployment
+of static assets does not deploy the private device agent or authorize a physical
+Terminal. Do not upload device keys or expose the local simulator as a public relay.
+
 ## Bug-fix checkpoint — 2026-10-17
 
 This supersedes the basket-preservation statements in the historical entries below.

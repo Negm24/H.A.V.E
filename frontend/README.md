@@ -1,5 +1,52 @@
 # H.A.V.E frontend
 
+## Cloudflare frontend builds — 2026-10-17
+
+These settings fix the repository-root `Could not detect a directory containing
+static files` error. This is **Workers Builds + Static Assets**, not Cloudflare
+Pages. Create two independent Workers from this GitHub repository and `main`:
+
+| Setting | Hub | Kiosk |
+| --- | --- | --- |
+| Worker/project name | `autopharm-have` | `autopharm-have-kiosk` |
+| Root directory | `frontend` | `frontend` |
+| Build command | `pnpm install --frozen-lockfile && pnpm --filter @have/hub build` | `pnpm install --frozen-lockfile && pnpm --filter @have/kiosk build` |
+| Deploy command | `npx wrangler@4.151.1 deploy --config hub/wrangler.jsonc` | `npx wrangler@4.151.1 deploy --config kiosk/wrangler.jsonc` |
+
+Use `main` as the production branch. Leave non-production/preview branch builds
+disabled for this first setup; their commands must also select the corresponding
+Wrangler config before enabling them later.
+
+For both Workers, set these **Build variables**, not frontend secrets:
+
+```dotenv
+NODE_VERSION=24.11.1
+PNPM_VERSION=11.25.0
+SKIP_DEPENDENCY_INSTALL=true
+```
+
+The explicit build command performs the frozen install. Keep the workspace root
+`frontend`, not `frontend/hub` or `frontend/kiosk`, so the shared package and lockfile
+remain available. In the existing Worker, open Settings → Build, save the settings,
+then retry the failed build. Create the second Worker with its own name/commands.
+Each config publishes only its app's `dist` and supports refreshing React routes.
+
+**This step publishes frontend assets only.** Vite's development `/api` proxy and
+kiosk credential injection do not run in a static deployment. No API gateway,
+Django/PostgreSQL/Redis/worker hosting, device agent, or payment-return bridge is
+configured here. Login, stock, cart and checkout need that separate backend/device
+connection before these can be called working hosted apps. Do not use a successful
+static deployment as evidence of working payments.
+
+Do not copy backend `.env`, Terminal keys, database passwords, or Kashier keys into
+Cloudflare build variables, `VITE_*`, source files, or public assets. The private
+local multi-Terminal simulator remains loopback-only. The local Docker workflow is
+unchanged, and generated `dist`/`.wrangler` output stays Git-ignored.
+
+Validation: both app builds/typechecks and pinned Wrangler 4.151.1 dry runs passed.
+Wrangler located each app's actual `dist` and accepted its asset/SPA configuration.
+Dry runs upload nothing; no successful cloud deployment or API connection is claimed.
+
 ## Egypt-market sample stock — 2026-10-16
 
 Both local test Terminals now use 31 recognisable medicine/supply records across
