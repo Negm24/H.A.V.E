@@ -12,7 +12,7 @@ function fixtures() {
     start: vi.fn().mockResolvedValue(guest), activity: vi.fn().mockResolvedValue({ ...guest, session_token: undefined }),
     end: vi.fn().mockResolvedValue(undefined), login: vi.fn().mockResolvedValue(loggedIn), me: vi.fn().mockResolvedValue(customer),
     createQr: vi.fn(), qrStatus: vi.fn(), completeQr: vi.fn().mockResolvedValue(loggedIn),
-  } satisfies typeof terminalApi
+  } satisfies NonNullable<Parameters<typeof createSessionController>[0]>
   const controller = createSessionController(api)
   controller.connect()
   const start = async () => { controller.chooseLanguage(); await controller.start('en') }

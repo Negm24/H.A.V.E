@@ -9,6 +9,14 @@ import { ProfilePage } from '../features/dashboard/pages/ProfilePage'
 import { useSession } from '../features/session/hooks/use-session'
 import { useEffect } from 'react'
 import { useTranslation } from '@have/shared/i18n'
+import { CategoriesPage } from '../features/catalogue/pages/CategoriesPage'
+import { ProductsPage } from '../features/catalogue/pages/ProductsPage'
+import { SearchPage } from '../features/catalogue/pages/SearchPage'
+import { ProductDetailPage } from '../features/catalogue/pages/ProductDetailPage'
+import { CheckoutPage } from '../features/orders/pages/CheckoutPage'
+import { OrderHistoryPage } from '../features/orders/pages/OrderHistoryPage'
+import { OrderDetailPage } from '../features/orders/pages/OrderDetailPage'
+import { PaymentReturnPage } from '../features/orders/pages/PaymentReturnPage'
 
 export function AppRoutes() {
   const { state } = useSession()
@@ -17,6 +25,14 @@ export function AppRoutes() {
   const home = state.phase === 'guest' ? '/guest' : state.phase === 'customer' ? '/dashboard'
     : state.phase === 'language' || state.phase === 'starting' ? '/language' : '/'
   return <Routes>
+    <Route path="/payment-return" element={<PaymentReturnPage />} />
+    <Route path="/checkout" element={['guest', 'customer'].includes(state.phase) ? <CheckoutPage /> : <Navigate to={home} replace />} />
+    <Route path="/profile/orders" element={state.phase === 'customer' ? <OrderHistoryPage /> : <Navigate to={home} replace />} />
+    <Route path="/profile/orders/:orderId" element={state.phase === 'customer' ? <OrderDetailPage /> : <Navigate to={home} replace />} />
+    <Route path="/browse" element={['guest', 'customer'].includes(state.phase) ? <CategoriesPage /> : <Navigate to={home} replace />} />
+    <Route path="/browse/categories/:categoryId" element={['guest', 'customer'].includes(state.phase) ? <ProductsPage /> : <Navigate to={home} replace />} />
+    <Route path="/browse/search" element={['guest', 'customer'].includes(state.phase) ? <SearchPage /> : <Navigate to={home} replace />} />
+    <Route path="/browse/products/:productId" element={['guest', 'customer'].includes(state.phase) ? <ProductDetailPage /> : <Navigate to={home} replace />} />
     <Route path="/" element={home === '/' ? <AttractPage /> : <Navigate to={home} replace />} />
     <Route path="/language" element={home === '/language' ? <LanguagePage /> : <Navigate to={home} replace />} />
     <Route path="/guest" element={state.phase === 'guest' ? <GuestHomePage /> : <Navigate to={home} replace />} />

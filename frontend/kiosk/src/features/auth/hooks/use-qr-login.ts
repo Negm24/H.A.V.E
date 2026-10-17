@@ -27,11 +27,13 @@ export function useQrLogin() {
       const result = await controller.createQr()
       if (current !== generation.current) return
       deadline.current = Date.now() + result.expires_in * 1000
+      setRetryAt(Date.now() + ((result as QrChallenge & { generate_again_in?: number }).generate_again_in ?? 10) * 1000)
+      setClock(Date.now())
       setQr(result); setStatus(result.status)
     } catch (error) {
       if (current !== generation.current) return
       setStatus('unavailable')
-      if (error instanceof ApiError) setRetryAt(Date.now() + (error.retryAfter || 0) * 1000)
+      if (error instanceof ApiError) setRetryAt(previous => Math.max(previous, Date.now() + (error.retryAfter || 0) * 1000))
     } finally { if (current === generation.current) setBusy(false) }
   }
 
@@ -61,7 +63,7 @@ export function useQrLogin() {
         if (stopped || current !== generation.current) return
         setQr(null)
         setStatus(error instanceof ApiError && error.status === 400 ? 'expired' : 'unavailable')
-        if (error instanceof ApiError) setRetryAt(Date.now() + (error.retryAfter || 0) * 1000)
+        if (error instanceof ApiError) setRetryAt(previous => Math.max(previous, Date.now() + (error.retryAfter || 0) * 1000))
       } finally {
         running = false
         if (!stopped) timer = setTimeout(() => void poll(), 2000)

@@ -1,0 +1,15 @@
+H.A.V.E — إيصال دفع تجريبي
+لم يتم خصم أموال حقيقية.
+رقم الإيصال: {{ receipt_number }}
+الطلب: {{ receipt.order_number }}
+الجهاز: {{ receipt.terminal_name }}
+
+{% for item in receipt.items %}{{ item.name_ar }} × {{ item.quantity }}: {{ item.line_total }} جنيه مصري
+{% endfor %}
+إجمالي المدفوع: {{ receipt.total_paid }} جنيه مصري
+{% if receipt.collection_deadline %}مدفوع — بانتظار الاستلام
+الاستلام قبل: {{ receipt.collection_deadline }} (UTC)
+استلم من الجهاز المحدد. تُلغى الطلبات غير المستلمة وتُرد مبالغها.
+{% else %}تسليم المنتجات محاكاة في هذا النموذج الأكاديمي.
+{% endif %}
+الطباعة: {{ receipt.printing }} (محاكاة فقط، لا توجد طابعة فعلية).

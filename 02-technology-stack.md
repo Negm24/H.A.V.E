@@ -1,5 +1,17 @@
 # H.A.V.E — Technology Stack and Architecture
 
+**Bug-fix update — 17 October 2026:** Terminal PIN/QR login atomically discards the
+guest basket without resetting the absolute session clock. Provider creation-field
+validation failures release unpaid allocations; lost session references are recovered
+by bounded, exact-reference reads with merchant/amount/currency validation. Unknown
+financial outcomes remain fail-closed. No public-to-local return bridge or cloud
+deployment is added. Optional ngrok agent DNS uses explicit resolvers without disabling
+TLS/CRL verification; Cloudflare local secret/state files are excluded from Git.
+
+**Implementation update — 15 October 2026:** Catalogue (categories/products/batches) and Terminal inventory (slots/stock) use Django ORM/PostgreSQL with additive migrations. A private development seed inserts labelled samples, never on startup. Catalogue APIs have no runtime mock-JSON fallback. Terminal baskets live inside the existing Redis session value; EGP prices/totals are calculated by Django from PostgreSQL. Reservations, checkout and image storage remain future work. Existing device authentication and session deadlines are unchanged.
+
+**Shared-cart update — 15 October 2026:** `apps/carts` owns reusable cart pricing/projection and atomic versioned Redis persistence. Customer keys are account-owned and shared across Hub and signed-in Terminals; guest baskets remain session-owned. Root `CART_DATA_EXPIRY=86400` is passed to Django through Compose. Actual modifications renew expiry; reads, login and unchanged writes do not. There are no new PostgreSQL tables/migrations. Catalogue services support local Terminal stock and Hub network-wide stock using the same eligibility rules. Hub's `/api/v1/hub/catalogue/` and `/api/v1/hub/cart/` require Hub bearer authentication, never device credentials. A mandatory post-login cart comparison prevents automatic merging/overwriting; stale versions return 409. Presentation/search/translation code is shared without importing one frontend app into another. No reservations, purchase, order creation or collection is implemented. Future paid Hub orders will be collected through Terminal Profile → Order History, with payment/ownership/stock/duplicate checks designed in the purchase increment.
+
 **Version:** 1.4
 
 **Status:** Confirmed
@@ -110,7 +122,7 @@ An approved doctor may look up a customer by exact canonical phone number to aut
 
 ### 3.3 H.A.V.E Hub
 
-Hub is the customer-facing React + Vite application for use away from a kiosk. It uses the same central customer account as Terminal, with its own non-kiosk session policy. It is the only place customers sign up: signup verifies the phone by SMS code and then the email by emailed code. It also provides prescription claim and viewing, order and receipt history, nearby Terminal discovery, and per-Terminal catalogue/stock browsing. Stock shown remotely is timestamped and advisory until a backend reservation is confirmed.
+Hub is the customer-facing React + Vite application for use away from a kiosk. It uses the same central customer account as Terminal, with its own non-kiosk session policy. It is the only place customers sign up: signup verifies the phone by SMS code and then the email by emailed code. Catalogue/stock browsing now shows network-wide advisory availability without a selected Terminal, plus a shared one-day customer cart. Prescription claim/viewing, order/receipt history, nearby Terminal discovery and purchasing/collection remain planned features. Stock is timestamped and is not guaranteed at any particular machine or reserved by adding to a cart.
 
 Hub will let customers save payment methods through a provider-hosted capture flow. Only provider tokens and display-safe metadata reach Django; no card number or security code reaches Hub, Django, or PostgreSQL. In the academic implementation the provider flow is simulated without real card credentials. A saved method still requires a customer-approved, amount-specific checkout and any provider-required verification.
 
@@ -1234,3 +1246,11 @@ GitHub monorepo + Semantic Versioning
 ```
 
 This architecture keeps the project understandable for five developers, supports Terminal, Advisor, and Hub as separate applications on one backend, preserves transactional correctness without pretending external systems share a database transaction, allows Python-based integrations, supports the required offline degradation, and avoids letting a hosting platform replace the project's own backend design. H.A.V.E Operation remains on standby rather than part of the current frontend count.
+
+## Kashier sandbox purchasing — 2026-10-17
+
+This update supersedes historical generic/mock-provider, shared-cart and network-wide Hub discovery statements. Django Orders owns durable allocations, lifecycle transitions, immutable receipts and bilingual SMTP templates. Payments owns the fixed Kashier test adapter, signed webhook verification, narrowly scoped return authorization and durable payment/refund attempts. No raw card data or provider tokens reach H.A.V.E clients. Saved methods remain provider-owned.
+
+Hub selects a machine before discovery and uses an isolated per-customer/per-machine Redis basket (one day after a real edit). Terminal baskets are session-owned, including after customer login. Stock reservation begins at checkout under PostgreSQL locks; available stock excludes ACTIVE reservations. Immediate sandbox capture precedes simulated fulfilment. Paid Hub orders have a fixed 24-hour collection window; expiry releases allocations and queues full refunds.
+
+The Docker order-worker reuses the backend image and polls durable domain records for reconciliation, expiry, refunds, cart cleanup and email retries. This increment does not introduce Celery, a generic outbox or a new queue framework. Network and SMTP calls occur outside short locked transactions; uncertain financial mutations are never blindly repeated. Provider endpoints are pinned to test hosts and mode=test. Secrets stay in root .env, passed only to backend/worker; device keys remain frontend-server-only.

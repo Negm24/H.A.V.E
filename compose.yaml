@@ -68,7 +68,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend:/app
-    environment:
+    environment: &backend-environment
       DJANGO_SETTINGS_MODULE: config.settings.local
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
@@ -79,6 +79,11 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       REDIS_URL: redis://redis:6379/0
+      CART_DATA_EXPIRY: ${CART_DATA_EXPIRY:-86400}
+      KASHIER_DEFAULT_TEST_KEY: ${KASHIER_DEFAULT_TEST_KEY:-}
+      KASHIER_SECRET_KEY: ${KASHIER_SECRET_KEY:-}
+      KASHIER_MERCHANT_ID: ${KASHIER_MERCHANT_ID:-}
+      PAYMENTS_PUBLIC_BASE_URL: ${PAYMENTS_PUBLIC_BASE_URL:-}
       MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:-}
       OWNER_NOTIFICATION_EMAIL: ${OWNER_NOTIFICATION_EMAIL:-}
       EMAIL_HOST: ${EMAIL_HOST:-}
@@ -106,6 +111,17 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  order-worker:
+    build: ./backend
+    restart: unless-stopped
+    command: ["python", "manage.py", "order_worker"]
+    environment: *backend-environment
+    volumes:
+      - ./backend:/app
+    depends_on:
+      backend:
         condition: service_healthy
 
   kiosk:

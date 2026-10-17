@@ -2,6 +2,8 @@
 
 Date: 27 September 2026. Status: accepted design, not a description of the current implemented database.
 
+Implementation note — 15 October 2026 (shared cart): Hub reuses the migrated catalogue/inventory tables with network-wide advisory availability. Customer saved carts are versioned Redis records shared across apps, with a one-day actual-modification expiry; guest carts remain Terminal-session state. This update adds no ERD entity, PostgreSQL table or migration. Future paid Hub orders and collection through Terminal Profile → Order History are requirements only; payment, reservation, order-state and duplicate-collection design remain deferred. Redis baskets must not be represented as purchased orders in this diagram.
+
 [Open the editable six-page Lucidchart ERD](https://lucid.app/lucidchart/7665a8f5-ffd3-474a-b74e-0a296ed603f3/edit)
 
 Pages: overview, accounts/approval, catalogue/inventory, prescriptions, orders/fulfilment, and insurance/payment/receipts. Each detailed page uses crow's-foot FK endpoints; dashed reference cards repeat existing tables, not extra entities. All 21 tables and 34 relationships are covered. The Lucidchart presentation uses editable shapes with routed connector segments. When moving tables, move/reroute their connector segments too. This field dictionary records the planned schema and constraints; it is not an executable migration.
@@ -136,6 +138,8 @@ PK = primary key; FK = foreign key; NULL = optional. Crow's-foot endpoints show 
 | `ip_address` | inet NULL |  |
 
 ## categories
+
+Implementation checkpoint — 2026-10-15: categories, products, product_batches, terminal_slots and terminal_stock now have additive Django migrations. Sample data is inserted only with the explicit DEBUG-only seed_catalogue command. Cart remains temporary Redis Terminal-session state (no table). Stock reservations/orders remain future work; adding to cart does not decrement/reserve stock. Image fields remain deferred; API image_url is currently null.
 
 | Column | Type / default | Key |
 |---|---|---|
@@ -410,3 +414,11 @@ PK = primary key; FK = foreign key; NULL = optional. Crow's-foot endpoints show 
 | payment_transactions.saved_payment_method_id | saved_payment_methods.id | zeroOrOne | zeroOrMore |
 | payment_transactions.related_transaction_id | payment_transactions.id | zeroOrOne | zeroOrMore |
 | receipts.order_id | orders.id | exactlyOne | zeroOrOne |
+
+## Purchasing implementation notes — 2026-10-17
+
+Implemented tables now include orders, order_products, stock_reservations, payment_transactions and receipts. Orders keep exactly PENDING/DISPENSING/CANCELLED/COMPLETED/REVIEW_REQUIRED; Expired is CANCELLED with COLLECTION_EXPIRED. Lines allocate one concrete stock/batch row per line; one product may span multiple lines. Protected financial relationships and immutable receipt snapshots preserve issued records.
+
+The implementation adds channel, idempotency/fingerprint, checkout version, paid/collection/cancellation timestamps, uncertain-payment state, durable notification retry/lease metadata, and safe cart-cleanup markers. Payment attempts persist provider session/order/transaction references and work leases. Amounts are decimal EGP, never floating point. Product.max_quantity_per_order is nullable: NULL means available-stock-only.
+
+Future insurance/prescription relations and saved_payment_methods remain unimplemented; Kashier currently owns saved tokens. Physical stock changes only at simulated fulfilment. ACTIVE reservations reduce availability until explicitly consumed/released/expired; no physical increment occurs on cancellation. Hub collection deadline is 24 hours from verified payment. Basket state is Redis only: Hub per customer+machine, Terminal per active session. This supersedes the historical shared-cart design notes.

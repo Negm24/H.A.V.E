@@ -33,7 +33,7 @@ urlpatterns = [
 class ApiContractTests(SimpleTestCase):
     def test_services_and_security_do_not_depend_on_api(self):
         apps_root = Path(__file__).resolve().parents[2]
-        for app in ("accounts", "terminals"):
+        for app in ("accounts", "terminals", "catalogue", "carts", "orders", "payments"):
             for layer in ("services", "security"):
                 for source in (apps_root / app / layer).rglob("*.py"):
                     tree = ast.parse(source.read_text(encoding="utf-8"))
@@ -87,16 +87,19 @@ class ApiContractTests(SimpleTestCase):
             ("sessions/", "terminal-session-start"),
             ("sessions/activity/", "terminal-session-activity"),
             ("sessions/end/", "terminal-session-end"),
+            ("cart/", "terminal-cart"),
+            ("cart/items/<int:product_id>/", "terminal-cart-item"),
         ]
         self.assertEqual([(str(p.pattern), p.name) for p in account_routes[:len(expected_accounts)]], expected_accounts)
-        self.assertEqual([(str(p.pattern), p.name) for p in terminal_routes], expected_terminals)
+        self.assertEqual([(str(p.pattern), p.name) for p in terminal_routes[:-1]], expected_terminals)
+        self.assertEqual(str(terminal_routes[-1].pattern), "catalogue/")
         for suffix, name in expected_accounts:
             url = "/api/v1/auth/" + suffix
             self.assertEqual(reverse("accounts_api:" + name), url)
             self.assertEqual(resolve(url).view_name, "accounts_api:" + name)
         for suffix, name in expected_terminals:
-            url = "/api/v1/terminals/" + suffix
-            self.assertEqual(reverse(name), url)
+            url = "/api/v1/terminals/" + suffix.replace("<int:product_id>", "1")
+            self.assertEqual(reverse(name, kwargs={"product_id": 1} if "product_id" in suffix else None), url)
             self.assertEqual(resolve(url).view_name, name)
 
 

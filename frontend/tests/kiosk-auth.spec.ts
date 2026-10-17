@@ -6,11 +6,14 @@ const customer = { id: 'HAV-C876-000000000024', account_type: 'CUSTOMER', first_
 async function mockTerminal(page: Page, options: { unavailable?: boolean; rejected?: boolean; shortQr?: boolean } = {}) {
   const calls: { path: string; method: string; bearer: string | undefined }[] = []
   let qrReads = 0
+  const emptyCart = { items: [], total_quantity: 0, subtotal: '0.00', total: '0.00', currency: 'EGP', has_issues: false, version: 'empty', created_at: null, updated_at: null, expires_at: null, comparison_required: false, adoption_notice: null }
   await page.route('**/api/v1/**', async route => {
     const req = route.request(), path = new URL(req.url()).pathname
     calls.push({ path, method: req.method(), bearer: req.headers().authorization })
     let status = 200, body: unknown = { session_id: 'test', idle_expires_in: 240 }
     if (options.unavailable) { status = 503; body = { detail: 'Device configuration unavailable' } }
+    else if (path.includes('/catalogue/')) body = []
+    else if (path.endsWith('/cart/')) body = emptyCart
     else if (path === '/api/v1/terminals/sessions/') { status = 201; body = { session_id: 'test', session_token: 'guest-test', token_type: 'Bearer', idle_expires_in: 240 } }
     else if (path.endsWith('/end/')) { status = 204; body = undefined }
     else if (path.endsWith('/terminal/login/')) {
@@ -25,11 +28,12 @@ async function mockTerminal(page: Page, options: { unavailable?: boolean; reject
   return calls
 }
 
-async function start(page: Page, arabic = false) {
-  await page.goto(origin)
+async function start(page: Page, arabic = false, real = false) {
+  const selector = real ? process.env.TERMINAL_HAVE_TEST_001_SIMULATOR_ID : undefined
+  await page.goto(selector ? `${origin}/?terminal=${selector}` : origin)
   await page.getByRole('button', { name: /Touch to start/ }).click()
   await page.getByRole('button', { name: arabic ? /العربية/ : /Continue in English/ }).click()
-  await expect(page).toHaveURL(/\/guest$/)
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/guest')
 }
 
 async function pinLogin(page: Page, pin = '4826') {
@@ -48,7 +52,7 @@ async function openQrLogin(page: Page) {
 test('guest menu has two cards and QR login belongs to the sign-in page', async ({ page }) => {
   await mockTerminal(page); await start(page)
   await expect(page.locator('.home-card')).toHaveCount(2)
-  await expect(page.getByRole('button', { name: /Browse medicines/ })).toBeDisabled()
+  await expect(page.getByRole('button', { name: /Browse medicines/ })).toBeEnabled()
   await expect(page.getByRole('button', { name: /Product guidance/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /H.A.V.E Hub/ })).toHaveCount(0)
   await openQrLogin(page)
@@ -58,11 +62,12 @@ test('guest menu has two cards and QR login belongs to the sign-in page', async 
 })
 
 test('PIN login rotates token, profile is real-shaped/read-only, sign-out clears it', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 600 })
   const calls = await mockTerminal(page)
   await start(page); await pinLogin(page)
   await expect(page.getByRole('heading', { name: 'Hello Kiosk' })).toBeVisible()
   await expect(page.locator('.home-card')).toHaveCount(4)
-  await expect(page.getByRole('button', { name: /Browse medicines/ })).toBeDisabled()
+  await expect(page.getByRole('button', { name: /Browse medicines/ })).toBeEnabled()
   await expect(page.getByRole('button', { name: /Order history/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0)
   expect(calls.find(call => call.path.endsWith('/terminal/login/'))?.bearer).toBe('Bearer guest-test')
@@ -71,8 +76,11 @@ test('PIN login rotates token, profile is real-shaped/read-only, sign-out clears
   await expect(page.getByText('24-01-2005', { exact: true })).toBeVisible()
   await expect(page.getByText(customer.email, { exact: true })).toBeVisible()
   await expect(page.locator('input')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /Order history/ })).toBeDisabled()
+  await expect(page.getByRole('button', { name: /Order history/ })).toBeEnabled()
   expect(await page.locator('.terminal-content').evaluate(element => element.scrollHeight <= element.clientHeight)).toBe(true)
+  expect(await page.locator('.profile-actions').evaluate(element => getComputedStyle(element).marginBlockEnd)).toBe('12px')
+  if (process.env.E2E_VISUAL === 'true') await page.screenshot({ path: 'test-results/kiosk-profile-spacing.png' })
+  expect(await page.locator('.profile-actions').evaluate(element => document.querySelector('.terminal-footer')!.getBoundingClientRect().top - element.getBoundingClientRect().bottom)).toBeGreaterThanOrEqual(12)
   await page.getByRole('button', { name: 'Back', exact: true }).click()
   await page.getByRole('button', { name: 'Start over', exact: true }).click()
   await expect(page.getByRole('button', { name: /Touch to start/ })).toBeVisible()
@@ -100,11 +108,14 @@ test('QR waits for confirmation and completes once', async ({ page }) => {
 })
 
 test('QR rejection removes QR and offers regeneration', async ({ page }) => {
+  await page.clock.install()
   await mockTerminal(page, { rejected: true }); await start(page)
   await openQrLogin(page)
   await page.getByRole('button', { name: 'Generate QR', exact: true }).click()
   await expect(page.getByRole('status')).toContainText('rejected', { timeout: 5000 })
   await expect(page.locator('.qr-panel svg')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Generate QR', exact: true })).toBeDisabled()
+  await page.clock.fastForward(10_000)
   await expect(page.getByRole('button', { name: 'Generate QR', exact: true })).toBeEnabled()
 })
 
@@ -165,7 +176,7 @@ test.describe('real backend kiosk smoke tests', () => {
   test.skip(process.env.E2E_REAL !== 'true', 'Enable only with the documented dedicated local fixtures.')
   test.describe.configure({ mode: 'serial' })
   test('real PIN, profile and sign-out', async ({ page }) => {
-    await start(page); await pinLogin(page)
+    await start(page, false, true); await pinLogin(page)
     await expect(page.getByRole('heading', { name: 'Hello Kiosk' })).toBeVisible()
     await page.getByRole('button', { name: /My profile/ }).click()
     await expect(page.getByText('kiosk-tester@example.test', { exact: true })).toBeVisible()
@@ -181,7 +192,7 @@ test.describe('real backend kiosk smoke tests', () => {
     expect(login.status()).toBe(200)
     const access = (await login.json()).access_token
     try {
-      await start(page)
+      await start(page, false, true)
       await openQrLogin(page)
       const created = page.waitForResponse(response => response.url().endsWith('/terminal/qr-login/') && response.request().method() === 'POST')
       await page.getByRole('button', { name: 'Generate QR', exact: true }).click()

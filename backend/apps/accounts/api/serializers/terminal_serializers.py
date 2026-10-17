@@ -7,6 +7,7 @@ from .shared_serializers import QrStatusOutputSerializer
 
 class CustomerTerminalQrCreateOutputSerializer(QrStatusOutputSerializer):
     qr_payload = serializers.CharField()
+    generate_again_in = serializers.IntegerField()
 
 
 @extend_schema_serializer(component_name="CustomerLogin")

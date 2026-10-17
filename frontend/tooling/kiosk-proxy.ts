@@ -13,6 +13,14 @@ const methods = new Map([
 ])
 
 export function terminalMethod(path: string): string | undefined {
+  if (path === '/api/v1/terminals/orders/') return 'GET'
+  if (path === '/api/v1/terminals/orders/checkout/') return 'POST'
+  if (/^\/api\/v1\/terminals\/orders\/[0-9a-f-]{36}\/(?:result\/)?$/.test(path)) return 'GET'
+  if (/^\/api\/v1\/terminals\/orders\/[0-9a-f-]{36}\/(?:cancel|collect|reorder|result\/(?:end|activity))\/$/.test(path)) return 'POST'
+  if (path === '/api/v1/terminals/catalogue/categories/' || path === '/api/v1/terminals/catalogue/products/') return 'GET'
+  if (/^\/api\/v1\/terminals\/catalogue\/products\/[1-9][0-9]*\/$/.test(path)) return 'GET'
+  if (path === '/api/v1/terminals/cart/') return 'GET,DELETE'
+  if (/^\/api\/v1\/terminals\/cart\/items\/[1-9][0-9]*\/$/.test(path)) return 'PUT'
   if (methods.has(path)) return methods.get(path)
   if (/^\/api\/v1\/auth\/customers\/terminal\/qr-login\/[0-9a-f-]{36}\/$/.test(path)) return 'GET'
   if (/^\/api\/v1\/auth\/customers\/terminal\/qr-login\/[0-9a-f-]{36}\/complete\/$/.test(path)) return 'POST'
@@ -53,22 +61,36 @@ function forward(target: URL, method: string, headers: Headers, body?: Buffer): 
 }
 
 // Development-only local boundary. It never returns the installation key.
-export function kioskProxy(): Plugin {
+export function resolveTerminalCredentials(env: Record<string, string>, simulatorId?: string) {
+  const mappings = Object.keys(env).filter(name => /^TERMINAL_[A-Z0-9_]+_SIMULATOR_ID$/.test(name))
+  // Keep existing single-installation setups working until explicitly migrated.
+  if (!mappings.length && !simulatorId) {
+    return { serial: env.TERMINAL_SERIAL?.trim(), key: env.TERMINAL_KEY?.trim() }
+  }
+  if (!simulatorId || !/^[a-f0-9]{32}$/.test(simulatorId)) return undefined
+  const matches = mappings.filter(name => env[name]?.trim() === simulatorId)
+  if (matches.length !== 1) return undefined
+  const prefix = matches[0]!.slice(0, -'SIMULATOR_ID'.length)
+  return { serial: env[`${prefix}SERIAL`]?.trim(), key: env[`${prefix}KEY`]?.trim() }
+}
+
+export function kioskProxy(testCredentials?: Record<string, string>): Plugin {
   return {
     name: 'private-kiosk-device-proxy',
     configureServer(server) {
       // Server-only config. Never pass these values to Vite's browser define/env.
-      const credentials = loadEnv(server.config?.mode || 'development', fileURLToPath(new URL('..', import.meta.url)), 'TERMINAL_')
+      const credentials = testCredentials ?? loadEnv(server.config?.mode || 'development', fileURLToPath(new URL('..', import.meta.url)), 'TERMINAL_')
       server.middlewares.use(async (req, res, next) => {
         const path = req.url?.split('?')[0] || ''
         const isTerminal = path.startsWith('/api/v1/terminals/') || path.startsWith('/api/v1/auth/customers/terminal/')
         if (!isTerminal) return next()
         const method = terminalMethod(path)
         if (!method) return fail(res, 404, 'Terminal route unavailable.')
-        if (req.method !== method) return fail(res, 405, 'Method not allowed.')
+        if (!method.split(',').includes(req.method || '')) return fail(res, 405, 'Method not allowed.')
         if (!trustedKioskRequest(req)) return fail(res, 403, 'Use the installed kiosk application.')
-        const serial = credentials.TERMINAL_SERIAL?.trim()
-        const key = credentials.TERMINAL_KEY?.trim()
+        const selector = req.headers['x-terminal-simulator']
+        const device = resolveTerminalCredentials(credentials, typeof selector === 'string' ? selector : undefined)
+        const { serial, key } = device ?? {}
         if (!serial || !key) return fail(res, 503, 'Terminal device configuration is unavailable.')
         try {
           const chunks: Buffer[] = []
@@ -84,14 +106,21 @@ export function kioskProxy(): Plugin {
             'X-Terminal-Serial': serial, 'X-Terminal-Key': key,
           })
           if (req.headers.authorization) headers.set('Authorization', req.headers.authorization)
-          const response = await forward(new URL(path, process.env.BACKEND_ORIGIN || 'http://127.0.0.1:8000'), method, headers,
-            method === 'GET' || !size ? undefined : Buffer.concat(chunks))
+          // Only order-scoped HttpOnly result cookies cross this private boundary.
+          // General Hub/owner cookies must never be forwarded to device routes.
+          const resultCookie = req.headers.cookie?.split(';').map(item => item.trim()).filter(item => /^have_payment_[a-f0-9]{32}=/.test(item)).join('; ')
+          if (path.startsWith('/api/v1/terminals/orders/') && resultCookie) headers.set('Cookie', resultCookie)
+          const response = await forward(new URL(path, process.env.BACKEND_ORIGIN || 'http://127.0.0.1:8000'), req.method!, headers,
+            req.method === 'GET' || !size ? undefined : Buffer.concat(chunks))
           if (response.status !== 204 && !String(response.headers['content-type']).includes('application/json')) {
             return fail(res, 503, 'Terminal service returned an invalid response.')
           }
           res.statusCode = response.status
           res.setHeader('Content-Type', 'application/json')
           res.setHeader('Cache-Control', 'no-store')
+          if (path.startsWith('/api/v1/terminals/orders/') && response.headers['set-cookie']) {
+            res.setHeader('Set-Cookie', response.headers['set-cookie'].filter(item => /^have_payment_[a-f0-9]{32}=/.test(item)))
+          }
           for (const name of ['Retry-After', 'WWW-Authenticate']) {
             const value = response.headers[name.toLowerCase()]
             if (value) res.setHeader(name, value)

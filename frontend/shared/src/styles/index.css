@@ -1,7 +1,16 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/noto-sans-arabic";
 @import "tailwindcss";
+@import "./catalogue.css";
 @source "../ui";
+
+.have-image-placeholder { border:1px dashed var(--color-border); background:var(--color-accent-soft); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; overflow:hidden; color:var(--color-text-secondary); font-size:15px; text-align:center; }
+.have-image-placeholder>span:first-child { color:var(--color-accent); font-size:30px; }
+.have-image-placeholder img { width:100%; height:100%; object-fit:contain; }
+.have-stock { font-size:15px; font-weight:600; border-radius:6px; padding:3px 7px; white-space:nowrap; }
+.have-stock.available { color:var(--color-success); background:var(--color-success-soft); }
+.have-stock.low { color:#845600; background:var(--color-warning-soft); }
+.have-stock.empty { color:var(--color-emergency); background:var(--color-danger-soft); }
 
 @theme {
   --color-outer-ground: #18151e;

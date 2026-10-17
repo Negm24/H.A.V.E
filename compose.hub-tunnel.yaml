@@ -10,11 +10,13 @@ services:
   hub-tunnel:
     image: ngrok/ngrok:latest
     profiles: ["tunnel"]
-    restart: "no"
+    restart: unless-stopped
     environment:
       NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?Set your private ngrok authtoken in the root .env}
+    volumes:
+      - ./infrastructure/ngrok/agent.yml:/etc/ngrok/agent.yml:ro
     # ngrok automatically selects the account's stable development domain.
-    command: ["http", "--inspect=false", "--log=stdout", "--log-format=json", "http://hub:5174"]
+    command: ["http", "--config=/etc/ngrok/agent.yml", "--pooling-enabled=true", "--inspect=false", "--log=stdout", "--log-format=json", "http://hub:5174"]
     depends_on:
       hub:
         condition: service_started

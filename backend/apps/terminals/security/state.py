@@ -38,6 +38,11 @@ else
         state.user_id = update.user_id
         state.token_hash = update.token_hash
         state.credential_version = update.credential_version
+        -- Signing in starts a private customer basket, not a guest adoption.
+        state.cart = nil
+        state.cart_version = nil
+        state.cart_created_at = nil
+        state.cart_updated_at = nil
     end
     state.last_activity_at = now
 end

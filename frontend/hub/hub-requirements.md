@@ -1,5 +1,28 @@
 # H.A.V.E Hub requirements
 
+Updated: 2026-10-17 (bug fixes). Hub baskets remain independent of Terminal
+sessions. Successful Terminal PIN/QR login now discards guest items and starts an
+empty customer basket; this changes no saved Hub basket or authentication deadline.
+
+Updated: 2026-10-15. Browse medicines now works for authenticated customers: responsive categories/products/details, bilingual search with native keyboard, sorting, image fallbacks, stock badges, cart review and help skeleton. No Terminal picker: stock is network-wide, advisory and timestamped, refreshed every 15 seconds while visible without overlapping reads. Common presentation/search/translations are shared with kiosk; app layouts and session state remain separate.
+
+Updated: 2026-10-15. One saved versioned Redis cart belongs to each customer and is shared with signed-in Terminals. Actual changes renew one-day expiry (`CART_DATA_EXPIRY=86400`); reads, unchanged submissions and login do not. Sign-out/account change clears browser identity/drafts/pending work but preserves server-side basket. Stale mutations reload and require repeating the action, never automatic replay. Redis failure shows cart unavailable separately while catalogue remains usable. Terminal login immediately compares nonempty guest/saved baskets, showing dates, names/quantities and totals before an explicit choice; no silent merging or clamping.
+
+Updated: 2026-10-15. Future requirement only: purchase in Hub → paid order in signed-in Terminal My Profile → Order History → collection guarded by ownership/payment/stock/duplicate protection. No payment, order creation, collection endpoints or fake purchased records exist. Checkout, insurance and Order History remain disabled. The dated updates here supersede historical authentication-only scope notes below.
+
+Updated: 2026-10-16. Both dedicated test Terminals now hold 31 Egypt-market
+medicine/supply product identities in 10 categories with independent test stock.
+Hub automatically aggregates their eligible quantities through its existing APIs.
+Prices, stock, batches and expiry are synthetic prototype data, not live pharmacy
+data. No dosing advice is supplied. Old demo assignments are disabled without
+deleting saved carts; their lines may show unavailable until manually removed.
+
+Updated: 2026-10-17. The current purchase increment supersedes the shared-cart and
+future-purchase updates above: choose a collection Terminal before browsing, keep
+one saved Hub basket per customer and machine, use Kashier test checkout, and view
+owned orders/collection deadlines. Terminal baskets are independent session state.
+See the latest Hub purchase/cart decisions below and backend/AUTH_GUIDE.md.
+
 This file contains the complete project requirements snapshot below, followed by
 Hub-specific decisions. Read it together with ../CODEX-Increment-3.md and the current
 backend schema. Update this snapshot whenever the root requirements change; update
@@ -12,9 +35,17 @@ and live backend contract take precedence over obsolete prototype descriptions.
 
 # H.A.V.E — Requirements Specification
 
+**Bug-fix update — 2026-10-17:** Successful PIN/QR Terminal sign-in discards the guest basket and starts an empty customer basket without restarting the session's maximum clock. Hub baskets remain independent. Confirmed provider field-validation rejections release unpaid allocations; unknown/duplicate/timeout outcomes remain subject to reconciliation. No public-to-local payment-return bridge is implemented.
+
+**Implementation checkpoint — 2026-10-15:** Terminal browse/search/details now use PostgreSQL catalogue and inventory tables. Guest/customer carts are temporary Redis session state; EGP totals include no added tax. Catalogue panels may scroll within the fixed screen. Image storage, guidance, checkout, insurance application and dispensing remain deferred. Cart additions do not reserve/decrement stock: FR-27 is not implemented by this increment. The development seed command creates clearly labelled samples; normal API responses have no mock-JSON fallback.
+
+**Shared-cart update — 2026-10-15 (supersedes the cart ownership above):** Hub now browses network-wide advisory availability without selecting a Terminal. Each customer has one Redis cart shared with Hub and signed-in Terminals, expiring one day after its last actual change (`CART_DATA_EXPIRY=86400`). Guest carts remain temporary. Sign-out/session expiry clears local identity and guest data, not the saved customer cart. Stock reservations, purchasing, paid orders and Terminal collection remain future work; no additional PostgreSQL tables or migrations are introduced by this update.
+
 **Version** 0.8 · **Market:** Egypt (academic scope) · **Scope:** three frontend applications—H.A.V.E Terminal, H.A.V.E Advisor, and H.A.V.E Hub—connected to one central backend, plus secured owner-only doctor-approval endpoints in the backend. H.A.V.E means **Health Access & Vending Everywhere**. AutoPharm remains the project/repository name. Hardware selection, enclosure, and robotics are out of scope except where Terminal must talk to them.
 
 ---
+
+**Purchasing update — 2026-10-17 (current checkpoint):** Kashier test checkout, reservations, owned orders, simulated fulfilment, receipts and refund work are implemented. Hub selects a collection Terminal before browsing and has a separate basket per customer and machine. Every Terminal basket is session-only; carts are no longer shared. These rules supersede the two historical checkpoints above. Provider card capture/saving/refunds and inbox delivery still require manual sandbox acceptance; see backend/AUTH_GUIDE.md.
 
 ## 0. Decisions
 
@@ -24,8 +55,8 @@ and live backend contract take precedence over obsolete prototype descriptions.
 | --- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D-1 | Identity primitive        | **Mobile number + 4-digit PIN.** Verification by SMS one-time code. Fastest thing to enter on a wall-mounted terminal.                                                                                                                                                                                                                                                                                                                                                                                                 |
 | D-2 | Target market             | **Egypt.** Currency EGP, Arabic primary with English secondary, Egyptian regulatory regime throughout.                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| D-7 | Guest proof of purchase   | **Resolved by D-3.** A guest prints a receipt at the terminal (ALWAYS for user or guest), or + optionally types an email address, or optionally creates an account afterwards to retain it. No guest leaves with nothing.                                                                                                                                                                                                                                                                                              |
-| D-3 | Receipt delivery          | **Three routes: printed, emailed, stored in the account.** A thermal ESC/POS printer closes the guest gap. Signed-in users always get account storage, with email and print as options; guests get print, or email if they choose to type an address. Every sale also produces an ETA-format e-receipt, generated for real against a mock submission endpoint.                                                                                                                                                         |
+| D-7 | Guest proof of purchase | Every guest supplies receipt email before payment and requests printing. Printing is explicitly simulated until hardware integration; an on-screen order-scoped receipt is also available. |
+| D-3 | Receipt delivery | Immutable receipts for all paid orders, mandatory email with durable retries, account history for signed-in customers. Terminal customers choose Print or Go green; guest printing request is mandatory. Printer hardware and ETA submission remain future work. |
 | D-5 | Prescription source model | **Independent H.A.V.E Advisor doctor app.** Doctors issue structured prescriptions through the central backend, including before a customer account exists. Doctor signup creates a pending account. The project owner reviews and approves or rejects it through secured owner-only backend endpoints; approval activates it directly, without an owner-shared activation code. Rejection emails the applicant and erases the application's personal data, keeping keyed hashes of the phone and email, the decision, and a rejection counter; a rejected doctor may sign up again until the third rejection (FR-82e to FR-82g). No clinical-assistant role or prescription draft workflow. Controlled/narcotic medicines are excluded. |
 | D-4 | Guidance engine           | **Deterministic guidance service with versioned configuration files.** Product records carry symptom tags for matching. Questions, safety rules, red-flag outcomes, ranking, and bilingual explanations live in reviewed application configuration, not dedicated guidance database tables. No model, LLM, training, or generated recommendations. Product tags alone never bypass safety screening. |
 | D-6 | Insurance simulation      | **Simple customer insurance activation.** An activation selects covered products, an expiry date, a configurable coverage percentage (default 75%), and a maximum number of uses per calendar month. The backend checks eligibility and calculates the discount locally. No insurer gateway, plan catalogue, or separate claim-submission workflow is required. |
@@ -76,7 +107,7 @@ D-4 and D-6 are resolved above. Exact fictional insurance percentages and produc
 - **FR-2** Each session shall be anonymous by default; no identity is required to start.
 - **FR-3** The app shall maintain an inactivity timer, warn the user before expiry, and allow extension.
 - **FR-3a** Terminal inactivity shall expire the session after 240 seconds without meaningful user interaction. The backend shall also enforce a non-extendable 15-minute maximum from session start, not displayed as a countdown. Polling, heartbeat, `/me/`, or silent token refresh shall not count as user activity or extend this maximum. Customer login does not restart the guest session's absolute clock. FR-7 governs safe handling of an in-flight payment or dispense at expiry.
-- **FR-4** On expiry, cancellation, or completion, the app shall destroy all session state — cart, identity, prescription data, entered text, and cached personal data — and return to attract.
+- **FR-4** Terminal reset/expiry/completion clears its session basket, identity and drafts. Hub's independent customer-and-machine basket survives Hub sign-out until one-day expiry. No Terminal cart is shared.
 - **FR-5** A session shall never be resumable by the next person at the terminal.
 - **FR-6** The app shall expose a Cancel / Start Over action from every in-session screen.
 - **FR-7** Session termination during an in-flight payment or dispense shall be blocked until that operation reaches a terminal state.
@@ -114,8 +145,12 @@ D-4 and D-6 are resolved above. Exact fictional insurance percentages and produc
 
 - **FR-25** Users shall add, remove, and change quantities of items.
 - **FR-26** Quantity shall be capped per item by stock level and by any regulatory maximum.
-- **FR-27** Stock for cart contents shall be soft-reserved on add, with a timeout, so two adjacent terminals or a concurrent session cannot oversell the same unit.
+- **FR-27** Reserve stock atomically at checkout, not cart add. Unpaid checkout has a 15-minute window; uncertain payments retain allocations until reconciled. Paid Hub reservations last until collection or the fixed 24-hour deadline. Reservations reduce availability, not physical stock.
 - **FR-28** The cart shall show a running total, itemised, before any payment step.
+- **FR-28a** Hub carts are separate per customer and selected collection Terminal, with one-day expiry on actual changes only (CART_DATA_EXPIRY=86400). Terminal baskets are session-only for guests and customers. Reset, expiry and session replacement destroy them; authentication, reads and unchanged writes renew neither cart nor session deadlines.
+- **FR-28b** PostgreSQL supplies prices and exact-decimal EGP totals. Both apps use the selected machine's available stock minus reservations. NULL per-order cap means stock-only; explicit limits and prescription restrictions remain enforced. Problematic lines stay visible/removable. Cart adds do not reserve stock.
+- **FR-28c** Versioned atomic writes detect concurrent changes to a basket. Stale mutations conflict; reload and ask the user to repeat their choice, never automatically replay it.
+- **FR-28d** Successful PIN/QR login discards the guest Terminal basket while rotating its token and starts an empty customer basket without restarting the session's absolute clock. Failed login keeps the guest basket. It never compares, adopts, merges or loads Hub baskets. Remove the superseded shared-cart chooser.
 
 ### 2.6 Identity and accounts
 
@@ -171,13 +206,13 @@ Order status shall use only `PENDING`, `DISPENSING`, `CANCELLED`, `COMPLETED`, a
 ### 2.9 Payment
 
 - **FR-52** The app shall support digitally mocked payment without a physical card reader, and cash if the hardware is fitted.
-- **FR-53** The H.A.V.E backend and frontends shall never capture or store raw card data. At Terminal and in Hub, the academic payment-provider flow is simulated without real card credentials; saving a method returns an opaque reference.
+- **FR-53** H.A.V.E never receives PAN, CVV or raw card details. Kashier hosted checkout collects test-card input. Provider API hosts and checkout URLs are test-only; no live-mode switch exists.
 - **FR-54** Payment screens shall give clear digital confirmation instructions and live status; they shall not instruct customers to use a card reader.
-- **FR-55** Authorisation shall precede dispensing; capture shall follow successful dispensing.
+- **FR-55** Use immediate Kashier test capture followed by simulated Terminal dispensing, or later collection for Hub orders. Authorize-before-dispense/capture-after-confirmation remains a future hardware/live-payment design, not this sandbox increment.
 - **FR-56** A failed or declined payment shall return the user to a recoverable state with the cart intact and an alternative offered.
 - **FR-57** Payment shall be idempotent: no retry, timeout, or reconnect may charge a customer twice.
-- **FR-57a** Hub shall let an authenticated customer save and remove provider-backed payment methods for later use at any Terminal. The backend shall store only provider-issued references/tokens and display-safe metadata, never a card number, security code, or other raw payment credentials.
-- **FR-57b** At Terminal, using a saved method shall require an explicit customer-approved, amount-specific payment action and normal provider authorization. The flow should avoid repeated card-detail entry where the provider permits; it shall not promise to bypass an OTP or other verification required by the issuer or provider.
+- **FR-57a** Save cards optionally during a Hub hosted purchase. Kashier owns tokens; H.A.V.E retrieves customer-owned display-safe metadata without exposing tokens. Standalone no-purchase enrollment, direct token charging and in-app card removal are deferred.
+- **FR-57b** Signed-in Terminal customers need a provider-saved card before checkout; otherwise save one during a Hub purchase first. Lookup outage means unavailable, not empty or guest fallback. Standard hosted checkout may still allow new-card entry and CVV/OTP. Guests use fresh checkout without account-card retrieval.
 
 ### 2.10 Dispensing
 
@@ -192,13 +227,13 @@ Order status shall use only `PENDING`, `DISPENSING`, `CANCELLED`, `COMPLETED`, a
 
 - **FR-64** Every completed order shall generate a receipt available by three routes: **printed** at the terminal, **emailed**, and **stored in the account**.
 - **FR-64a** For a signed-in user the receipt shall **always** be stored against the account immediately on completion, independently of any delivery choice made at the terminal, and shall be retrievable from **any terminal in the fleet** at any time. Account storage is the durable copy; print and email are convenience copies.
-- **FR-64b** Print shall be offered to every user, signed in or guest. It is the primary route for guests, who have no account to store into and may not wish to type an email address.
-- **FR-64c** Email shall be offered alongside account storage for signed-in users, pre-filled where an address is on file so it costs a single tap.
+- **FR-64b** Guests must request printing. Signed-in Terminal customers choose Print or Go green. The current implementation calls a dedicated print stub and never claims actual paper was printed.
+- **FR-64c** Every purchase requires receipt email, prefilled for signed-in customers and entered by guests. SMTP failures are durably retried without undoing payment or repeating dispensing.
 - **FR-64d** The completion screen shall also **display** the receipt — line items, insurance breakdown, total, order reference — so it can be read or photographed before the user leaves.
 - **FR-64e** Printer faults (paper out, jam, offline) shall be detected **before** the print option is offered; the option shall be hidden or disabled rather than failing after selection. Paper level shall be reported on the fleet monitoring heartbeat (FR-74).
 - **FR-64f** A print failure after a completed sale shall never lose the receipt: fall back to on-screen display and offer email.
 - **FR-64g** PDF download shall be offered in Hub, not on Terminal. A kiosk has no user device attached, so a download there would write a file to the terminal's own filesystem where the user can never retrieve it.
-- **FR-65** A user choosing email shall enter the address via the keyboard overlay; a visible skip shall always be present and skipping shall not block completion.
+- **FR-65** Receipt email is required before checkout. Guests enter it using the touch keyboard; there is no skip-email action. Signed-in customers may use their prefilled email. This supersedes the earlier optional receipt-email policy.
 - **FR-66** Because Terminal does not create accounts (FR-31), a guest shall be offered, after payment, an optional invitation to create an account in Hub. Attaching the just-completed receipt to that later Hub account requires a receipt-claim step to be designed with the receipts feature. The invitation shall be skippable and shall not block completion.
 - **FR-67** Signed-in users shall access receipt history from any terminal, with full line items, insurance breakdown, reprint and resend-by-email at the kiosk, and PDF download on the web.
 - **FR-68** _(SIMULATE)_ Every sale shall generate an **Egyptian Tax Authority e-receipt** in ETA's structured format, carrying issuer and branch identifiers, terminal serial, timestamp, item lines, VAT detail, totals, currency, and a UUID. Since a real taxpayer registration and e-seal certificate are unobtainable for an academic project, the document shall be signed with a self-generated key and the submission endpoint mocked — structure, signing, UUID and QR generation are real; only the transmission is stubbed.
@@ -251,8 +286,12 @@ Hardware maintenance mode, diagnostics, and technician access belong to the hard
 - **FR-94** Hub shall be a separate customer-facing app usable away from a Terminal, connected to the same central backend and customer accounts.
 - **FR-95** A customer shall be able to create an account at home, verify a phone number and an email address, sign in, reset a PIN, and view claimed prescriptions and order/receipt history. A customer who has no account when the doctor issues a prescription may register later and claim it without another clinic visit, subject to FR-44b–FR-44d.
 - **FR-96** Hub shall show nearby Terminal locations using a map or location list, with address and availability status. The customer shall be able to select a location manually without granting device-location access.
-- **FR-97** Hub shall let customers browse/search the catalogue and check product availability and price for a selected Terminal. Availability is advisory and timestamped; it is not a reservation or guarantee until the backend confirms a checkout reservation.
-- **FR-98** Hub shall support managing saved provider-backed payment methods for faster in-person checkout, subject to FR-57a–FR-57b. Saving a payment method shall be optional and shall not be required to browse, claim a prescription, or pay through another supported route.
+- **FR-97** Hub Browse medicines first requires choosing a collection Terminal. Categories, search, products, availability and cart validation use that machine. Refresh visible reads every 15 seconds and on visibility without overlap or expiry renewal. Show Redis cart failures separately from catalogue availability.
+- **FR-98** Hub displays customer-owned saved-card metadata and explains saving during a Hub purchase. No standalone add-card form. Guests can pay without an account; signed-in Terminal payment follows FR-57b.
+- **FR-99** Implement Kashier test checkout, owned Order History under My Profile, receipts, cancellation and explicit reorder. Reorder validates current machine stock/prices, confirms replacing nonempty baskets and reports unavailable quantities without substitution, clamping or automatic charging.
+- **FR-99a** Verified Hub payment starts a fixed 24-hour collection window. Only the owning customer at the selected Terminal may collect. Collection and expiry lock the same order; collection at/after deadline is rejected even if the worker is late.
+- **FR-99b** Expired paid orders become CANCELLED/COLLECTION_EXPIRED. Release allocations once without incrementing physical stock, durably request the full original-order paid amount as a test refund, email expiry/refund-processing, and send confirmation only after provider confirmation. Pending/failed refunds are not completed; current carts stay untouched.
+- **FR-99c** Every purchase requires receipt email with durable SMTP retries. Guests also require printing; signed-in Terminal customers choose Print or Go green. Printing is explicitly simulated by a dedicated stub. Browser success parameters never prove payment; signed notifications trigger independent reconciliation.
 
 ---
 
@@ -405,6 +444,14 @@ Egypt's **Personal Data Protection Law No. 151 of 2020** became fully operationa
 
 Enclosure, robotics, refrigeration, physical security design, and the hardware team's maintenance mode/technician interface · the insurer's own systems · back-office ERP and procurement · delivery of any kind · real professional-registry, EDA, Ministry, Surescripts or pharmacy-network integration · controlled/narcotic prescribing in Advisor · a dedicated H.A.V.E Operation frontend.
 
+## Purchase implementation update — 2026-10-17
+
+The revised FR-27/28/53/55/57/97–99 above supersede the historical shared-cart and deferred-purchase checkpoints. PostgreSQL stores orders, allocated order lines, reservations, payment attempts and immutable receipts. Redis stores separate baskets only. Hub selects a collection Terminal before browsing; Hub baskets are isolated by customer and machine, while Terminal baskets belong only to their active sessions.
+
+Kashier hosted checkout is sandbox-only with immediate test capture. Signed-in Terminal customers need an existing provider-saved card (first saved during a Hub purchase); guests use fresh checkout. Kashier may still show new-card entry, CVV/OTP or sandbox wallets. Every purchase requires receipt email; guests also request printing. Customers choose Print or Go green. Printing/dispensing are explicitly simulated; physical printer, ETA, insurance and prescription checkout remain future work.
+
+Paid Hub orders reserve their selected machine for 24 hours from confirmed payment. Expiry cancels collection, releases allocations once (never increments physical stock), queues a full original-order test refund and emails processing; only provider confirmation triggers refund confirmation email. Owner endpoints support cancellation/reconciliation. Unknown outcomes retain stock and require reconciliation, not blind mutation retries. Current cart edits remain untouched by paid-order expiry/refunds.
+
 <!-- END PROJECT REQUIREMENTS SNAPSHOT -->
 
 ## Hub implementation decisions — Increment 3
@@ -450,4 +497,47 @@ Enclosure, robotics, refrigeration, physical security design, and the hardware t
   doctor/admin feature, database migration or new backend auth endpoint in this increment.
 - Actual phone-camera and configured SMTP inbox delivery require manual verification
   in addition to deterministic browser tests and live local backend smoke tests.
+
+## Hub purchase decisions — 2026-10-16
+
+These decisions supersede the earlier authentication-only, network-wide catalogue,
+shared Terminal/Hub cart and disabled Order history notes above. The full project
+snapshot is maintained from root requirements separately.
+
+- Browse medicines first asks the customer to choose the collection Terminal; only
+  that machine's categories, products, search results and stock are displayed.
+  The choice is visible throughout discovery and checkout and may be changed.
+- Hub's saved customer basket is separate from every Terminal's session cart. Actual
+  Hub basket changes renew its one-day expiry; authentication and read/polling rules
+  remain unchanged. Changing location retains unavailable lines with clear issues.
+- Collection selection remains memory-only. Reloading discovery asks again; an owned
+  payment-return order restores its location from the authenticated backend response.
+- Checkout requires a receipt email, prefilled from the customer's identity, and uses
+  the current cart version plus an idempotency key. Kashier hosts all test card entry;
+  Hub neither captures raw card data nor stores provider credentials in browser code.
+- The payment destination must be an HTTPS Kashier test session. Browser return/query
+  parameters never prove payment: order data and payment outcomes come from Django.
+- My profile includes Order history and saved payment methods. History offers owned
+  order details, backend-confirmed outcomes/deadlines, explicit cancellation, and
+  Order again with confirmation before replacing a nonempty Hub basket.
+- A paid Hub order is collected at its selected Terminal after account sign-in and
+  backend ownership/payment/stock/deadline checks. Hub does not dispense or collect.
+- The first saved method is created during a Hub purchase in hosted checkout. The
+  saved-method screen displays safe brand/last-four/expiry metadata and explains the
+  flow; no standalone add-card form or raw card fields exist in H.A.V.E.
+- No sensitive mutation is automatically replayed. Unknown outcomes require checking
+  Order history; an explicit checkout retry reuses its request key for the unchanged
+  cart on the same open screen. Logout clears in-memory UI state and pending work.
+- Preserve responsive EN/AR design, separate role/device authentication, existing
+  camera/privacy rules and Docker-only development. Test mode remains explicit.
+
+## Hub cart clarification — 2026-10-17
+
+- There is one independent saved Hub basket per customer AND selected collection
+  Terminal. Changing machines loads that machine's basket; it does not carry or
+  merge the previous location's items. This supersedes the earlier sentence about
+  retaining unavailable lines when changing location. Unavailable lines remain
+  visible only within the basket to which they already belong.
+- No Hub basket is shared with any guest or signed-in Terminal session. Signing
+  out preserves saved Hub baskets until their one-day modification expiry.
 

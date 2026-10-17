@@ -6,6 +6,8 @@ import authEn from '../locales/en.json'
 import authAr from '../locales/ar.json'
 import dashboardEn from '../../dashboard/locales/en.json'
 import dashboardAr from '../../dashboard/locales/ar.json'
+import ordersEn from '../../orders/locales/en.json'
+import ordersAr from '../../orders/locales/ar.json'
 
 it('delegates phone formats to the backend and keeps PINs as four-digit strings', () => {
   expect(loginSchema.parse({ phone: '01012345678', pin: '0123' }).pin).toBe('0123')
@@ -20,5 +22,5 @@ function keys(value: object, prefix = ''): string[] {
   return Object.entries(value).flatMap(([key, entry]) => typeof entry === 'object' ? keys(entry, prefix + key + '.') : [prefix + key]).sort()
 }
 it('has matching English and Arabic resource keys in every feature', () => {
-  for (const [en, ar] of [[sessionEn, sessionAr], [authEn, authAr], [dashboardEn, dashboardAr]]) expect(keys(en!)).toEqual(keys(ar!))
+  for (const [en, ar] of [[sessionEn, sessionAr], [authEn, authAr], [dashboardEn, dashboardAr], [ordersEn, ordersAr]]) expect(keys(en!)).toEqual(keys(ar!))
 })

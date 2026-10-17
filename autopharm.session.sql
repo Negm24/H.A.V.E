@@ -12,8 +12,9 @@
 --     ON o.user_id = u.id
 -- WHERE u.account_type = 'OWNER';
 
+
 SELECT *
-FROM public.doctors;
+FROM public.terminals;
 
 -- SELECT table_name
 -- FROM information_schema.tables

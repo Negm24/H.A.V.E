@@ -1,0 +1,54 @@
+.hub-terminal-picker,.hub-orders,.hub-order-detail,.hub-checkout,.hub-saved-cards { max-width:960px; margin-inline:auto; }
+.hub-terminal-picker>h1,.hub-orders>h1,.hub-checkout>h1,.hub-saved-cards>h1 { margin-block-start:28px; }
+.hub-terminal-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-block-start:28px; }
+.hub-terminal-option { border:1px solid var(--color-border); border-radius:18px; padding:24px; background:white; text-align:start; color:var(--color-text-primary); cursor:pointer; display:flex; flex-direction:column; gap:12px; }
+.hub-terminal-option:hover,.hub-terminal-option.selected { border-color:var(--color-primary); box-shadow:0 4px 20px #423a6a15; }
+.hub-terminal-option>span { font-size:30px; color:var(--color-primary); }
+.hub-terminal-option>strong { font-size:20px; }
+.hub-terminal-option>p { margin:0; font-size:14px; color:var(--color-text-secondary); }
+.hub-terminal-option>small { font-size:12px; text-align:match-parent; }
+.hub-terminal-option>b { margin-block-start:auto; padding-block-start:12px; font-size:14px; color:var(--color-primary); }
+.hub-availability>small { display:block; margin-block-start:10px; }
+.hub-order-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:18px; margin-block:28px 16px; }
+.hub-order-heading h1 { font-size:25px; overflow-wrap:anywhere; margin-block:8px 0; text-align:match-parent; }
+.hub-order-status { padding:6px 10px; border-radius:8px; background:var(--color-accent-soft); color:var(--color-primary-dark); font-size:12px; font-weight:650; display:inline-block; }
+.status-completed { color:var(--color-success); background:var(--color-success-soft); }
+.status-cancelled,.status-review_required { color:var(--color-emergency); background:var(--color-danger-soft); }
+.hub-test-banner { padding:12px 16px; border:1px solid #e9cb85; background:var(--color-warning-soft); border-radius:10px; font-size:13px; }
+.hub-order-terminal { border:1px solid var(--color-border); padding:20px; background:white; border-radius:14px; margin-block:20px; }
+.hub-order-terminal p { margin-block:8px; font-size:14px; color:var(--color-text-secondary); }
+.hub-order-terminal small { display:block; font-size:12px; text-align:match-parent; }
+.hub-order-dates { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-block:24px; }
+.hub-order-dates dt { font-size:12px; color:var(--color-text-secondary); margin-block-end:5px; }
+.hub-order-dates dd { margin:0; font-size:14px; }
+.hub-order-lines { background:white; border:1px solid var(--color-border); border-radius:14px; overflow:hidden; }
+.hub-order-line { padding:18px; display:flex; justify-content:space-between; gap:16px; border-bottom:1px solid var(--color-border); }
+.hub-order-line:last-child { border-bottom:0; }
+.hub-order-line>div { display:flex; flex-direction:column; gap:6px; }
+.hub-order-line>div:last-child { text-align:end; flex-shrink:0; }
+.hub-order-line strong { font-size:16px; }
+.hub-order-line span,.hub-order-line small { font-size:13px; color:var(--color-text-secondary); }
+.hub-order-totals { max-width:420px; margin-inline-start:auto; margin-block:24px; }
+.hub-order-totals>div { display:flex; justify-content:space-between; gap:20px; padding-block:10px; font-size:15px; }
+.hub-order-totals dd { margin:0; font-weight:650; }
+.hub-order-receipt { padding:20px; border:1px dashed var(--color-border); border-radius:14px; font-size:14px; }
+.hub-order-note { padding:18px; background:var(--color-success-soft); color:var(--color-success); border-radius:12px; font-size:15px; }
+.hub-order-actions { display:flex; flex-wrap:wrap; gap:12px; margin-block:24px; }
+.hub-order-actions>.have-button { min-height:44px; padding:8px 18px; font-size:14px; }
+.hub-order-list { display:grid; gap:16px; margin-block-start:24px; }
+.hub-app a.hub-order-card { display:block; color:var(--color-text-primary); text-decoration:none; background:white; border:1px solid var(--color-border); border-radius:16px; padding:22px; }
+.hub-order-card>div { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:14px; }
+.hub-order-card>div:first-child { margin-block-end:14px; }
+.hub-order-card>p { font-size:14px; color:var(--color-text-secondary); }
+.hub-checkout { max-width:720px; }
+.hub-checkout-items { background:white; border:1px solid var(--color-border); border-radius:14px; padding:6px 20px; }
+.hub-checkout-items>div { display:flex; justify-content:space-between; gap:20px; padding-block:14px; font-size:14px; }
+.hub-checkout-total { display:flex; justify-content:space-between; gap:16px; font-size:23px; border-top:1px solid var(--color-border); padding-block-start:20px; }
+.hub-profile-services { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.hub-profile-services .hub-order-history { display:flex; align-items:center; justify-content:space-between; text-decoration:none; background:white; }
+.hub-profile-services .hub-order-history h2 { margin:0; font-size:17px; }
+.hub-saved-card-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-block:28px; }
+.hub-saved-card-list>article { background:white; border:1px solid var(--color-border); border-radius:16px; padding:24px; display:grid; gap:12px; }
+.hub-saved-card-list>article>span { font-size:28px; color:var(--color-primary); }
+.hub-saved-card-list small { color:var(--color-text-secondary); font-size:13px; }
+@media(max-width:600px) { .hub-terminal-grid,.hub-saved-card-list,.hub-profile-services { grid-template-columns:1fr; } .hub-terminal-option { padding:20px; } .hub-order-line { flex-wrap:wrap; } .hub-order-line>div:last-child { flex:1; align-items:flex-end; } .hub-order-dates { gap:16px; } .hub-order-heading h1 { font-size:22px; } .hub-order-card { padding:18px; } .hub-checkout-items>div { flex-wrap:wrap; } }

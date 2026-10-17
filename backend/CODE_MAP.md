@@ -1,5 +1,48 @@
 # Backend code map
 
+## Bug-fix checkpoint — 2026-10-17
+
+Terminal `security/state.py` discards guest cart fields in the same atomic PIN/QR
+token-rotation script. Catalogue/cart services retain separate Hub machine carts.
+Kashier `services/kashier_services.py` classifies only known creation-validation
+rejections as definitive and recovers lost session references through bounded,
+validated provider reads. `payment_services.reconcile` persists recovered references;
+uncertain outcomes never cause a second creation request. Existing return routing is
+unchanged: there is no public-to-local redirect bridge in this checkpoint.
+
+## Hub catalogue and shared cart — 2026-10-15
+
+This update supersedes the earlier session-only customer basket description below.
+
+| Responsibility | Location |
+| --- | --- |
+| Network/local catalogue discovery and stock eligibility | `apps/catalogue/services/catalogue_services.py`; `None` means network, a Terminal means local stock |
+| Hub bearer-authenticated catalogue HTTP handlers | `apps/catalogue/api/views/hub_views.py`; envelope includes `availability_scope: NETWORK` and `observed_at` |
+| Cart projection, prices, issues and quantity policy | `apps/carts/services/cart_services.py`; current database prices, unavailable lines retained, decreases always permitted |
+| Account cart Redis keys, TTL and atomic version/comparison operations | `apps/carts/security/state.py`; default 86400s, real changes only, no auth renewal |
+| Hub cart handlers/input/output | `apps/carts/api/views/cart_views.py`, `api/serializers/cart_serializers.py`, `api/urls.py` |
+| Terminal adapter and guest-vs-saved comparison/choice | `apps/terminals/services/cart_services.py`, `api/views/cart_views.py`; resolves customer from the authenticated session, never a submitted customer ID |
+| Regressions and race/expiry/isolation coverage | `apps/carts/tests/` and `apps/catalogue/tests/test_hub_catalogue.py` |
+
+No `models/` or migrations are added to Carts: Redis stores baskets, not durable orders. Guest state stays device-session-owned and disappears on reset. Customer saved state remains after sign-out until expiry. Catalogue works without Redis when Hub auth/PostgreSQL are healthy; cart failure is separate. `/api/v1/hub/` business routes are outside `/auth/`. Swagger groups are Hub · Catalogue, Hub · Cart, and Terminal · Cart. Checkout, order history and collection have no new implementation.
+
+## Egypt-market development data — 2026-10-16
+
+`apps/catalogue/management/commands/seed_egypt_catalogue.py` contains the reviewed
+product identities, source URLs and DEBUG-only transactional importer. Use
+`--terminal HAVE-TEST-001 HAVE-TEST-002 --replace-demo` to populate both machines
+and disable their old HAVE-DEMO assignments without deleting records. New slots
+receive independent test quantities; existing edits/stock/expiry and credentials
+are never overwritten. Tests: `apps/catalogue/tests/test_egypt_seed.py`.
+All prices/batches/expiry/stock/limits are synthetic. This is not a clinical catalogue.
+
+## Catalogue/inventory/cart — 2026-10-15
+
+- `apps/catalogue`: models/category.py, product.py, product_batch.py; API serializers/views/urls; services/catalogue_services.py for database-only Terminal discovery; management/commands/seed_catalogue.py for repeat-safe DEBUG-only samples; tests/test_catalogue.py.
+- `apps/terminals/models`: terminal_slot.py and terminal_stock.py. `services/inventory_services.py` locks a slot before changing quantities and checks total capacity/product agreement. Do not write stock through unvalidated bulk/SQL updates; defensive catalogue reads exclude inconsistent records.
+- `apps/terminals/services/cart_services.py`: Redis session basket plus current PostgreSQL prices/eligibility. `security/state.py` atomically edits cart without touching session clocks/TTL. Existing token rotation retains the basket; reset/end/replacement destroy it. No new cart table or stock reservation.
+- `apps/terminals/api/views/cart_views.py` and serializers/cart_serializers.py: cart read/absolute quantity PUT/clear. `apps/catalogue/api`: category/list/detail reads. All use existing Terminal device/session authentication, including guests. Swagger groups Terminal · Catalogue/Cart. Documentation and testing: frontend/CODEX-Increment-2.md.
+
 The backend is organized by subsystem, then responsibility. Features below include
 the recovery and Terminal-to-Hub QR increment as well as the original authentication flows.
 
@@ -151,3 +194,23 @@ For a future intentional API change, review the contract difference before updat
 that fixture; do not regenerate it merely to hide a test failure.
 
 Manual Swagger/Postman steps remain in [AUTH_GUIDE.md](AUTH_GUIDE.md).
+
+## Orders, Kashier and separate carts — 2026-10-17
+
+This section supersedes earlier shared-cart/no-checkout maps.
+
+| Responsibility | Location |
+| --- | --- |
+| Durable order, allocated batch lines, reservation, immutable receipt models/migrations | apps/orders/models/; apps/orders/migrations/ |
+| Reserve, verify paid transition, simulate fulfilment, cancel/expire, safe projections | apps/orders/services/order_services.py |
+| Cart snapshot → checkout; explicit reorder validation | apps/orders/services/checkout_services.py |
+| Email receipt templates/retries; expiry/refund notices; printing stub | apps/orders/templates/orders/; services/receipt_services.py; notification_services.py; printing_services.py |
+| Hub/Terminal/owner HTTP inputs, outputs and paths | apps/orders/api/views/; api/serializers/order_serializers.py; api/urls.py |
+| Test-only provider requests, safe card summaries, independent verification | apps/payments/services/kashier_services.py |
+| Durable capture/refund leases and idempotent transitions | apps/payments/models/payment_transaction.py; services/payment_services.py |
+| Signed callbacks and order-scoped result cookies | apps/payments/security/; api/views/payment_views.py |
+| Restart-safe worker and private command | apps/payments/services/worker_services.py; management/commands/order_worker.py |
+| Isolated Hub customer+machine / Terminal session baskets and CAS paid cleanup | apps/carts/security/state.py |
+| Machine-first selection validation | apps/terminals/services/selection_services.py |
+
+No provider, SMTP or hardware call runs inside inventory locks. Root requirements and AUTH_GUIDE.md explain current rules; historical diagrams are design references, not a claim that future insurance/prescription/card-management tables exist.

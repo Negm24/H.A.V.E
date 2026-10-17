@@ -15,7 +15,10 @@ export function LoginPage() {
   return <FormSection title={t('signIn')} description={t('loginDescription')}>
     {location.state?.message && <p className="hub-success" role="status">{t(location.state.message)}</p>}
     {operation.error && <Alert>{operation.error}</Alert>}
-    <form className="hub-form" onSubmit={handleSubmit(data => operation.run(() => session.login(data), () => navigate('/dashboard', { replace: true })))}>
+    <form className="hub-form" onSubmit={handleSubmit(data => operation.run(() => session.login(data), () => {
+      const requested = location.state?.from
+      navigate(typeof requested === 'string' && /^\/(orders|browse|checkout)(\/|\?|$)/.test(requested) ? requested : '/dashboard', { replace: true })
+    }))}>
       <Field label={t('phone')} {...register('phone_number')} type="tel" autoComplete="tel" dir="ltr" error={operation.fields.phone_number || (errors.phone_number && t('validation.required'))} />
       <Field label={t('pin')} {...register('pin')} type="password" inputMode="numeric" autoComplete="current-password" dir="ltr" maxLength={4} error={errors.pin && t('validation.pin')} />
       <div className="hub-form-row"><label className="hub-check"><input type="checkbox" {...register('remember_me')} />{t('rememberMe')}</label><Link to="/forgot-pin">{t('forgotPin')}</Link></div>

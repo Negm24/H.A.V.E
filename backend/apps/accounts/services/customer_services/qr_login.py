@@ -63,6 +63,7 @@ def create_qr(*, terminal, guest_token, source):
     state, _ = operate(terminal, "read", guest_token)
     if state["user_id"]:
         raise AuthError("Start a guest session before requesting QR login.", 400)
+    enforce_limit("qr-generation-cooldown", terminal.pk, 1, 10)
     challenge_id = str(uuid4())
     payload = f"{challenge_id}.{secrets.token_urlsafe(32)}"
     qr = dict(challenge_id=challenge_id, terminal_serial=terminal.pk,
@@ -70,7 +71,7 @@ def create_qr(*, terminal, guest_token, source):
               guest_token_hash=token_hash(guest_token), qr_hash=token_hash(payload),
               status="waiting_for_scan")
     qr = transition(challenge_id, terminal.pk, "create", qr)
-    return _status(challenge_id, qr) | {"qr_payload": payload}
+    return _status(challenge_id, qr) | {"qr_payload": payload, "generate_again_in": 10}
 
 
 def scan_qr(*, qr_payload, access_token, source):

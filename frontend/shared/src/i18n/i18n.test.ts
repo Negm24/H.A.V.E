@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import en from './en.json'
 import ar from './ar.json'
+import catalogueEn from './catalogue/en.json'
+import catalogueAr from './catalogue/ar.json'
 import { createAppI18n, languageDirection } from './index'
 
 beforeEach(() => localStorage.clear())
@@ -13,6 +15,10 @@ describe('language foundation', () => {
   it('uses RTL for Arabic and LTR for English', () => {
     expect(languageDirection('ar-EG')).toBe('rtl')
     expect(languageDirection('en')).toBe('ltr')
+  })
+  it('shares complete matching catalogue and cart translations across apps', () => {
+    expect(Object.keys(catalogueAr).sort()).toEqual(Object.keys(catalogueEn).sort())
+    for (const value of [...Object.values(catalogueEn), ...Object.values(catalogueAr)]) expect(value.trim()).not.toBe('')
   })
   it('changes document direction and persists the Hub preference', async () => {
     const instance = await createAppI18n('hub')

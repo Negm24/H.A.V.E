@@ -252,7 +252,8 @@ test.describe('real backend Hub smoke tests', () => {
     await login(page); await expect(page.getByRole('heading', { name: 'Hello, Kiosk' })).toBeVisible()
     const kiosk = await context.newPage()
     try {
-      await kiosk.goto('http://localhost:5173'); await kiosk.getByRole('button', { name: /Touch to start/ }).click()
+      const selector = process.env.TERMINAL_HAVE_TEST_001_SIMULATOR_ID
+      await kiosk.goto(`http://localhost:5173/${selector ? `?terminal=${selector}` : ''}`); await kiosk.getByRole('button', { name: /Touch to start/ }).click()
       await kiosk.getByRole('button', { name: /Continue in English/ }).click()
       await kiosk.getByRole('button', { name: /Sign in with PIN/ }).click()
       await kiosk.getByRole('button', { name: 'Or sign in with H.A.V.E Hub QR code', exact: true }).click()

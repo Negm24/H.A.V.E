@@ -9,6 +9,7 @@ export class ApiError extends Error {
 
 type JsonObject = Record<string, unknown>
 export interface RequestOptions {
+  terminalSimulatorId?: string
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
   bearerToken?: string
@@ -35,6 +36,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const timeout = AbortSignal.timeout(options.timeoutMs ?? 15_000)
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout
   const headers = new Headers({ Accept: 'application/json' })
+  if (options.terminalSimulatorId) {
+    if (!path.startsWith('/api/v1/terminals/') && !path.startsWith('/api/v1/auth/customers/terminal/')) {
+      throw new Error('Terminal simulator selection is only allowed on Terminal routes.')
+    }
+    headers.set('X-Terminal-Simulator', options.terminalSimulatorId)
+  }
   if (options.body !== undefined) headers.set('Content-Type', 'application/json')
   if (options.bearerToken) headers.set('Authorization', `Bearer ${options.bearerToken}`)
   if (options.csrf && method !== 'GET') {

@@ -10,7 +10,7 @@ export function GuestHomePage() {
     <p className="page-intro">{t('guestIntro')}</p>
     <div className="home-grid">
       <Button className="home-card" onClick={() => navigate('/auth/pin')}><span className="card-icon">▦</span><strong>{t('pinLogin')}</strong><span>{t('pinDescription')}</span></Button>
-      <Button className="home-card" disabled><strong>{t('browse')}</strong><span>{t('comingLater')}</span></Button>
+      <Button className="home-card" onClick={() => navigate('/browse')}><strong>{t('browse')}</strong><span>{t('catalogue:demo')}</span></Button>
     </div>
   </KioskFrame>
 }

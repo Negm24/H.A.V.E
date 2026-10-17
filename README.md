@@ -2,6 +2,26 @@
 
 The backend includes owner authentication, customer signup, Hub login/refresh/logout, and Terminal guest/customer sessions. PostgreSQL, Redis, and Django run through Docker Compose.
 
+## Bug-fix checkpoint — 2026-10-17
+
+The latest purchase/separate-cart checkpoint below supersedes historical shared-cart
+notes. Successful Terminal PIN/QR login now discards guest items; the customer starts
+with an empty session basket while Hub baskets remain independent. Confirmed checkout
+validation failures release unpaid reservations; uncertain outcomes are reconciled
+without creating another charge. No public-to-local payment-return bridge is included.
+Kashier may still reject the local Terminal return URL until hosting is designed.
+
+Private `.env`, Cloudflare `.dev.vars`, `.wrangler` state, credentials, database dumps
+and generated build/test output are Git-ignored. Deployable source configuration is
+not ignored. Hosting on Cloudflare is not configured by this update: the local Vite
+device proxy and Docker backend/worker still need an explicit deployment arrangement.
+
+## Hub catalogue and shared cart — 2026-10-15
+
+Hub and kiosk now browse the PostgreSQL catalogue. Hub shows timestamped, network-wide advisory stock without a Terminal picker; kiosk shows its own machine. One Redis cart per customer is shared across both, expiring one day after an actual change (`CART_DATA_EXPIRY=86400` in root `.env`). Guest baskets remain temporary. Logout clears local identity but preserves saved baskets; conflicting guest/saved baskets require a choice immediately after Terminal login. No new migrations are needed for this update. Purchasing, paid orders and Terminal collection remain unimplemented requirements.
+
+Start the apps with `docker compose --profile frontend up -d --build`. Open Hub at http://localhost:5174 and kiosk at http://localhost:5173. Existing ngrok users should keep using the override commands in [the Hub guide](frontend/CODEX-Increment-3.md) to preserve their exact public Host/CSRF configuration. The catalogue/cart code map and manual cross-app tests are in that guide and [frontend/README.md](frontend/README.md).
+
 ## Start locally
 
 From your cloned repository's root folder, with Docker Desktop running:
@@ -48,7 +68,7 @@ No virtual-environment activation is needed for Docker commands. Do not start a 
 docker compose up -d --force-recreate backend
 ```
 
-`docker compose down` preserves PostgreSQL data. `down -v` deletes its volume; it is not a normal restart command. The optional kiosk service is separate and disabled unless the `frontend` profile is selected. This guide validates backend setup only; frontend integration is still pending.
+`docker compose down` preserves PostgreSQL data. `down -v` deletes its volume; it is not a normal restart command. Frontend services are enabled through the `frontend` profile; kiosk and Hub authentication/catalogue integration is implemented. Advisor/Admin remain heading-only shells.
 
 Run authentication tests inside Docker:
 
@@ -68,3 +88,16 @@ For code ownership and where to add the next feature, read the [backend code map
 - [Contributing](CONTRIBUTING.md)
 
 Stop any Windows `manage.py runserver` before starting the Docker backend to free port 8000. After dependency or Dockerfile changes, run `docker compose up -d --build backend`.
+
+## Kashier sandbox purchases — 2026-10-17
+
+Hub now selects a collection Terminal before Browse medicines. Hub carts are separate by customer/machine; Terminal carts belong only to their session. Cart Continue opens Kashier TEST checkout. Saved cards are first saved during Hub purchases; signed-in Terminal customers require one. Guests supply receipt email and mandatory simulated printing. Payment/dispensing are test-only.
+
+Orders and allocated stock reservations are durable PostgreSQL records. Paid Hub orders must be collected from their chosen machine within 24 hours; expiry releases allocations and queues a full refund plus email notices. An order-worker handles reconciliation and retries without holding stock locks over provider/SMTP requests.
+
+~~~powershell
+docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d --build db redis backend order-worker kiosk hub hub-tunnel
+docker compose exec backend python manage.py migrate
+~~~
+
+Root .env requires KASHIER_DEFAULT_TEST_KEY, KASHIER_SECRET_KEY, KASHIER_MERCHANT_ID and PAYMENTS_PUBLIC_BASE_URL (existing ngrok HTTPS origin). Keys are backend/worker-only, never frontend variables. See [the complete purchase test walkthrough](backend/AUTH_GUIDE.md#kashier-test-purchases-and-collection--2026-10-17). No physical printing, ETA, real money or direct card entry in H.A.V.E.

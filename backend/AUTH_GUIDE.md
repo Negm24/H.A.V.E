@@ -1,9 +1,44 @@
 # Authentication testing guide
 
+## Bug-fix checkpoint — 2026-10-17
+
+This supersedes the older guest-basket preservation instructions below. Add guest
+items, then complete PIN or QR sign-in: the customer basket must now be empty, the
+old token rejected, and Hub baskets unchanged. An incorrect PIN keeps guest items.
+The original session start/maximum deadline is not reset.
+
+Known Kashier field-validation rejections (including an invalid merchantRedirect)
+mark creation FAILED, cancel the unpaid order, and release allocations without
+changing physical stock. Duplicate/unknown errors and timeouts remain UNKNOWN and
+are never blindly retried. The worker recovers missing session references using
+bounded, exact-reference session-list reads and independent merchant/amount/currency
+verification; no match is not proof of non-payment. Old uncertain development
+orders are not manually deleted or released by this fix.
+
+There is deliberately no public-to-local Terminal payment-return bridge. The
+existing localhost return URL may still be rejected by the provider; a successful
+mocked browser test does not prove real Terminal checkout works before hosting.
+No new `.env` value is needed for these fixes. Existing Kashier and device secrets
+remain private and unchanged. The Docker order-worker is required for payment
+reconciliation, expiry, refunds and email retries; it is not another frontend.
+
+Verified through Docker: **275 backend tests**, **74 frontend unit tests**, **79
+deterministic browser cases** and **8 live Django/PostgreSQL/Redis cases** passed.
+All four app builds/typechecks, OpenAPI validation and no-migration-drift checks
+passed. Existing large-chunk build advisories remain non-blocking. Private secret
+values were absent from publishable text and Terminal keys from browser bundles.
+The existing ngrok tunnel reconnected and its public health request returned OK
+after applying explicit DNS resolvers; this does not guarantee an ISP never drops
+future connections. No new payment, refund or return bridge was used by these checks.
+
 For implementation locations and folder responsibilities, see [CODE_MAP.md](CODE_MAP.md).
 
 This is the shared guide for implemented authentication features. Extend it as
 new features ship; listed future features are not available endpoints.
+
+## Post-login shared cart update — 2026-10-15
+
+Authentication policies and endpoint paths are unchanged. After PIN or QR Terminal login, the kiosk immediately reads `/api/v1/terminals/cart/comparison/`. If both guest and saved baskets contain items, choose with `POST /api/v1/terminals/cart/choice/` using `choice` (`saved`/`guest`), `saved_version` and `guest_version` from that comparison. Review dates, item summaries and totals; 409 means reload/reconfirm, not retry automatically. Guest-only baskets are saved once with a notice. Ending/resetting a session or Hub logout does not delete the saved customer cart. Hub bearer-authenticated catalogue/cart routes are under `/api/v1/hub/`, not auth routes; detailed manual tests are in `frontend/CODEX-Increment-3.md`. No purchase or collection endpoint exists.
 
 ## Current scope
 
@@ -944,3 +979,110 @@ New dependencies (`pyotp`, `cryptography`) require rebuilding the image once:
 `docker compose up -d --build backend`. Startup applies accounts migration `0005`
 (email verification, rejection hashes and counter) and `0006` (`rejection_reason` restored). The Django admin app was removed;
 an old `django_admin_log` table in a dev database is unused and harmless.
+# Catalogue/cart addition — 2026-10-15
+
+**Stock update — 2026-10-16:** The two dedicated test Terminals use the explicit
+DEBUG-only `seed_egypt_catalogue --terminal HAVE-TEST-001 HAVE-TEST-002 --replace-demo`
+command through Docker/manage.py. It inserts 31 recognisable Egypt-market products
+and supplies with independent stock; prices/batches/expiry are synthetic, not live
+pharmacy data. Old demo slots are disabled, never deleted; old saved-cart items may
+show unavailable and can be removed manually. Reruns never refill existing stock or
+overwrite manual edits. Device keys and API contracts stay unchanged. The older
+generic seeder below is retained for isolated demonstration/test fixtures only.
+
+The existing Terminal serial/key and session bearer also authorize **Terminal · Catalogue** and **Terminal · Cart** in Swagger. No new login or credential is required. These endpoints do not extend inactivity by reading/polling or by cart writes; the kiosk continues reporting genuine activity separately.
+
+From the repository root:
+
+```powershell
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py seed_catalogue --terminal HAVE-TEST-001
+```
+
+Start a guest session once, Authorize its token, then GET `/api/v1/terminals/catalogue/categories/` and `/api/v1/terminals/catalogue/products/`. Choose an available non-prescription product ID. PUT `/api/v1/terminals/cart/items/ID/` with `{"quantity":1}`, then GET `/api/v1/terminals/cart/`. Quantity zero removes a line; DELETE cart clears all. Prices come only from PostgreSQL. Stock and per-order limits are enforced, and unavailable/prescription-only additions are rejected. Login token rotation preserves this session's cart; starting another guest session replaces it. Do not start a Swagger guest session while manually testing the same Terminal in the kiosk.
+
+Samples are DEBUG-only, labelled demo records, and repeat-safe without refilling stock. All five catalogue/inventory tables are real; there is no runtime catalogue mock. No tax, insurance calculation, reservation, checkout or dispensing is included. Full frontend manual testing and code map: `frontend/CODEX-Increment-2.md`.
+
+## Kashier test purchases and collection — 2026-10-17
+
+This section supersedes the earlier shared-cart and no-checkout examples. No live payments, physical dispensing/printing, insurance or ETA integration is included.
+
+### Start everything (PowerShell, repository root)
+
+Keep KASHIER_DEFAULT_TEST_KEY, KASHIER_SECRET_KEY, KASHIER_MERCHANT_ID and PAYMENTS_PUBLIC_BASE_URL in root .env only. The public URL is your existing Hub ngrok HTTPS origin, without a trailing slash. Quote literal dollar signs in secret values with single quotes; never paste secrets in chat. Provider API hosts and checkout URL mode are fixed to test.
+
+~~~powershell
+docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d --build db redis backend order-worker kiosk hub hub-tunnel
+docker compose exec backend python manage.py migrate
+docker compose ps
+~~~
+
+The migrations are already applied on this machine. Do not reset volumes or rerun seed commands to replenish purchased stock. After editing root .env, recreate backend/order-worker using the same Compose command; frontend .env remains private device-simulator configuration. The worker must run for reconciliation, expiry, refund processing and receipt-email retries. Use existing SMTP settings; no new mail password is needed.
+
+### Hub: choose a machine, buy, then collect
+
+1. Open http://localhost:5174 (or the existing ngrok HTTPS URL), sign in, then Browse medicines. Choose HAVE Mark I/II FIRST. Only that machine's catalogue and stock appear.
+2. Add an available OTC product. Quantities above two work when stock permits; NULL product max_quantity_per_order means stock-only. Prescription checkout remains blocked.
+3. Open Cart → Checkout. Check the collection machine, EGP total and required receipt email. Click Pay securely with Kashier. H.A.V.E never has PAN/CVV fields.
+4. Use ONLY official sandbox test cards on the hosted page. The current provider test guide is https://developers.kashier.io/docs/get-started/testing (intentional expiry values are scenario triggers, not actual card expiry). Approved example: 5123450000000008, CVV 100, expiry 06/25; decline 05/25, timeout 08/28, unknown 05/37. Never use a real card. Save the test card during this Hub purchase if Kashier offers its save option.
+5. Return to the owned order page. Browser query parameters never prove payment. Wait for server verification: Paid — awaiting collection, machine and fixed 24-hour deadline. Receipt email is queued automatically. View My profile → Order history or Saved payment methods.
+6. At the assigned kiosk simulator, sign in to the same account → My profile → Order history → order → Collect. Only that machine may collect. Dispensing is simulated, stock decrements once, and the order becomes Completed. Collection elsewhere/under another customer/at or after deadline is rejected.
+7. Order again rechecks current stock/prices and asks before replacing a nonempty basket. It never charges automatically. Hub carts are isolated per customer AND machine; no Hub cart is shared with a Terminal session.
+
+Kashier may show new-card entry or wallets even in sandbox; saved cards do not promise CVV/OTP bypass. Saving the first card occurs during a purchase, not through standalone enrollment.
+
+### Terminal: guest versus signed-in checkout
+
+Use the existing private simulator URLs in frontend/.env; do not place device keys or serial credentials in browser URLs.
+
+- Guest: Start → language → Browse medicines → cart → Continue. Enter a receipt email on the touch keyboard. Printing is mandatory and clearly simulated. Hosted checkout does not retrieve an account's saved cards.
+- Customer: sign in → browse/cart → Continue. Choose Print or Go green; email is required either way. No saved card means checkout is blocked BEFORE reservation/payment creation; save one during a Hub purchase first. A provider lookup outage gives 503, not an empty-card result or guest fallback.
+- After hosted return, a private order-scoped HttpOnly cookie plus the device credential allows only that result/receipt. It never restores general customer login. Explicit touches renew its 60-second idle allowance; polling does not. Done/Start over revokes it; the underlying Terminal authentication clocks are unchanged. Cookies cannot be supplied via Swagger's Bearer box.
+- Printing calls printing_services.print_receipt_stub only when creating the immutable receipt. SIMULATED_REQUESTED is a request marker, not proof that paper was printed.
+
+### Swagger/Postman: exact request order
+
+Open http://localhost:8000/api/docs/. Hub uses HubBearer; Terminal uses device serial/key AND its guest/customer bearer except the private result routes (device + cookie only). All paths below start /api/v1/.
+
+1. Hub GET hub/orders/terminals/. Then GET hub/catalogue/products/?terminal_serial=HAVE-TEST-001 and hub/cart/?terminal_serial=HAVE-TEST-001.
+2. PUT hub/cart/items/PRODUCT_ID/?terminal_serial=HAVE-TEST-001 with {"quantity":3,"expected_version":"CURRENT_VERSION"}. Read the returned version.
+3. POST hub/orders/checkout/ with {"terminal_serial":"HAVE-TEST-001","cart_version":"CURRENT_VERSION","email":"YOUR_TEST_EMAIL","language":"en","print_requested":false,"idempotency_key":"NEW_UUID"}. Generate a UUID in PowerShell with [guid]::NewGuid(). Open only the returned checkout_url. Retrying the SAME checkout uses the SAME key; do not create another payment when the result is uncertain.
+4. GET hub/orders/ and hub/orders/ORDER_UUID/ for authoritative status. POST .../cancel/ with {} for cancellation. Pending hosted checkout is abandoned and verified before release; uncertain outcomes remain held. Paid cancellation queues the full refund.
+5. POST .../reorder/ with {"cart_version":"CURRENT_VERSION","replace_existing":true}. For Hub it uses the original machine's basket. For Terminal it uses the current machine's session cart.
+6. Terminal uses terminals/cart/ and terminals/orders/checkout/ with the same version/email/language/print/idempotency fields (no selected-machine override). Guest print_requested is enforced true. POST terminals/orders/ORDER_UUID/collect/ with {} requires the owning customer at the assigned device.
+7. Hub GET hub/payments/cards/ returns display-safe summaries only; it never returns the provider token. No standalone add/remove card endpoint exists.
+
+### Expiry, refunds and failure recovery
+
+- Unpaid reservations have 15 minutes. Uncertain creation/charge/refund outcomes are reconciled, never blindly resubmitted. A declined card attempt while the hosted session is still open is not definitive order failure: the same hosted session may permit another attempt.
+- Paid Hub orders have 24 hours from confirmed payment. At expiry: CANCELLED/COLLECTION_EXPIRED, reservation release once, full ORIGINAL paid-order amount queued for test refund, expiry email saying processing, then confirmation email only after Kashier confirms. Physical on-hand stock is NOT incremented; only availability is restored. Current cart changes are untouched.
+- Worker/notification tests advance the clock; do not change production timestamps or reset stock just to test expiry. For a manually selected DEV order only, you may move its collection_deadline into the past in a Django shell, then run order_worker --once; this changes that test order and triggers a real sandbox refund/email, so identify the exact order first.
+- A refund FAILURE stays failed/review-required, never shown as completed. Network uncertainty stays UNKNOWN. With an owner session + CSRF, POST auth/owners/orders/ORDER_UUID/reconcile/ with {} to read provider state; this never resubmits an uncertain refund. POST .../cancel/ cancels an unfulfilled order and queues a paid-order refund.
+- If session creation's response was lost and automatic lookup cannot recover its session ID, reservations stay held and the order becomes REVIEW_REQUIRED after its checkout deadline. Find the exact session in the Kashier test dashboard, then owner POST .../reconcile/ with {"session_id":"THE_MATCHING_PROVIDER_SESSION_ID"}. The backend independently checks merchant/order/amount/currency before accepting it. No manual mark-paid endpoint exists.
+- SMTP failure leaves durable retry markers; it never reverses payment, repeats dispensing or loses the receipt. Worker logs suppress provider payloads and secrets. Inbox delivery and actual hosted sandbox enrollment/payment/refund must also be checked manually with your Kashier account.
+
+~~~powershell
+docker compose logs --tail 50 order-worker
+docker compose exec backend python manage.py order_worker --once
+docker compose exec backend python manage.py test apps.accounts.tests apps.terminals.tests apps.catalogue.tests apps.carts.tests apps.orders.tests apps.payments.tests config.tests --noinput
+docker compose exec backend python manage.py spectacular --validate --file /tmp/have-schema.yaml
+docker compose exec backend python manage.py makemigrations --check --dry-run
+~~~
+
+Provider references: https://developers.kashier.io/docs/accept-payments/payment-sessions ; https://developers.kashier.io/docs/webhooks ; https://developers.kashier.io/docs/api-reference/order-operations/refundOrder . Sandbox SDK/merchant features can differ; do not infer a successful card save or refund from the redirect alone.
+
+### Sandbox connection verified — 2026-10-17
+
+- A real unpaid checkout session was created using this machine's configured test account, then abandoned and independently reconciled to CANCELLED/FAILED. Its reservation was released; physical stock was unchanged. The cancelled diagnostic order remains in the dedicated test customer's history.
+- Actual sandbox validation rejects the documented request-body `mode` field. H.A.V.E omits it; the fixed `test-api.kashier.io` address and strict `mode=test` checkout-URL validation still enforce sandbox-only operation.
+- The documented empty cancellation PATCH returns 404. The adapter now follows Kashier's current hosted checkout: fetch the private session server-side, then send its `Kashier-Hash` and merchant/customer/order cancellation payload. Hashes and provider bodies never reach H.A.V.E clients or logs. Current provider source: https://payments.kashier.io/main-IEJX3S4R.js and https://payments.kashier.io/chunk-DHQJUDA2.js .
+- Starting over and issuing a payment-result cookie are serialized against the same Terminal row. An old in-flight checkout cannot expose its receipt to the next visitor. An already-issued private receipt cookie can still show its result after ordinary authentication expiry, for its own limited lifetime only.
+- Card submission, saved-card enrollment, a captured-payment refund and SMTP inbox delivery still need the manual checks above. An unpaid session test is not evidence that those provider/account-specific flows have completed.
+
+### Final automated verification — 2026-10-17
+
+- All **267 backend tests** passed, including isolated PostgreSQL concurrency, real Redis session state, checkout idempotency, fulfilment/refunds, receipt privacy and authentication regressions.
+- All **74 frontend unit tests** and the complete **84 browser tests** passed with zero failures/skips. Live browser cases exercise dedicated local Hub/Terminal fixtures; provider financial outcomes are controlled test doubles, not actual card payments.
+- All five frontend packages typecheck; all four applications build independently. Vite reports non-blocking bundle-size warnings for Hub/kiosk.
+- Swagger validates without warnings and `makemigrations --check --dry-run` reports no changes. All purchase migrations are applied on this development database.
+- Backend and order-worker were restarted with the rotated configuration and final code. Existing data/credentials were preserved, apart from the explicitly cancelled unpaid diagnostic order and its released reservation. No Git commit or push was made.

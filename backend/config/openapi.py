@@ -14,10 +14,14 @@ HUB_SIGNUP = "Hub · Customer signup"
 HUB_SESSION = "Hub · Customer session"
 HUB_PIN_RECOVERY = "Hub · PIN recovery"
 HUB_QR_APPROVAL = "Hub · QR login approval"
+HUB_CATALOGUE = "Hub · Catalogue"
+HUB_CART = "Hub · Cart"
 
 TERMINAL_GUEST_SESSION = "Terminal · Guest session"
 TERMINAL_CUSTOMER_SIGN_IN = "Terminal · Customer sign-in"
 TERMINAL_QR_LOGIN = "Terminal · QR login"
+TERMINAL_CATALOGUE = "Terminal · Catalogue"
+TERMINAL_CART = "Terminal · Cart"
 
 ADVISOR_SIGNUP = "Advisor · Doctor signup"
 ADVISOR_SESSION = "Advisor · Doctor session"
@@ -44,9 +48,16 @@ TAGS = [
     {"name": HUB_PIN_RECOVERY, "description": "Forgot PIN from the Hub login page: request → verify → complete. " + _ANONYMOUS},
     {"name": HUB_QR_APPROVAL, "description": "A signed-in Hub customer scans a Terminal's QR and approves or rejects "
                                              "that Terminal login. " + _HUB_AUTH},
+    {"name": HUB_CATALOGUE, "description": "Choose a collection Terminal first; pass terminal_serial to catalogue and cart requests. Availability subtracts reservations. " + _HUB_AUTH},
+    {"name": HUB_CART, "description": "Separate customer cart for each selected Terminal; one day from the last actual change. Never shared with kiosk sessions. " + _HUB_AUTH},
+    {"name": "Hub · Orders", "description": "Terminal selection, test checkout, owned history, cancellation and reorder. Paid Hub orders have a fixed 24-hour collection window. " + _HUB_AUTH},
+    {"name": "Hub · Payments", "description": "Display-safe provider saved cards. Save the first card during a Hub purchase, not a standalone enrollment. " + _HUB_AUTH},
     {"name": TERMINAL_GUEST_SESSION, "description": "Kiosk guest session: start, record explicit activity, end. " + _TERMINAL_AUTH},
     {"name": TERMINAL_CUSTOMER_SIGN_IN, "description": "Customer phone + PIN sign-in inside a guest session. " + _TERMINAL_AUTH},
     {"name": TERMINAL_QR_LOGIN, "description": "Display a QR for Hub approval, poll it, then complete the login. " + _TERMINAL_AUTH},
+    {"name": TERMINAL_CATALOGUE, "description": "Database-backed category, product and stock discovery for this device. " + _TERMINAL_AUTH},
+    {"name": TERMINAL_CART, "description": "Session-only basket for guests and customers. Login preserves it; reset destroys it. " + _TERMINAL_AUTH},
+    {"name": "Terminal · Orders", "description": "Sandbox checkout, history and simulated collection. Return/result routes require device credentials plus an order-scoped HttpOnly cookie instead of the expired session. " + _TERMINAL_AUTH},
     {"name": ADVISOR_SIGNUP, "description": "Doctor application: submit details, then verify the SMS code and the "
                                             "emailed code. Creates a PENDING application for owner review. " + _ANONYMOUS},
     {"name": ADVISOR_SESSION, "description": "Password step, authenticator (TOTP) step, current doctor, refresh and "
@@ -58,6 +69,8 @@ TAGS = [
     {"name": OWNER_PASSWORD_RECOVERY, "description": "Forgot password from the owner login page: request → verify → "
                                                      "complete. " + _ANONYMOUS},
     {"name": OWNER_DOCTOR_APPLICATIONS, "description": "List, inspect, and approve or reject doctor applications. " + _OWNER_AUTH},
+    {"name": "Owner · Payments", "description": "Privileged cancellation and provider reconciliation. " + _OWNER_AUTH},
+    {"name": "Payments · Kashier", "description": "Provider webhook: signed notification only; success is independently verified against Kashier sandbox."},
 ]
 
 # Within a group, operations follow the order a client calls them, keyed by the

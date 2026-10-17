@@ -3,10 +3,12 @@ import { useTranslation } from '@have/shared/i18n'
 import { Button } from '@have/shared/ui/controls'
 import { KioskFrame } from '../../../layouts/KioskFrame'
 import { useSession } from '../../session/hooks/use-session'
+import { useNavigate } from 'react-router-dom'
 
 export function ProfilePage() {
   const { t } = useTranslation('dashboard')
   const { controller, state } = useSession()
+  const navigate = useNavigate()
   useEffect(() => { void controller.refreshIdentity() }, [controller])
   const customer = state.customer
   const items = customer ? [
@@ -17,7 +19,7 @@ export function ProfilePage() {
     <p className="page-intro">{t('readOnly')}</p><dl className="profile-grid">{items.map(([label, value]) => <div key={label}><dt>{t(label!)}</dt><dd><bdi>{value}</bdi></dd></div>)}</dl>
     <div className="profile-actions">
       <Button disabled={state.busy} onClick={() => void controller.refreshIdentity()}>{t('refreshProfile')}</Button>
-      <Button disabled>{t('orders')} · {t('comingLater')}</Button>
+      <Button onClick={() => navigate('/profile/orders')}>{t('orders')}</Button>
     </div>
   </KioskFrame>
 }

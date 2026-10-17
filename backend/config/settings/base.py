@@ -46,6 +46,10 @@ INSTALLED_APPS = [
     "drf_spectacular_sidecar",
     "apps.accounts.apps.AccountsConfig",
     "apps.terminals.apps.TerminalsConfig",
+    "apps.catalogue.apps.CatalogueConfig",
+    "apps.carts.apps.CartsConfig",
+    "apps.orders.apps.OrdersConfig",
+    "apps.payments.apps.PaymentsConfig",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -215,7 +219,18 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REDIS_URL = env("REDIS_URL")
+CART_DATA_EXPIRY = env.int("CART_DATA_EXPIRY", default=86400)
+if CART_DATA_EXPIRY <= 0:
+    raise ValueError("CART_DATA_EXPIRY must be a positive number of seconds.")
 AUTH_REDIS_PREFIX = "have:auth:"
+
+# Sandbox only: there is deliberately no live-mode switch in this increment.
+KASHIER_DEFAULT_TEST_KEY = env("KASHIER_DEFAULT_TEST_KEY", default="")
+KASHIER_SECRET_KEY = env("KASHIER_SECRET_KEY", default="")
+KASHIER_MERCHANT_ID = env("KASHIER_MERCHANT_ID", default="")
+PAYMENTS_PUBLIC_BASE_URL = env("PAYMENTS_PUBLIC_BASE_URL", default="").rstrip("/")
+CHECKOUT_RESERVATION_SECONDS = 900
+ORDER_COLLECTION_SECONDS = 86400
 
 # Temporary customer signup state; no unverified database accounts.
 CUSTOMER_SIGNUP_CODE_SECONDS = 300

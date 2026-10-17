@@ -1,5 +1,161 @@
 # Increment 2 — Terminal authentication and mock customer dashboard
 
+## Bug-fix checkpoint — 2026-10-17
+
+This supersedes the basket-preservation statements in the historical entries below.
+Successful PIN and QR sign-in atomically discard the guest basket; customer browsing
+starts empty without restarting the absolute session clock. The catalogue provider
+clears guest quantities immediately on identity change, even if a cart read fails.
+Failed sign-in does not discard the guest's items. Hub carts remain untouched.
+
+Checkout failures now have payment-specific English/Arabic guidance rather than a
+generic connection error. No public return-address bridge is added: the current
+localhost Terminal return can still be rejected by Kashier. A real hosted Terminal
+origin/device boundary is separate deployment work, not part of this bug fix.
+
+Verified: all 275 backend and 74 unit tests, 79 deterministic browser cases plus
+eight live-fixture browser cases, all four typechecks/builds, OpenAPI and migration
+drift checks pass. The live checks restore fixture Hub cart quantities and create
+no purchases. Private env files, Cloudflare state and build/test output stay ignored.
+
+## Egypt-market sample stock — 2026-10-16
+
+The dedicated HAVE-TEST-001/002 datasets now contain 31 shared product identities
+and 10 appropriately assigned categories, with independent per-machine stock.
+`seed_egypt_catalogue --terminal HAVE-TEST-001 HAVE-TEST-002 --replace-demo` runs in
+Docker through manage.py. Names/strengths/selected packs are sourced in that command
+from EDA lists and manufacturer references; all prices, stock, batch numbers, expiry
+dates and quantity limits are explicitly synthetic prototype data. No dosing advice,
+live price claims, images, recommendations or checkout were introduced.
+The old `seed_catalogue` remains an isolated generic test fixture, not the local
+machines' current stock. Old slots are disabled, never deleted; old cart lines are
+flagged unavailable. Other inventory and private device credentials remain intact.
+Repeat runs preserve edits, depleted quantities, disabled slots and batch expiry.
+Terminal discovery and Hub network aggregation use the same existing database APIs.
+
+Verification: 52 catalogue/Terminal/cart backend tests passed (including five seed
+safety tests), plus two real-browser catalogue/two-device session smoke tests.
+Both live Terminals expose 31 products/10 categories; Panadol Advance quantities
+12 and 8 aggregate to 20 in Hub. No migration changes were detected.
+
+## Local multi-Terminal simulator — 2026-10-16
+
+This supersedes the single-installation private-device examples below. Configure
+`TERMINAL_HAVE_TEST_001_SERIAL`, `_KEY`, `_SIMULATOR_ID` and the equivalent three
+`TERMINAL_HAVE_TEST_002_` variables in private `frontend/.env`. Selectors are unique
+random 32-character lowercase hex IDs; generate with `[guid]::NewGuid().ToString('N')`.
+Open `http://localhost:5173/?terminal=SELECTOR` in each tab. Never put keys in URLs.
+
+`main.tsx` captures the selector per page and configures the Terminal API client;
+`App.tsx` retains it through router navigation/reset so reload remains on the same
+simulated installation. There is no cookie/localStorage/sessionStorage selector or
+authentication persistence. Reload clears customer/session state as before.
+The API wrapper sends `X-Terminal-Simulator` only to Terminal routes. The local Vite
+proxy maps it to private serial/key values, strips it and injects backend device headers.
+Unknown/missing/duplicate mappings fail closed. Existing host/origin/path/method checks
+remain. All other apps and backend contracts are unchanged. This is loopback-only
+development simulation, not production device authentication or a secret URL scheme.
+
+Recreate only kiosk after changing `.env`:
+`docker compose --profile frontend up -d --force-recreate --no-deps kiosk`.
+Unit tests cover selection, rejection, no key leakage and Terminal-only headers.
+`tests/kiosk-simulator.spec.ts` checks two tabs/navigation/reload and (with E2E_REAL=true)
+two real Redis sessions, wrong-device rejection and ending one without affecting the other.
+The old single-device pair works only in configurations with no simulator mappings.
+
+Verification: 59 unit tests and all workspace typechecks/four builds passed. The final
+28-case Docker browser run passed, including two independent real device sessions,
+wrong-device token rejection, navigation/reload/reset, existing PIN/QR/catalogue flows
+and real Hub/shared-cart behavior. Private keys were absent from the kiosk browser
+bundle. Only kiosk was recreated; existing keys, database inventory and other services
+were preserved. No backend source changes, migrations, commit or push.
+
+## Shared customer cart update — 2026-10-15
+
+This dated update supersedes session-only customer basket ownership below. Guest
+baskets still live in the Terminal session. Signed-in customers use their single
+account-owned Redis cart, shared with Hub/all Terminals, for one day after an actual
+edit. Reset, expiry and sign-out clear local identity/guest data but retain saved data.
+Reads, unchanged writes, login and polling never renew cart or session deadlines.
+
+At successful PIN **or QR** login, the global catalogue coordinator immediately reads
+`terminals/cart/comparison/`. Both nonempty baskets open a mandatory chooser showing
+creation/update dates, item names/quantities and current totals. Use saved discards
+guest without renewing saved TTL; Use current guest replaces saved and renews TTL.
+Guest-only is adopted once with a notice; saved-only loads unchanged. No merging,
+clamping or hidden overwrite. A changed version requires refreshed comparison and
+confirmation. Session expiry/Start over closes the chooser and clears temporary data.
+
+`PUT cart/items/{id}/` now includes `expected_version` with `quantity`; DELETE cart
+includes `expected_version`. Choice POST includes `choice`, `saved_version`,
+`guest_version`. Version conflicts return 409; clients refetch and request a repeated
+action, never replay automatically. Existing problem lines allow reduction/removal.
+
+Reusable image/stock/quantity/price/help/cart presentation, common catalogue locales
+and search matching live in shared. Kiosk retains its own fixed grids, keyboard,
+session queue and device proxy. `.profile-actions` has 12px logical bottom spacing.
+Hub availability is network-wide; Terminal availability remains machine-local.
+
+For manual cross-app tests and code map, see the dated section in Increment 3.
+Future paid Hub orders will be collectable through Terminal Profile → Order History;
+that service is still disabled and no purchasing/collection implementation exists.
+
+## Database catalogue and Redis cart — 2026-10-15
+
+This addition supersedes the older disabled-Browse scope below; authentication and its deadlines remain unchanged.
+
+### Run
+
+From the repository root (Docker Desktop running):
+
+```powershell
+docker compose --profile frontend up -d db redis backend kiosk
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py seed_catalogue --terminal HAVE-TEST-001
+```
+
+Use your existing provisioned serial instead if different; keep it matched with frontend/.env. The seed is DEBUG-only, transactional and repeat-safe: no credential rotation, stock refills, database reset or changes to existing rows. It inserts ten demonstration categories and 28 products. Catalogue/inventory reads use PostgreSQL only. Images remain placeholders and clinical sample text is explicitly non-advisory.
+
+### Code map
+
+- `backend/apps/catalogue/models`: Category, Product and ProductBatch; `services/catalogue_services.py`: Terminal-scoped discovery and safe stock aggregation; `api`: serializers/views/URLs; `management/commands/seed_catalogue.py`: explicit development samples.
+- `backend/apps/terminals/models`: TerminalSlot/TerminalStock. `services/inventory_services.py`: locked inventory writes. `services/cart_services.py`: validation and decimal pricing. `security/state.py`: atomic cart changes inside the existing session Redis value, preserving TTL/clocks.
+- `kiosk/src/features/catalogue`: category/list/detail/search pages, provider, discovery helpers, touch keyboard, translations, feature `styles/` and tests. `features/cart`: quantity controls and cart modal. `features/guidance`: skeleton modal only.
+- `shared/src/api/terminal.ts`: named endpoint clients/types from generated OpenAPI. `shared/src/ui/catalogue.tsx`: image fallback and stock badge. `tooling/kiosk-proxy.ts`: exact-method allowlist extended for these routes, credentials remain server-side.
+
+Endpoints under `/api/v1/terminals/`: GET `catalogue/categories/`, `catalogue/products/`, `catalogue/products/{id}/`, `cart/`; PUT `cart/items/{id}/` with `{"quantity":2,"expected_version":"VERSION_FROM_CART_READ"}`; DELETE `cart/` with `{"expected_version":"VERSION_FROM_CART_READ"}`. Comparison/choice routes are described in the shared-cart update above. All require Terminal serial/key plus session bearer. Swagger groups: Terminal · Catalogue and Terminal · Cart. No CSRF or Hub token is used for these device-bound routes.
+
+### Manual testing
+
+1. Open http://localhost:5173, Start, choose a language, Browse medicines. Observe eight categories; scroll to the remaining two. The final category has one enabled sample slot; a separate disabled slot is excluded.
+2. Open the first category: six cards fit before scrolling. Compare zero/low/normal stock. Prescription and expired-only items cannot be added. Switch price order, open details and return.
+3. Search from categories or products. Use the keyboard or type; try a partial English/Arabic name or ingredient. Search spans the whole Terminal. Open a result and Back: text remains in memory.
+4. Add an available product, increase/decrease, open Cart, check EGP totals and Remove. Continue and Insurance are intentionally disabled. No tax, payment, reservation or inventory decrement occurs.
+5. Open Need help choosing?: closable Coming soon skeleton only. Leave a cart modal idle: the inactivity warning takes priority. Reset/reload must reveal no previous personal/cart state. Sign in first and repeat Browse to test the same features as a customer.
+6. To inspect data, query categories/products/product_batches/terminal_slots/terminal_stock in SQLTools. Adjust stock with `set_stock` in Django rather than bypassing slot locks/capacity checks. UI reads refresh every 15 seconds; cart changes always revalidate. Invalidated cart lines show a warning and remain removable.
+
+### Checks
+
+```powershell
+docker compose exec backend python manage.py test apps.catalogue.tests apps.accounts.tests apps.terminals.tests config.tests
+docker compose exec backend python manage.py makemigrations --check --dry-run
+docker compose exec kiosk pnpm check
+docker compose exec -u root kiosk pnpm exec playwright install --with-deps chromium
+docker compose exec kiosk pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-catalogue.spec.ts
+docker compose exec -e E2E_REAL=true kiosk pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-catalogue.spec.ts
+```
+
+Rebuild the frontend image only when dependencies/manifests change; normal source edits hot-reload. New Django source and migrations are bind-mounted. Docker restart/recreation never seeds sample data automatically.
+
+### Verification — 2026-10-15
+
+- 161 backend tests passed, including authentication regressions, inventory locking under concurrent writes, parallel absolute cart updates, isolation, expiry and repeat-safe seeding.
+- 50 frontend unit tests, all package TypeScript checks, and all four builds passed. The existing Hub build still reports its non-blocking 500 kB chunk-size warning.
+- 48 browser tests passed inside Docker, including real PostgreSQL/Redis cart operations and real Hub/Terminal PIN/QR authentication regressions. Controlled-clock tests cover inactivity-modal priority and background reads not extending activity.
+- English/Arabic category, product, detail and cart screenshots plus search were inspected at 1024×600. Eight/six fully visible cards were checked before scrolling. Production image storage remains deferred.
+- Swagger validated, `makemigrations --check --dry-run` reported no changes, and both frontend requirements snapshots match the root requirements.
+- Existing development data and Terminal credentials were preserved. No Git commit, PR merge or push was performed.
+
 ## Scope and design
 
 Working flow: attract → language selection → guest home → phone/PIN or QR login →
@@ -218,10 +374,10 @@ checks against the dedicated device/customer above. Do not enable it against per
 accounts or a Terminal somebody else is currently using. Fixture records are kept for
 manual testing; Hub smoke-test sessions are logged out afterward.
 
-Refresh generated types from the current schema (from frontend/ on Windows):
+Refresh generated types from the current schema through Docker:
 
 ```powershell
-pnpm exec openapi-typescript "http://localhost:8000/api/schema/?format=json" -o shared/src/api/generated.d.ts
+docker compose exec kiosk pnpm exec openapi-typescript "http://localhost:5173/api/schema/?format=json" -o shared/src/api/generated.d.ts
 ```
 
 In the kiosk container use http://localhost:5173/api/schema/?format=json through its
@@ -240,3 +396,148 @@ the eight explicit request wrappers still control which endpoints this app calls
   representative screenshots were visually inspected. No top timer or pharmacist control.
 - Private key absent from built JavaScript; direct Vite access to its file returned 403.
 - No backend source changes or development-database migrations were made by this increment.
+
+## Shared-cart verification — 2026-10-16
+
+The new shared-cart update above is verified by 184 backend tests, 56 frontend unit
+tests and the full 64-case Docker browser run, all passing. Real Hub → kiosk data
+sharing, both cart choices and sign-out persistence were tested; guest data stays
+private on reset. English/Arabic chooser/profile screens fit 1024×600 with at least
+12px beneath profile actions. All app builds and schema validation pass; no new
+migration is needed. See Increment 3 for the full report and cross-app instructions.
+
+## Terminal purchase and separate-cart update — 2026-10-17
+
+This is the current contract. It supersedes the historical shared-cart and
+disabled-checkout sections above without deleting their dated implementation notes.
+
+### Ownership and navigation
+
+- A Terminal basket belongs only to its Redis session. It survives PIN/QR token
+  rotation, but reset, end, replacement or expiry removes it. Customer login does
+  not adopt a Hub basket and never opens a cart-choice modal.
+- Hub selects a Terminal before browsing and keeps a separate customer basket for
+  that selection. Another Hub selection and either physical Terminal session have
+  different baskets. Shared presentation/API mechanisms do not imply shared data.
+- Valid Cart → Continue now opens `/checkout`. Guests enter a receipt email using
+  the touch keyboard, then review. Signed-in customers review their account email
+  and choose Print or Go green. A guest always requests printing; print output is
+  explicitly simulated. Quantities are packs and remain bounded by current limits.
+- Profile → Order history is working, with order list/detail, explicit cancellation,
+  replacing this session's basket through Order again, and eligible paid Hub-order
+  collection at the assigned Terminal. Backend stock/payment decisions remain
+  authoritative. Insurance and real printer/dispensing hardware are not added.
+
+### Code map and endpoint boundary
+
+- `kiosk/src/features/orders/pages`: Checkout, OrderHistory, OrderDetail and
+  PaymentReturn. Pages use the feature operation hook and shared named clients;
+  they do not contain payment-provider credentials or HTTP endpoint strings.
+- `orders/components/OrderSummary.tsx`: immutable order/receipt presentation,
+  requested/dispensed quantities, collection deadline, expired label and explicit
+  confirmed/pending/review refund messages. Long content scrolls internally.
+- `orders/hooks/use-order-operation.ts`: busy/error and stale-response handling,
+  without automatic mutation retry. `orders/styles/` and `orders/locales/` contain
+  feature styling and matching English/Arabic messages.
+- Shared `CartContents` accepts an optional Continue action; it remains disabled
+  for an empty/problem cart or where no app action is provided. The reusable email
+  keyboard is kiosk-owned and never stores the draft in browser storage.
+- `shared/src/api/purchase.ts`: `terminalPurchaseApi` checkout/list/detail/cancel/
+  reorder/collect and restricted result/read/activity/end operations. The existing
+  private device proxy remains the only source of serial/key headers.
+
+Terminal routes under `/api/v1/terminals/orders/`:
+
+| Method/path | Authority and purpose |
+| --- | --- |
+| POST `checkout/` | Active session/device; reviewed `cart_version`, email, language, print choice, idempotency UUID and optional local simulator return selector |
+| GET root / GET `{id}/` | Signed-in customer/device; owned order history/details |
+| POST `{id}/cancel/` | Signed-in customer/device; explicit decision |
+| POST `{id}/reorder/` | Signed-in customer/device; reviewed cart version and explicit replacement |
+| POST `{id}/collect/` | Signed-in customer/device; backend eligibility for assigned Terminal |
+| GET `{id}/result/` | Restricted return cookie/device, never a restored account bearer |
+| POST `{id}/result/activity/` | Real private-result interaction only; five-second throttle |
+| POST `{id}/result/end/` | Revoke the private result and clear its cookie |
+
+The browser redirects only to a backend-created
+`https://payments.kashier.io/session/...?...mode=test` URL after exact host/protocol
+validation. Never enter real card information. The URL's success fields do not
+confirm payment; only backend-verified order state does. Explicit checkout retry
+uses the original idempotency key; no financial mutation is automatically replayed.
+
+The provider's Terminal return opens `/payment-return?order_id=...&terminal=...`.
+The selector only chooses the privately configured local device mapping, never a
+device key. No original session token is restored. A narrowly scoped HttpOnly
+cookie authorizes only this order's result alongside that device. Its screen clears
+at 60 seconds without interaction; real input can renew this private window, never
+Terminal authentication, and the server enforces a 30-minute absolute return cap.
+GET polling never counts as activity. Done/Start over clears local data and requests
+ticket revocation. Invalid cookie/device/order access shows no personal result.
+
+QR regeneration now has a visible ten-second cooldown after successful generation
+(`generate_again_in` where provided). Existing scan approval and session timings stay
+unchanged: 240-second idle / 900-second maximum, with no background renewal.
+
+### Run and test
+
+The root/backend guide owns payment TEST configuration, migrations, webhooks and
+maintenance commands. Do not invent merchant credentials, rotate existing device
+keys, reset data or fabricate paid orders to bypass that setup. Normal source edits
+still hot-reload; no frontend dependencies were added by the Terminal purchase UI.
+
+1. Open the private simulator URL for your test Terminal, choose a language, browse
+   and add an available product. Cart → Continue opens Checkout.
+2. As a guest, try the required email field and touch keyboard, enter a test receipt
+   address and review. Confirm printing is labelled simulated. Open secure test
+   payment only after the backend TEST provider is configured.
+3. As a signed-in customer, choose Go green and review the account email. Without
+   an eligible saved method, the backend gate should explain the required Hub-first
+   setup rather than exposing card fields or silently bypassing it.
+4. After a real TEST checkout return, verify confirmed status/receipt; no previous
+   account is restored. Leave the result untouched for 60 seconds: it clears. Reading
+   status repeatedly must not keep it alive; Done clears it immediately.
+5. Sign in and open My profile → Order history. Review owned orders and long item
+   lists. Confirm cancel/reorder actions explicitly. A paid Hub order is collectable
+   only at its assigned Terminal; final outcomes/receipt/printing are backend-owned.
+6. Reset, start again, then log in again: the old Terminal basket is empty. Hub's
+   selected-Terminal basket is independent. QR rejection offers regeneration only
+   once the ten-second cooldown ends.
+
+Deterministic UI checks (no database writes or payment-provider requests):
+
+```powershell
+docker compose exec -u root kiosk pnpm exec playwright install --with-deps chromium
+docker compose exec -e E2E_BROWSER_CHANNEL=chromium -e E2E_VISUAL=true kiosk pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-catalogue.spec.ts tests/kiosk-simulator.spec.ts tests/kiosk-orders.spec.ts --output=test-results/kiosk-purchase-check
+docker compose exec kiosk pnpm --filter @have/kiosk typecheck
+docker compose exec kiosk pnpm exec vitest run shared/src/ui/catalogue.test.ts kiosk/src/features/auth/tests/validation.test.ts
+```
+
+Use `tests/separate-carts-real.spec.ts`, not the obsolete shared-customer-cart test,
+for dedicated live-fixture isolation checks. It temporarily edits only the documented
+test customer's two scoped Hub baskets, restores their original quantities, and ends
+its test Terminal sessions. It must run serially after backend setup is complete and
+not while anyone else uses those two Terminals. It does not make purchases. Follow
+the shared Docker test-tunnel instructions when Hub access is needed from kiosk.
+
+### Terminal frontend verification — 2026-10-17
+
+- Docker Chromium: 32 deterministic Kiosk tests passed; four dedicated live-fixture
+  checks were skipped in this run. The 15 purchase cases include required guest
+  email/keyboard and review in both languages, saved-card gating, explicit
+  cancellation/reorder/collection, uncertain request/idempotency handling, strict
+  redirect host, restricted return without login restoration, real-interaction-only
+  private activity, sixty-second privacy reset, expired/refund states and long lists.
+- Kiosk TypeScript and five targeted shared-control/locale unit tests passed.
+- English/Arabic checkout and long order detail screenshots were inspected at
+  1024×600. Lists scroll internally while actions/footer stay visible. Screenshot
+  artifacts are ignored test output, not committed product images.
+- These deterministic checks mock purchase responses and the hosted TEST page.
+  They do not prove real merchant credentials, provider webhook delivery, receipt
+  SMTP delivery, physical printing or hardware dispensing. Backend/live verification
+  is reported separately and must not be inferred from a mocked success screen.
+- The subsequent serial Docker live run passed all six selected cases: PIN/profile/
+  reset, Hub-approved QR, real catalogue/cart, two-device session isolation and
+  separate Hub-selected-Terminal versus kiosk-session baskets. Guest login retained
+  only its own session basket; reset and fresh re-login found it empty, without
+  modifying Hub baskets. Original fixture Hub quantities were restored and test
+  sessions ended. No payment-provider purchase was attempted by this run.

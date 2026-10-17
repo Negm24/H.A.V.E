@@ -7,7 +7,7 @@ const fresh = (): SessionState => ({ phase: 'attract', language: null, customer:
 const MAXIMUM_MS = 900_000
 const ACTIVITY_GAP_MS = 5_000
 
-export function createSessionController(api = terminalApi, now = Date.now) {
+export function createSessionController(api: Pick<typeof terminalApi, 'start' | 'activity' | 'end' | 'login' | 'me' | 'createQr' | 'qrStatus' | 'completeQr'> = terminalApi, now = Date.now) {
   let state = fresh()
   let token = ''
   let epoch = 0
@@ -154,6 +154,9 @@ export function createSessionController(api = terminalApi, now = Date.now) {
   }
 
   return {
+    // Feature operations join the same queue as login/activity/end. The token is
+    // resolved at execution time, never exposed through React state or storage.
+    request: <T>(work: (currentToken: string, signal: AbortSignal) => Promise<T>) => query(signal => work(token, signal)),
     getSnapshot: () => state,
     subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } },
     connect() {

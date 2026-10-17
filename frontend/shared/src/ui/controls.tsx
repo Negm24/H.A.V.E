@@ -1,8 +1,6 @@
-import { useEffect, useRef, type ComponentProps, type ReactNode } from 'react'
-
-export function Button({ variant = 'secondary', className = '', ...props }: ComponentProps<'button'> & { variant?: 'primary' | 'secondary' | 'danger' }) {
-  return <button {...props} className={`have-button have-button--${variant} ${className}`} />
-}
+import { useEffect, useRef, type ReactNode } from 'react'
+export { ImagePlaceholder, StockBadge } from './catalogue'
+export { Button } from './button'
 
 export function Alert({ children }: { children: ReactNode }) {
   return <div className="have-alert" role="alert">{children}</div>

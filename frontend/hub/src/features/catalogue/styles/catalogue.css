@@ -1,0 +1,58 @@
+.hub-catalogue { min-width:0; }
+.hub-catalogue-back { display:inline-block; margin-block-end:22px; font-size:14px; }
+.hub-catalogue-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.hub-catalogue-heading h1 { margin-block-start:8px; }
+.hub-search-action { display:inline-flex; align-items:center; justify-content:center; gap:10px; background:white; padding:12px 20px; border:1px solid var(--color-border); border-radius:12px; text-decoration:none; flex-shrink:0; }
+.hub-availability { padding:16px 20px; background:var(--color-accent-soft); border-radius:14px; margin-block:16px 26px; color:var(--color-primary-dark); }
+.hub-availability strong { font-size:14px; }
+.hub-availability p { font-size:13px; margin-block:6px; }
+.hub-availability small { font-size:12px; }
+.hub-category-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
+.hub-app a.hub-category-card { display:block; color:var(--color-text-primary); background:white; border:1px solid var(--color-border); border-radius:16px; padding:14px; text-decoration:none; transition:box-shadow .15s,border-color .15s; min-width:0; }
+.hub-category-card:hover { border-color:var(--color-accent); box-shadow:0 5px 16px #423a6a12; }
+.hub-category-card .have-image-placeholder { min-height:135px; aspect-ratio:1.45; }
+.hub-category-card h2 { font-size:18px; margin-block:14px 5px; }
+.hub-category-card>span { color:var(--color-text-secondary); font-size:13px; }
+.hub-product-toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-block-end:20px; }
+.hub-product-toolbar p { font-size:14px; color:var(--color-text-secondary); }
+.hub-product-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.hub-catalogue .product-card { min-width:0; padding:14px; border-radius:16px; }
+.hub-catalogue .product-card .have-image-placeholder { height:145px; }
+.hub-catalogue .product-open { gap:8px; }
+.hub-catalogue .product-open strong { font-size:17px; }
+.hub-catalogue .product-pack { font-size:13px; }
+.hub-catalogue .product-open .prescription-badge { position:static; align-self:flex-start; font-size:12px; margin-block-start:2px; }
+.hub-catalogue .product-price { margin-block:12px; gap:8px; flex-wrap:wrap; }
+.hub-catalogue .product-price>b { font-size:20px; }
+.hub-catalogue .quantity-control { height:48px; min-height:48px; }
+.hub-catalogue .quantity-control .have-button { min-height:46px; min-width:40px; font-size:16px; padding:6px 10px; }
+.hub-catalogue .quantity-control>output { min-width:28px; font-size:18px; }
+.hub-catalogue .price-sort { min-height:44px; font-size:13px; }
+.hub-catalogue .price-sort-orbit { width:34px; height:34px; font-size:24px; }
+.hub-guidance-action { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-block-start:32px; padding-block-start:22px; border-top:1px solid var(--color-border); }
+.hub-guidance-action .have-button { min-height:44px; font-size:14px; padding:8px 18px; }
+.hub-guidance-action>span { color:var(--color-text-secondary); font-size:12px; }
+.hub-catalogue-search label { display:block; font-size:14px; font-weight:600; margin-block-end:10px; }
+.hub-catalogue-search>div { display:flex; align-items:center; gap:12px; padding-inline:16px 4px; background:white; border:1px solid var(--color-border); border-radius:12px; }
+.hub-catalogue-search>div:focus-within { outline:2px solid var(--color-primary); outline-offset:2px; }
+.hub-catalogue-search input { min-width:0; width:100%; border:0; background:transparent; padding-block:16px; font-size:18px; outline:none; }
+.hub-catalogue-search .have-button { min-height:42px; padding:4px 14px; border:0; box-shadow:none; background:transparent; }
+.hub-product-detail { display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.3fr); gap:32px; align-items:start; }
+.hub-product-detail>.have-image-placeholder { aspect-ratio:1; height:auto; min-height:250px; position:sticky; top:20px; border-radius:18px; }
+.hub-product-copy { min-width:0; }
+.hub-product-copy h2 { font-size:28px; line-height:1.3; }
+.hub-product-copy>p { font-size:14px; color:var(--color-text-secondary); }
+.hub-detail-price { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-block:22px; }
+.hub-detail-price>strong { font-size:25px; }
+.hub-product-copy dl { display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:14px; }
+.hub-product-copy dt { color:var(--color-text-secondary); font-size:12px; margin-block-end:5px; }
+.hub-product-copy dd { margin:0; }
+.hub-product-instructions,.hub-product-warnings { padding:18px; background:white; border:1px solid var(--color-border); border-radius:12px; margin-block:18px; }
+.hub-product-warnings { background:var(--color-warning-soft); }
+.hub-product-copy h3 { font-size:14px; margin:0; }
+.hub-product-copy section p { font-size:14px; margin-block:9px 0; }
+.hub-detail-actions { display:flex; align-items:center; gap:14px; margin-block-start:24px; }
+.hub-detail-actions>.quantity-control { min-width:140px; }
+.hub-detail-actions>.have-button { flex:1; min-height:48px; font-size:15px; }
+@media(max-width:950px) { .hub-category-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .hub-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .hub-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; } .hub-category-card .have-image-placeholder { min-height:100px; } .hub-category-card h2 { font-size:16px; } .hub-product-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; } .hub-catalogue .product-card { padding:10px; } .hub-catalogue .product-card .have-image-placeholder { height:100px; } .hub-catalogue .product-open strong { font-size:14px; } .hub-catalogue .product-price>b { font-size:17px; } .hub-catalogue .have-stock { font-size:11px; } .hub-catalogue .product-pack { font-size:12px; } .hub-catalogue-heading { align-items:flex-start; } .hub-catalogue-heading h1 { font-size:25px; } .hub-search-action { padding:10px 13px; font-size:13px; } .hub-availability { padding:14px; } .hub-guidance-action { align-items:flex-start; flex-direction:column; } .hub-product-detail { grid-template-columns:1fr; gap:24px; } .hub-product-detail>.have-image-placeholder { aspect-ratio:1.5; min-height:190px; position:static; } .hub-product-copy h2 { font-size:25px; } .hub-detail-actions { flex-wrap:wrap; } .hub-catalogue .price-sort { min-width:165px; } }

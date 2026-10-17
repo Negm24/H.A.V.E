@@ -1,0 +1,17 @@
+{
+  "home": "Back to home",
+  "back": "Back",
+  "networkStock": "Availability across the H.A.V.E network",
+  "advisory": "Combined stock across our Terminals. Availability at a particular machine may differ; items are not reserved.",
+  "observed": "Last checked {{date}}",
+  "demo": "Demonstration catalogue · EGP",
+  "cartUnavailable": "Your saved cart is temporarily unavailable. You can still browse medicines. Refresh before changing your cart.",
+  "conflict": "Your cart changed on another device. We loaded the latest version. Please check it and try your choice again.",
+  "limited": "Too many changes. Please wait before trying again.",
+  "savedCart": "Your Hub cart is separate from Terminal carts. It expires one day after your last change.",
+  "collectionTerminal": "Collect from",
+  "terminalAdvisory": "Only this machine's medicines and availability are shown. Stock is reserved only when checkout begins.",
+  "changeTerminal": "Change collection Terminal",
+  "clearCart": "Clear cart",
+  "empty": "No medicines are listed at this Terminal yet."
+}

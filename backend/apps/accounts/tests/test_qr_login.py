@@ -12,7 +12,8 @@ from rest_framework.test import APIClient
 from apps.accounts.models import User, RefreshToken
 from apps.accounts.security.errors import AuthError
 from apps.accounts.security.qr_state import qr_key
-from apps.accounts.security.challenges import enforce_limit
+from apps.accounts.security.challenges import enforce_limit, recovery_digest
+from apps.accounts.security.state import auth_key
 from apps.accounts.services.customer_services.registration import create_customer_account
 from apps.accounts.services.customer_services.hub_sessions import start_hub_session
 from apps.accounts.services.customer_services.qr_login import complete_qr
@@ -32,6 +33,11 @@ class QrFixtures(SessionFixtures):
 
     def create(self):
         return self.client.post(TERM + "qr-login/", **self.term_headers)
+
+    def generation_cooldown_elapsed(self):
+        # Simulate this TTL expiring, without sleeping or bypassing the separate
+        # five-minute budgets or changing authentication/QR/session clocks.
+        self.redis.expire(auth_key(f"limits:qr-generation-cooldown:{recovery_digest(self.terminal.pk)}"), 0)
 
     def scan(self, payload, headers=None):
         return self.client.post(HUB + "qr-login/scan/", {"qr_payload": payload},
@@ -95,6 +101,8 @@ class QrLoginTests(QrFixtures, TestCase):
 
     def test_replacement_and_single_scan(self):
         first = self.create().json()
+        self.assertEqual(self.create().status_code, 429)
+        self.generation_cooldown_elapsed()
         second = self.create().json()
         self.assertEqual(self.scan(first["qr_payload"]).status_code, 400)
         self.assertEqual(self.scan(second["qr_payload"]).status_code, 200)
@@ -138,6 +146,7 @@ class QrLoginTests(QrFixtures, TestCase):
         qr = self.prepare()
         self.redis.expire(qr_key(qr["challenge_id"]), 0)
         self.assertEqual(self.complete(qr).status_code, 400)
+        self.generation_cooldown_elapsed()
         qr = self.prepare()
         self.change_state(last_activity_at=time.time() - 1000)
         self.assertEqual(self.confirm(qr).status_code, 400)
@@ -183,6 +192,7 @@ class QrLoginTests(QrFixtures, TestCase):
     def test_rate_limits(self):
         for _ in range(10):
             self.assertEqual(self.create().status_code, 201)
+            self.generation_cooldown_elapsed()
         self.assertEqual(self.create().status_code, 429)
 
     def test_redis_and_database_failures_deny_login(self):

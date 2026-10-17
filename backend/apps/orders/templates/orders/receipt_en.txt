@@ -1,0 +1,15 @@
+H.A.V.E — TEST PAYMENT RECEIPT
+No real money was charged.
+Receipt: {{ receipt_number }}
+Order: {{ receipt.order_number }}
+Terminal: {{ receipt.terminal_name }}
+
+{% for item in receipt.items %}{{ item.name_en }} × {{ item.quantity }}: {{ item.line_total }} EGP
+{% endfor %}
+Total paid: {{ receipt.total_paid }} EGP
+{% if receipt.collection_deadline %}PAID — AWAITING COLLECTION
+Collect before: {{ receipt.collection_deadline }} (UTC)
+Collect from the selected Terminal. Uncollected orders are cancelled and refunded.
+{% else %}Dispensing is simulated in this academic prototype.
+{% endif %}
+Printing: {{ receipt.printing }} (simulation only; no hardware printer).

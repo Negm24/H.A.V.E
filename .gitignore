@@ -7,6 +7,16 @@
 *.p12
 *.pfx
 .secrets/
+# Cloudflare/Vercel local secrets and generated deployment state (not source config)
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+.vercel/
+supabase/.temp/
+supabase/.branches/
+*.dump
+*.backup
 frontend/test-results/
 frontend/playwright-report/
 

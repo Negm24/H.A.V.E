@@ -1,33 +1,6 @@
-/plan-mode
-  Imagine that you are the frontend developer and waiting for the backend developer to finish up the whole auth increment in this project. Before i
-  delete the kiosk folder, i need you to take a detailed look at the structure, design, themes, colors, fonts, and etc. then write it in a
-  CLAUDE.md file inside the new folder frontend/ that will have frontend/kiosk/, frontend/hub/, frontend/advisor/, and frontend/admin/.
+Note:
+For users:
+1. In terminal, If a user do not have saved cards in their account, they cannot pay and enter card credentials. They must set one up in Hub
+2. In hub, they add a card and save it for future orders that works in both hub and terminal.
 
-  Each folder inside the frontend is a whole frontend app.
-
-  Now, you have the api's schema, ERD, and everything you need to finish the frontend auth part as well. You will need to use all of the endpoints
-  created in the backend to hand me a full working 4 (Auth) apps connected to a central backend server.
-
-  Please make sure your code is reusable, editable, clean enough for me to edit, and follows SOLID. That should conclude a less total number of
-  lines code. It can be as long as it requires, no repeated codes.
-
-  Make sure the kiosk (terminal) frontend app is fixed for wide screen included in the requirements, and the rest should be responsive for
-  desktop/tablet/mobile, and all apps should follow the same design theme.
-
-  Use genius strategies to:
-  1. Ensure a reusable, clean, non-repetitive code
-  2. Reuse styling for all frontend apps
-  3. Reuse api routing on all 3 apps (terminal kiosk app uses the same customer accounts, so use your strategy) - admin is independent.
-
-  This big task will be done in 4 increments:
-  1. Increment 1 - frontend overview structure: We both have to plan and agree on a certain code structure that ensures future feature implementations. You give me a productive genius structure that's perfect for this project, then i'll review and edit if needed.
-  2. Increment 2 - kiosk app: This increment's completion criteria is by completing a full working kiosk app that's connected to the real implemented backend.
-  3. Increment 3 - Advisor app: Same as increment 3
-  4. Increment 4 - admin app: Same as increment 4 -> And after increment 4 we will customize and add more features and services for the admin. Not just reviewing doctors (We will discuss that after we finish all incremenets).
-
-
-To stop the hosting tunnel:
-  docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel stop hub-tunnel
-
-To start it again:
-  docker compose -f compose.yaml -f compose.hub-tunnel.yaml --profile frontend --profile tunnel up -d db redis backend hub hub-tunnel
+For guests: Their only option is every time they have to enter the card credentials and get their hardcopy receipt
