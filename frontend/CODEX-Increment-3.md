@@ -157,7 +157,7 @@ secure camera context. Docker's 172.x address is not the laptop's Wi-Fi address.
 
 ## Phone camera: free HTTPS tunnels
 
-Use the current [two-tunnel instructions](README.md#free-https-purchase-testing--2026-10-17).
+Use the current [stable HTTPS instructions](README.md#stable-https-testing-with-tailscale--2026-10-18).
 
 ## Endpoints used
 
@@ -378,17 +378,75 @@ guide. Provider credentials stay server-side; no `VITE_*` payment secrets, brows
 token/cart storage, database reset, or production payment mode is introduced.
 
 
-## Free local HTTPS purchase testing — 2026-10-17
+## Stable HTTPS development — 2026-10-18
 
-This supersedes the historical localhost-return and earlier tunnel instructions.
-Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
-apps. Kiosk requires the local test-access password; Hub remains reachable for signed
-Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
-Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
-Only exact configured hosts are trusted, device keys stay server-side, and cookies
-over the tunnels are Secure. Database records, purchase policies and session timings
-are unchanged. No migration, real charge, Git commit or push is part of this update.
+The 2026-10-17 temporary Cloudflare setup is retired. Windows Tailscale Funnel
+provides stable HTTPS to the existing Docker apps: Hub on 443, Kiosk on 8443.
+One private, ignored development/access.local.json stores both exact public origins
+and the existing Kiosk access password; no recurring .env address changes or new
+connector containers. Terminal keys remain server-side in frontend/.env.
+HTTPS cookies/CSRF, debug-page protection, payment verification and session policies
+remain enforced. Phone access is public even with Tailscale disconnected; Kiosk
+still requires its password. Keep the laptop awake during payment tests.
+See [current setup and acceptance checks](README.md#stable-https-testing-with-tailscale--2026-10-18).
+Kashier's actual :8443 return and physical-phone camera/public-access checks remain
+manual acceptance, not implied by automated test success.
 
-See [start/configure/test/stop instructions](README.md#free-https-purchase-testing--2026-10-17).
-Restarting either tunnel changes its URL; update root .env and recreate apps without
-restarting the other tunnel. Do not recreate tunnels while a payment is in flight.
+## Shared cart-button presentation — 2026-10-18
+
+Hub and Kiosk use shared/src/ui/cart-button.tsx, re-exported by ui/catalogue.
+Its icon, primary quantity badge and 300ms revision glow are styled in
+shared/src/styles/catalogue.css under #cart-button. Initial hydration and
+unchanged reads do not flash; reduced motion disables the glow. No cart/API,
+checkout, session, or click-handler behavior changes.
+## Customer shopping recovery — 2026-10-18
+
+Hub's existing customer+Terminal Redis baskets are now authoritative in matching
+signed-in Kiosks too. Hub still chooses the collection machine before browsing.
+The picker includes own saved quantities, disabled half-opacity controls, and a
+confirmation for another active guest/customer session. Own sessions have no
+warning; unavailable usage/cart service is unknown, not free/empty.
+
+Collection summaries highlight My Profile and supply a number-only History badge.
+`features/orders/hooks/use-collection-summary.tsx` refreshes every 15 visible
+seconds/actions; catalogue coordination checks cart versions every two visible
+seconds and fetches only changed baskets. Stock refresh stays 15 seconds.
+
+History separates Unfinished checkouts from purchases. Continue payment reuses
+the provider session, immutable snapshot and original deadline; Cancel checkout
+requires confirmation. Expired/unknown attempts cannot be blindly restarted.
+Kiosk-origin orders resumed in Hub require collection at their original machine,
+with the existing 24-hour verified-payment deadline. A paid result never implies
+unattended dispensing. Newer basket edits are retained with an explicit notice.
+
+Implementation lives in the Hub's existing feature pages/hooks/services/styles;
+shared API wrappers and generated types own the HTTP contract. Both languages
+and mobile/tablet/desktop layouts are covered. Run migrations then restart the
+existing backend/order-worker, with no new .env values. Test the same-machine
+cross-app basket, own/other/disabled/unknown picker, badge counts, countdown,
+explicit resume/cancel, later cart edits and offline/uncertain outcomes.
+New browser coverage: hub-shopping-recovery.spec.ts; existing purchase/auth/
+catalogue regressions remain. Actual sandbox payments remain user-operated;
+external Funnel DNS/webhook reachability is a separate unresolved prerequisite.
+
+## Checkout-loop correction — 2026-10-18
+
+Existing unfinished attempts are returned for explicit recovery rather than shown
+as a generic basket/stock conflict. Checking-payment detail polling includes
+REVIEW_REQUIRED; uncertain cancellation displays its specific translated message,
+never suggests a confirmed cancellation. Expired failed-to-open sessions are
+resolved by the backend's verified absence checks, not frontend forced cancellation.
+See backend/AUTH_GUIDE.md; no authentication, networking or credential changes.
+
+## Payment attention and physical resumption — 2026-10-18
+
+Hub My Profile now attracts attention for actionable awaiting-payment checkouts
+as well as paid collectable orders, with distinct bilingual wording. The History
+entry retains a combined number-only badge. Expired/review attempts are excluded.
+Hub completion continues to require collection. A customer explicitly resuming
+an unpaid attempt at its assigned Kiosk may instead dispense there after verified
+payment while that bound session remains live, even when the original channel
+was Hub. Already-paid collection orders retain their collection action.
+Existing summary polling, deadlines, saved-card/security rules and Hub refresh
+coordination are unchanged. See backend/AUTH_GUIDE.md and the recovery browser
+suite. No new environment values, migration or networking changes.

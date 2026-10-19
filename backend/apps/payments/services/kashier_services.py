@@ -9,6 +9,8 @@ from urllib.parse import urlencode, urlparse, parse_qs
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 from apps.accounts.security.errors import AuthError
 
 API = "https://test-api.kashier.io"
@@ -38,13 +40,16 @@ def configuration():
     return values
 
 
-def valid_public_origin(value):
+def valid_public_origin(value, *, allow_development_kiosk=False):
     """A configured HTTPS origin, never a browser-supplied redirect destination."""
     try:
         url = urlparse(value)
         return (url.scheme == "https" and bool(url.hostname) and not url.username and not url.password
                 and url.path in ("", "/") and not url.query and not url.fragment
-                and url.port in (None, 443) and url.hostname not in ("localhost", "127.0.0.1", "::1")
+                and (url.port in (None, 443) or (
+                    allow_development_kiosk and url.port == 8443
+                    and value == getattr(settings, "DEVELOPMENT_KIOSK_PUBLIC_ORIGIN", "")
+                )) and url.hostname not in ("localhost", "127.0.0.1", "::1")
                 and not any(char.isspace() for char in value))
     except ValueError:
         return False
@@ -54,8 +59,8 @@ def checkout_base_url(channel):
     """Validate before cart/stock/payment writes; each app keeps its own origin."""
     _, _, _, hub_origin = configuration()
     origin = settings.KIOSK_PUBLIC_BASE_URL if channel == "TERMINAL" else hub_origin
-    if not valid_public_origin(origin):
-        raise AuthError("Test checkout is not configured. Set KIOSK_PUBLIC_BASE_URL to the Kiosk HTTPS tunnel origin.", 503)
+    if not valid_public_origin(origin, allow_development_kiosk=channel == "TERMINAL"):
+        raise AuthError("Test checkout is not configured. Set the Kiosk HTTPS origin in development/access.local.json.", 503)
     return origin.rstrip("/")
 
 
@@ -151,7 +156,7 @@ def create_session(order, return_url):
     return data["_id"], data["sessionUrl"]
 
 
-def recover_session(order):
+def recover_session(order, *, unfiltered=False):
     """Recover a lost creation response by exact reference, never another POST.
 
     The provider does not document its listing envelope/filters. The bounded,
@@ -162,8 +167,10 @@ def recover_session(order):
     matches = []
     page, pages, total, seen = 1, 1, None, set()
     while page <= pages:
-        result = _call(API, "/v3/payment/sessions?" + urlencode({
-            "search": order.order_number, "page": page, "limit": 100}))
+        query = {"page": page, "limit": 100}
+        if not unfiltered:
+            query["search"] = order.order_number
+        result = _call(API, "/v3/payment/sessions?" + urlencode(query))
         rows, pagination = result.get("data"), result.get("pagination")
         if not isinstance(rows, list) or not isinstance(pagination, dict):
             raise ProviderUnavailable()
@@ -203,13 +210,40 @@ def recover_session(order):
     return session_id, f"https://payments.kashier.io/session/{session_id}?mode=test"
 
 
+def _expired_creation_absent(order):
+    """Only close missing creation after expiry plus a creation-settlement margin.
+
+    A filtered/empty search alone is NOT evidence. Independently sweep every
+    merchant session page, then require a successful, complete empty provider
+    order search. Incomplete reads/outages/any order match remain uncertain.
+    expireAt is already in the past, so a delayed create cannot open a payable
+    session with our original deadline. No new POST/charge is issued here.
+    """
+    if timezone.now() < order.expires_at + timedelta(seconds=60):
+        return False, None
+    recovered = recover_session(order, unfiltered=True)
+    if recovered:
+        return False, recovered
+    result = _call(API, "/v3/payment/orders?" + urlencode({"search": order.order_number, "page": 1, "limit": 100}))
+    pagination = result.get("pagination")
+    absent = (result.get("status") == "SUCCESS" and result.get("data") == []
+        and isinstance(pagination, dict) and type(pagination.get("total")) is int
+        and pagination["total"] == 0 and pagination.get("page") == 1
+        and type(pagination.get("pages")) is int and pagination["pages"] in (0, 1))
+    return absent, None
+
+
 def verify_order(order, session_id):
     """Read only stored references; 200 alone, redirect and unsigned event are not proof."""
     _, _, merchant, _ = configuration()
     if not session_id:
         recovered = recover_session(order)
         if recovered is None:
-            return {"state": "UNKNOWN"}
+            absent, recovered = _expired_creation_absent(order)
+            if absent:
+                return {"state": "FAILED", "reason": "SESSION_NOT_CREATED"}
+            if recovered is None:
+                return {"state": "UNKNOWN"}
         session_id, checkout_url = recovered
         result = verify_order(order, session_id)
         return result | {"session_id": session_id, "checkout_url": checkout_url}

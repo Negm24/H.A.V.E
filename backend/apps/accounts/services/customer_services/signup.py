@@ -11,7 +11,7 @@ from redis.exceptions import RedisError
 from .registration import _create_customer_from_validated_data
 from apps.accounts.security.errors import AuthError, SignupError
 from apps.accounts.security.tokens import generate_verification_code
-from apps.accounts.services.shared_services.notifications import send_verification_sms
+from apps.accounts.services.shared_services.notifications import require_sms_delivery, send_verification_sms
 from apps.accounts.services.shared_services.signup_verification import verify_signup_step
 from apps.accounts.security.state import (
     auth_key, get_redis_client, _digest, _challenge_key, _latest_key,
@@ -29,8 +29,10 @@ def _deliver_sms(*, challenge_id, phone_number, code):
 
 def request_customer_signup(*, data, source):
     """Receive validated data, retain only a PIN hash, and issue a phone-bound code."""
-    if not (settings.DEBUG and settings.AUTH_CONSOLE_SMS):
-        raise SignupError("SMS delivery is not configured.", status=503)
+    try:
+        require_sms_delivery()
+    except AuthError as exc:
+        raise SignupError(exc.detail, status=exc.status) from None
     client = get_redis_client()
     try:
         _source_limit(source, "send", 20, 600)

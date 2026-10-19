@@ -35,6 +35,8 @@ class PaymentTransaction(models.Model):
     return_started_at = models.DateTimeField(null=True, blank=True)
     return_ended_at = models.DateTimeField(null=True, blank=True)
     simulator_id = models.CharField(max_length=32, blank=True)
+    return_app = models.CharField(max_length=8, choices=[("HUB", "Hub"), ("TERMINAL", "Terminal")], blank=True)
+    return_terminal_session_id = models.UUIDField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 

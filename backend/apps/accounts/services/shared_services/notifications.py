@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 def require_sms_delivery():
-    if not (settings.DEBUG and settings.AUTH_CONSOLE_SMS):
+    # Explicit development opt-in; public tunnel testing keeps DEBUG disabled.
+    if not settings.AUTH_CONSOLE_SMS:
         raise AuthError("SMS delivery is not configured.", 503)
 
 

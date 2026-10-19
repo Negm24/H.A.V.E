@@ -22,7 +22,7 @@ APPLICATION = {
 }
 
 
-@override_settings(DEBUG=True, AUTH_CONSOLE_SMS=True, OWNER_NOTIFICATION_EMAIL="owner@example.test",
+@override_settings(DEBUG=False, AUTH_CONSOLE_SMS=True, OWNER_NOTIFICATION_EMAIL="owner@example.test",
                    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class DoctorSignupTests(SessionFixtures, TestCase):
     def setUp(self):
@@ -154,7 +154,7 @@ class DoctorSignupTests(SessionFixtures, TestCase):
         with patch("apps.accounts.services.doctor_services.signup.get_redis_client", side_effect=RedisError):
             self.assertEqual(self.start().status_code, 503)
 
-    @override_settings(DEBUG=False)
-    def test_no_mock_sms_outside_development(self):
+    @override_settings(AUTH_CONSOLE_SMS=False)
+    def test_no_mock_sms_without_explicit_opt_in(self):
         self.assertEqual(self.start().status_code, 503)
         self.sms.assert_not_called()

@@ -1,5 +1,6 @@
 import { ApiError } from '@have/shared/api'
 import { terminalApi, type TerminalSession } from '@have/shared/api/terminal'
+import type { PaymentContinuedSession } from '@have/shared/api/purchase'
 import type { SessionState } from '../types'
 
 const fresh = (): SessionState => ({ phase: 'attract', language: null, customer: null, busy: false, remaining: 0, error: null, retryUntil: 0 })
@@ -223,6 +224,16 @@ export function createSessionController(api: Pick<typeof terminalApi, 'start' | 
       }
     }),
     clearError: () => publish({ error: null }),
+    reconnectPayment: (work: (signal: AbortSignal) => Promise<PaymentContinuedSession>) => action(async signal => {
+      const result = await work(signal)
+      assertCurrent(signal)
+      if (!result.session_token || result.session_expires_in <= 0) throw new Error('Invalid session continuation')
+      // Server supplies only the original remaining lifetime; never restart 15m.
+      maximum = now() + result.session_expires_in * 1000
+      adopt(result)
+      lastActivity = now()
+      publish({ phase: result.customer ? 'customer' : 'guest', customer: result.customer ?? null, language: result.language })
+    }),
     interact,
     reset,
   }

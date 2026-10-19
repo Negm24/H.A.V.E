@@ -1,15 +1,16 @@
 # Backend code map
 
-## Local HTTPS test tunnels — 2026-10-17
+## Stable HTTPS development — 2026-10-18
 
-- `config/settings/tunnels.py` is an opt-in development settings module: exact
-  public hosts/CSRF origins, debug disabled, existing database/Redis configuration.
-- `config/tunnel_middleware.py` recognizes the private frontend proxy's HTTPS
-  marker only on configured hosts and secures response cookies; localhost stays HTTP.
-- Payment `checkout_base_url()` validates Hub/Kiosk origins before writes. Hub
-  remains the public signed-webhook destination; Kiosk returns directly to its
-  own locally password-protected tunnel. No payment policy or schema migration changes.
-- Startup, env values and stop commands: `frontend/README.md`, free HTTPS testing.
+- config/development_access.py reads private development/access.local.json; local
+  settings derive exact public origins, CSRF, disabled debug pages and payment URLs.
+- config/development_middleware.py trusts the private proxy marker only on the
+  configured authorities, including Kiosk :8443; response cookies remain Secure.
+- Frontend tooling/development-access.ts validates the same file server-side;
+  device credentials remain in the existing private Kiosk proxy.
+- Windows Tailscale Funnel forwards 443 to Hub and 8443 to Kiosk. No Cloudflare
+  Compose services or changing-hostname env variables remain.
+
 
 ## Bug-fix checkpoint — 2026-10-17
 
@@ -225,3 +226,37 @@ This section supersedes earlier shared-cart/no-checkout maps.
 | Machine-first selection validation | apps/terminals/services/selection_services.py |
 
 No provider, SMTP or hardware call runs inside inventory locks. Root requirements and AUTH_GUIDE.md explain current rules; historical diagrams are design references, not a claim that future insurance/prescription/card-management tables exist.
+## Customer shopping recovery — 2026-10-18
+
+- Shared customer+Terminal key, atomic revisions and exact paid-snapshot cleanup: `apps/carts/security/state.py`; version projection: `services/cart_services.py`.
+- Device/session boundary wrappers and `cart/version/`: `apps/terminals/services/cart_services.py`, `api/views/cart_views.py`.
+- Private-occupant-safe picker projection (FREE/IN_USE/OWN_SESSION/UNKNOWN), disabled machines and saved quantities: `apps/terminals/services/discovery_services.py`.
+- Paid collection counts and machine guidance: `apps/orders/services/summary_services.py`.
+- Serialized checkout creation and immutable snapshots: `apps/orders/services/checkout_services.py`, `order_services.py`.
+- Existing-session resume, monotonic collection conversion, neutral configured return and uncertain expiry: `apps/payments/services/payment_services.py`.
+- Result-session checks, scoped cookies and new-visitor revocation: `apps/payments/security/return_authorization.py`.
+- Additive fields/backfills: Orders `0005_order_collection_required`, Payments `0002_payment_return_destination`. No new cart table, secrets, order status or networking subsystem.
+- Regression coverage: carts customer tests, Terminals `test_discovery.py`, Orders `test_summary.py`, Payments `test_checkout_recovery.py` and concurrency tests.
+
+## Checkout-loop correction — 2026-10-18
+
+`apps/payments/services/kashier_services.py` verifies expired missing creation
+through bounded full merchant-session pagination and a successful empty order
+lookup, after a settlement margin. `payment_services.py` uses the same verifier
+for cancellation and background reconciliation; never repeats session creation.
+`apps/orders/services/errors.py` supplies purchase-scoped recovery hints, handled
+only by Orders views. Existing/ended attempts return a snapshot without an
+automatic redirect. `test_missing_checkout.py` covers absence proof, uncertainty,
+original-guest-only status reads and safe recovery from stale baskets. No database
+migration, authentication-policy relaxation or network reconfiguration is needed.
+
+## Payment return continuation — 2026-10-18
+
+- `apps/payments/services/session_return_services.py`: explicit one-use device/result-cookie handoff and exact-session ending; no automatic receipt GET authentication.
+- `apps/terminals/security/state.py`: atomic exact-session token rotation/end, preserving original maximum lifetime and rejecting replacement visitors.
+- `apps/orders/api/views/terminal_views.py`, `api/urls.py`: scoped POST `orders/{id}/result/continue/`; API serialises the allowed identity, business service remains independent of API handlers/serialisers.
+- `apps/payments/services/payment_services.py`, `worker_services.py`: latest authorised live Kiosk session controls immediate fulfilment, including originally Hub-created unpaid attempts. This supersedes the historical monotonic collection-conversion rule; Hub resume and expired/replaced sessions still require collection.
+- `apps/orders/services/summary_services.py`: separate actionable awaiting-payment and collectable counts plus combined attention count.
+- `apps/payments/tests/test_session_return.py`: continuation proof/expiry/revocation/isolation, session clocks, local fulfilment and summary regressions. Existing recovery and worker fixtures exercise valid physical sessions.
+
+Existing persisted return-app/session binding is reused; no database migration or new secret.

@@ -3,6 +3,7 @@ import { useTranslation } from '../i18n'
 import { Button } from './button'
 import type { CatalogueProduct } from '../api/catalogue'
 import type { CustomerCart } from '../api/cart'
+export { CartButton } from './cart-button'
 
 export function ImagePlaceholder({ src, label, className = '' }: { src?: string | null; label: string; className?: string }) {
   const [failed, setFailed] = useState(false)

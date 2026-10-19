@@ -7,10 +7,9 @@ from apps.accounts.security.authentication import HubAuthentication
 from apps.carts.api.serializers.cart_serializers import CartOutputSerializer
 from apps.orders.api.serializers.order_serializers import (
     CheckoutInputSerializer, CheckoutOutputSerializer, OrderOutputSerializer,
-    ReorderInputSerializer, CollectionTerminalOutputSerializer,
+    ReorderInputSerializer, CollectionTerminalOutputSerializer, ResumeCheckoutInputSerializer, OrderSummaryOutputSerializer, CheckoutErrorOutputSerializer,
 )
-from apps.terminals.models import Terminal
-from .shared_views import HUB, OrderViewBase, CheckoutView, OrdersView, OrderDetailView, OrderCancelView, OrderReorderView
+from .shared_views import HUB, OrderViewBase, CheckoutView, OrdersView, OrderDetailView, OrderCancelView, OrderReorderView, OrderResumeView, OrderSummaryView
 
 
 class HubOrderView(OrderViewBase):
@@ -22,12 +21,24 @@ class HubOrderView(OrderViewBase):
 class CollectionTerminalsView(HubOrderView):
     @extend_schema(tags=[HUB], responses={200: CollectionTerminalOutputSerializer(many=True), **ERRORS})
     def get(self, request):
-        return Response(list(Terminal.objects.filter(is_disabled=False).order_by("serial_number").values(
-            "serial_number", "display_name", "address_en", "address_ar", "status")))
+        from apps.terminals.services.discovery_services import collection_terminals
+        return Response(collection_terminals(request.user.pk))
+
+
+class HubOrderSummaryView(OrderSummaryView, HubOrderView):
+    @extend_schema(tags=[HUB], responses={200: OrderSummaryOutputSerializer, **ERRORS})
+    def get(self, request):
+        return super().get(request)
+
+
+class HubOrderResumeView(OrderResumeView, HubOrderView):
+    @extend_schema(tags=[HUB], request=ResumeCheckoutInputSerializer, responses={200: CheckoutOutputSerializer, **ERRORS})
+    def post(self, request, order_id):
+        return super().post(request, order_id)
 
 
 class HubCheckoutView(CheckoutView, HubOrderView):
-    @extend_schema(tags=[HUB], request=CheckoutInputSerializer, responses={200: CheckoutOutputSerializer, **ERRORS})
+    @extend_schema(tags=[HUB], request=CheckoutInputSerializer, responses={200: CheckoutOutputSerializer, 409: CheckoutErrorOutputSerializer, **ERRORS})
     def post(self, request):
         return super().post(request)
 

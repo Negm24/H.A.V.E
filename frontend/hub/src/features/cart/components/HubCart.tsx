@@ -1,13 +1,13 @@
 import { useTranslation } from '@have/shared/i18n'
 import { Alert, Button } from '@have/shared/ui/controls'
-import { CartContents, CatalogueModal } from '@have/shared/ui/catalogue'
+import { CartButton, CartContents, CatalogueModal } from '@have/shared/ui/catalogue'
 import { useHubCatalogue } from '../../catalogue/hooks/use-catalogue'
 import '../styles/cart.css'
 import { useNavigate } from 'react-router-dom'
 
 export function HubCartButton() {
   const { t } = useTranslation('catalogue'), { cart, openCart, cartError, terminal } = useHubCatalogue(), navigate = useNavigate()
-  return <Button className="hub-cart-button" onClick={() => terminal ? openCart() : navigate('/browse')}>{cartError || !cart ? t('cart') : t('cartCount', { count: cart.total_quantity })}</Button>
+  return <CartButton className="hub-cart-button" count={cartError || !cart ? 0 : cart.total_quantity} revision={cartError ? undefined : cart?.version} aria-label={cartError || !cart ? t('cart') : t('cartCount', { count: cart.total_quantity })} onClick={() => terminal ? openCart() : navigate('/browse')} />
 }
 
 export function HubCartModal() {

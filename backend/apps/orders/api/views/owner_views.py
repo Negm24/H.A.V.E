@@ -43,7 +43,7 @@ class OwnerOrderReconcileView(OwnerOrderCancelView):
             # payment proof. Verify merchant/order/amount/currency via sandbox.
             verify_order(payment.order, candidate)
             PaymentTransaction.objects.filter(pk=payment.pk, session_id="").update(session_id=candidate)
-        reconcile(payment.pk)
+        reconcile(payment.pk, force=True)
         refund = PaymentTransaction.objects.filter(order_id=order_id, operation="REFUND").first()
         if refund:
             # Explicit owner action permits read-only reconciliation of failed

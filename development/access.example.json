@@ -1,0 +1,5 @@
+{
+  "hubPublicOrigin": "https://your-laptop.your-tailnet.ts.net",
+  "kioskPublicOrigin": "https://your-laptop.your-tailnet.ts.net:8443",
+  "kioskAccessPassword": "replace-with-a-private-password-of-at-least-16-characters"
+}

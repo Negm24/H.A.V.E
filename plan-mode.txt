@@ -1,6 +1,0 @@
-Note:
-For users:
-1. In terminal, If a user do not have saved cards in their account, they cannot pay and enter card credentials. They must set one up in Hub
-2. In hub, they add a card and save it for future orders that works in both hub and terminal.
-
-For guests: Their only option is every time they have to enter the card credentials and get their hardcopy receipt

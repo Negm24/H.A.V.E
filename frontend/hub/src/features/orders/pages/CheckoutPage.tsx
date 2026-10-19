@@ -25,6 +25,7 @@ export function CheckoutPage() {
     try {
       const result = await session.authorized(token => hubPurchaseApi.checkout(token, { terminal_serial: terminal.serial_number, cart_version: cart.version, email: email.trim(), language: i18n.language === 'ar' ? 'ar' : 'en', print_requested: false, idempotency_key: key.current!.id }, controller.signal))
       if (controller.signal.aborted) return
+      if (!result.checkout_url) { navigate(`/orders/${result.order.id}`, { replace: true }); return }
       if (!isHostedCheckoutUrl(result.checkout_url)) { navigate(`/orders/${result.order.id}`, { replace: true, state: { notice: 'unsafeCheckout' } }); return }
       // Kashier alone collects test card information. No PAN/CVV field exists in Hub.
       window.location.assign(result.checkout_url)

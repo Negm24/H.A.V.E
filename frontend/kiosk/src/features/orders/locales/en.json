@@ -61,7 +61,11 @@
   "resultNotice": "Only the backend confirms payment. Returning from the payment page alone does not mean payment succeeded.",
   "privateResult": "This private result is unavailable or has expired. Check your receipt email or sign in again to view order history.",
   "done": "Done · Start over",
-  "privacy": "This result clears automatically for privacy. It does not restore your previous sign-in.",
+  "privacy": "This private result clears after 60 seconds without interaction. Payment is confirmed only by the backend.",
+  "sessionChoice": "Would you like to continue this session or end it?",
+  "continueSession": "Continue session",
+  "endSession": "End session",
+  "sessionEnded": "Your previous session has ended. End this screen and sign in again if needed. Your payment and receipt are saved.",
   "statuses": {
     "PENDING": "Pending",
     "DISPENSING": "Dispensing",
@@ -69,5 +73,15 @@
     "COMPLETED": "Completed",
     "REVIEW_REQUIRED": "Review required — do not pay again"
   },
-  "cartNotice": "Stock is checked again at checkout. No added tax."
+  "cartNotice": "Stock is checked again at checkout. No added tax.",
+  "unfinished": "Unfinished checkouts", "awaitingPayment": "Awaiting payment", "checkingPayment": "Checking payment — do not pay again",
+  "resume": "Continue payment", "cancelCheckout": "Cancel checkout", "cancelCheckoutBody": "Cancel this checkout after checking its payment status. Your basket stays saved. A confirmed payment follows the refund process.",
+  "checkoutRemaining": "Checkout time left: {{minutes}}:{{seconds}}", "checkoutExpired": "Checkout time ended. Refresh to check payment before starting again.",
+  "resumeNotice": "Continue the same payment. Its products, amount and original deadline do not change.",
+  "cartPreserved": "Your basket changed after this checkout began, so your newer basket was kept.",
+  "cartLoading": "Loading your saved basket…", "cartReadFailed": "Your basket could not be loaded. It has not been cleared. Refresh before checking out.",
+  "viewExistingCheckout": "Check unfinished checkouts",
+  "checkoutUncertainDraft": "An earlier payment attempt may exist. Retrying checks that same payment with the original basket shown here, not any later changes.",
+  "cartChanged": "Your basket changed before checkout started. We loaded the latest basket. Review it, then open payment again.",
+  "checkingPaymentHelp": "We are checking whether this checkout opened or was paid. Cancellation is not confirmed yet. Do not pay again. Refresh its status; if verification cannot finish, contact support with the order reference. Your saved basket is kept."
 }

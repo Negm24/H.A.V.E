@@ -36,3 +36,7 @@ export const terminalApi = {
   qrStatus: (token: string, id: string, signal?: AbortSignal) => terminalRequest<QrStatus>(customers + `qr-login/${encodeURIComponent(id)}/`, { bearerToken: token, signal }),
   completeQr: (token: string, id: string, signal?: AbortSignal) => terminalRequest<TerminalSession>(customers + `qr-login/${encodeURIComponent(id)}/complete/`, { method: 'POST', bearerToken: token, signal }),
 }
+
+export const terminalCartApi = {
+  version: (token: string, signal?: AbortSignal) => terminalRequest<{ version: string }>('/api/v1/terminals/cart/version/', { bearerToken: token, signal }),
+}

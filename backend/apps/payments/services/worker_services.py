@@ -9,10 +9,10 @@ from apps.accounts.security.errors import AuthError
 from apps.carts.security.state import clear_purchased_cart
 from apps.orders.models import Order, Receipt
 from apps.orders.services.notification_services import send_order_notice
-from apps.orders.services.order_services import expire_orders, fulfil_order
+from apps.orders.services.order_services import expire_orders
 from apps.orders.services.receipt_services import deliver_receipt
 from apps.payments.models import PaymentTransaction
-from apps.payments.services.payment_services import reconcile, process_refund, request_refund
+from apps.payments.services.payment_services import reconcile, process_refund, request_refund, fulfil_paid_terminal
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +38,12 @@ def run_cycle():
         Q(lease_until__isnull=True) | Q(lease_until__lte=now))
     for pk in list(due.filter(operation="CAPTURE").values_list("pk", flat=True)[:100]):
         _run(lambda pk=pk: reconcile(pk), stats, "reconciled")
-    for order in Order.objects.filter(paid_at__isnull=False, cart_cleanup_completed_at__isnull=True).order_by("paid_at", "pk")[:100]:
+    for order in Order.objects.filter(paid_at__isnull=False, cart_cleanup_completed_at__isnull=True).exclude(
+            status="CANCELLED").order_by("paid_at", "pk")[:100]:
         _run(lambda order=order: _clear_paid_cart(order), stats, "cart_cleanups")
     # A process may stop after verified payment commit but before simulated dispense.
-    for pk in list(Order.objects.filter(channel="TERMINAL", status="PENDING", paid_at__isnull=False).values_list("pk", flat=True)[:100]):
-        _run(lambda pk=pk: fulfil_order(pk), stats, "fulfilled")
+    for pk in list(Order.objects.filter(collection_required=False, status="PENDING", paid_at__isnull=False).values_list("pk", flat=True)[:100]):
+        _run(lambda pk=pk: fulfil_paid_terminal(pk), stats, "fulfilled")
     try:
         stats["expired"] = len(expire_orders(now=now))
     except Exception:
@@ -74,5 +75,6 @@ def run_cycle():
 def _clear_paid_cart(order):
     # CAS protects later browser changes/new visitors; no TTL is extended. A
     # crash between Redis and this marker only repeats that same harmless CAS.
-    clear_purchased_cart(order)
-    Order.objects.filter(pk=order.pk, cart_cleanup_completed_at__isnull=True).update(cart_cleanup_completed_at=timezone.now())
+    preserved = clear_purchased_cart(order) is False
+    Order.objects.filter(pk=order.pk, cart_cleanup_completed_at__isnull=True).update(
+        cart_cleanup_completed_at=timezone.now(), cart_preserved=preserved)

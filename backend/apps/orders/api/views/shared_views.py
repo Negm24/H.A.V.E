@@ -5,12 +5,13 @@ from rest_framework.response import Response
 
 from apps.accounts.api.views.shared_views import CustomerSessionView
 from apps.accounts.security.errors import AuthError
-from apps.orders.api.serializers.order_serializers import CheckoutInputSerializer, ReorderInputSerializer
+from apps.orders.api.serializers.order_serializers import CheckoutInputSerializer, ReorderInputSerializer, ResumeCheckoutInputSerializer
 from apps.orders.models import Order
 from apps.orders.services.checkout_services import checkout_order, reorder
 from apps.orders.services.order_services import order_data
+from apps.orders.services.errors import CheckoutConflict
 from apps.payments.security.return_authorization import cookie_name
-from apps.payments.services.payment_services import start_checkout, reconcile, cancel_purchase
+from apps.payments.services.payment_services import start_checkout, reconcile, cancel_purchase, resume_checkout
 from apps.terminals.models import Terminal
 
 
@@ -21,7 +22,7 @@ TERMINAL = "Terminal · Orders"
 def _data(order, terminal=None):
     data = order_data(order)
     data["terminal"]["status"] = order.terminal.status
-    data["can_collect"] = bool(terminal and order.terminal_id == terminal.pk and order.channel == "HUB"
+    data["can_collect"] = bool(terminal and order.terminal_id == terminal.pk and order.collection_required
         and order.paid_at and order.status == "PENDING" and order.collection_deadline and order.collection_deadline > timezone.now())
     data["payment_status"] = order.payments.filter(operation="CAPTURE").values_list("status", flat=True).first()
     data["refund_status"] = order.payments.filter(operation="REFUND").values_list("status", flat=True).first()
@@ -30,6 +31,11 @@ def _data(order, terminal=None):
 
 class OrderViewBase(CustomerSessionView):
     terminal_flow = False
+
+    def handle_exception(self, exc):
+        if isinstance(exc, CheckoutConflict):
+            return Response({"detail": exc.detail, "code": exc.code}, status=exc.status)
+        return super().handle_exception(exc)
 
     def context(self, request):
         if self.terminal_flow:
@@ -44,6 +50,17 @@ class OrderViewBase(CustomerSessionView):
             raise Http404
         return order
 
+    def checkout_owned(self, request, order_id):
+        """Guests may recover/cancel only their exact original session purchase."""
+        if self.terminal_flow and not request.user.is_authenticated:
+            terminal, _, session_id = self.context(request)
+            order = Order.objects.select_related("terminal").filter(pk=order_id, customer__isnull=True,
+                terminal=terminal, terminal_session_id=session_id).first()
+            if order is None:
+                raise Http404
+            return order
+        return self.owned(request, order_id)
+
 
 class CheckoutView(OrderViewBase):
     def post(self, request):
@@ -56,14 +73,55 @@ class CheckoutView(OrderViewBase):
             if terminal is None:
                 raise AuthError("Choose an available collection Terminal first.", 400)
             data["print_requested"] = False
-        order = checkout_order(user=request.user, terminal=terminal, raw_token=raw, session_id=session_id,
-            data=data, channel="TERMINAL" if self.terminal_flow else "HUB")
+        try:
+            order = checkout_order(user=request.user, terminal=terminal, raw_token=raw, session_id=session_id,
+                data=data, channel="TERMINAL" if self.terminal_flow else "HUB")
+        except CheckoutConflict as exc:
+            if exc.code != "CHECKOUT_EXISTS":
+                raise
+            # Principal/machine were checked under the checkout creation lock.
+            # Surface the existing snapshot instead of trapping the browser in
+            # a generic stock-conflict retry. Resume remains an explicit action.
+            order = self.checkout_owned(request, exc.order_id)
+            return Response({"order": _data(order, terminal if self.terminal_flow else None), "checkout_url": None})
+        if order.paid_at or order.status == "CANCELLED" or order.expires_at <= timezone.now():
+            payment = order.payments.filter(operation="CAPTURE").first()
+            if payment and not order.paid_at and order.status != "CANCELLED":
+                reconcile(payment.pk, force=True)
+                order.refresh_from_db()
+            return Response({"order": _data(order, terminal if self.terminal_flow else None), "checkout_url": None})
         payment, ticket = start_checkout(order, simulator_id=data.get("return_simulator_id", ""))
         response = Response({"order": _data(order, terminal if self.terminal_flow else None), "checkout_url": payment.checkout_url})
         if ticket:
             response.set_cookie(cookie_name(order.pk), ticket, max_age=1800, httponly=True, secure=not settings.DEBUG,
                 samesite="Lax", path=f"/api/v1/terminals/orders/{order.pk}/")
         return response
+
+
+class OrderResumeView(OrderViewBase):
+    def post(self, request, order_id):
+        form = ResumeCheckoutInputSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        terminal, _, session_id = self.context(request)
+        order = self.checkout_owned(request, order_id)
+        payment, ticket = resume_checkout(order, user_id=request.user.pk if request.user.is_authenticated else None,
+            app="TERMINAL" if self.terminal_flow else "HUB", terminal=terminal, session_id=session_id,
+            simulator_id=form.validated_data.get("return_simulator_id", ""))
+        order.refresh_from_db()
+        data = _data(order, terminal)
+        response = Response({"order": data, "checkout_url": payment.checkout_url if data["can_resume"] else None})
+        if ticket:
+            response.set_cookie(cookie_name(order.pk), ticket, max_age=1800, httponly=True, secure=not settings.DEBUG,
+                samesite="Lax", path=f"/api/v1/terminals/orders/{order.pk}/")
+        return response
+
+
+class OrderSummaryView(OrderViewBase):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            raise AuthError("Sign in to view Order History.", 401)
+        from apps.orders.services.summary_services import collection_summary
+        return Response(collection_summary(request.user.pk, terminal=self.context(request)[0]))
 
 
 class OrdersView(OrderViewBase):
@@ -76,7 +134,7 @@ class OrdersView(OrderViewBase):
 
 class OrderDetailView(OrderViewBase):
     def get(self, request, order_id):
-        order = self.owned(request, order_id)
+        order = self.checkout_owned(request, order_id)
         payment = order.payments.filter(operation="CAPTURE").first()
         if payment and payment.status not in ("SUCCEEDED", "FAILED") and payment.next_attempt_at <= timezone.now():
             reconcile(payment.pk)
@@ -86,7 +144,7 @@ class OrderDetailView(OrderViewBase):
 
 class OrderCancelView(OrderViewBase):
     def post(self, request, order_id):
-        order = self.owned(request, order_id)
+        order = self.checkout_owned(request, order_id)
         if order.status == "COMPLETED":
             raise AuthError("A completed order cannot be cancelled.", 409)
         order = cancel_purchase(order)

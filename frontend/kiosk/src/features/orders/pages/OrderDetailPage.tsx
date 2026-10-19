@@ -9,11 +9,15 @@ import { useSession } from '../../session/hooks/use-session'
 import { useCatalogue } from '../../catalogue/hooks/use-catalogue'
 import { OrderSummary } from '../components/OrderSummary'
 import { useOrderOperation } from '../hooks/use-order-operation'
+import { useCollectionSummary } from '../hooks/use-collection-summary'
+import { CheckoutRecovery } from '../components/CheckoutRecovery'
+import { isUnfinishedCheckout, requiresCollection } from '../services/order-presentation'
 import '../styles/orders.css'
 
 export function OrderDetailPage() {
   const { orderId = '' } = useParams(), navigate = useNavigate(), { t } = useTranslation('orders')
   const { controller, state } = useSession(), { cart, refresh, busy: cartBusy } = useCatalogue()
+  const { refresh: refreshSummary } = useCollectionSummary()
   const [order, setOrder] = useState<PurchaseOrder | null>(null), [confirm, setConfirm] = useState<'cancel' | 'reorder' | 'collect' | null>(null)
   const { run, busy, error } = useOrderOperation(orderId)
   const warning = state.remaining <= 30
@@ -21,10 +25,10 @@ export function OrderDetailPage() {
   useEffect(() => { setOrder(null); void load() }, [load])
   useEffect(() => { if (warning) setConfirm(null) }, [warning])
   useEffect(() => {
-    if (!order || !['PENDING', 'DISPENSING'].includes(order.status)) return
+    if (!order || !['PENDING', 'DISPENSING'].includes(order.status) && order.payment_state !== 'CHECKING_PAYMENT') return
     const timer = setInterval(() => { if (!document.hidden) void load(true) }, 3_000)
     return () => clearInterval(timer)
-  }, [load, order?.status])
+  }, [load, order?.status, order?.payment_state])
   async function act() {
     const action = confirm
     if (!action) return
@@ -34,16 +38,16 @@ export function OrderDetailPage() {
       if (result) { await refresh(); navigate('/browse') }
     } else {
       const result = await run(() => controller.request((token, signal) => action === 'cancel' ? terminalPurchaseApi.cancel(token, orderId, signal) : terminalPurchaseApi.collect(token, orderId, signal)))
-      if (result) setOrder(result)
+      if (result) { setOrder(result); void refreshSummary(); void refresh() }
       else void load(true)
     }
   }
-  const collectible = !!order && order.channel === 'HUB' && !!order.paid_at && order.status === 'PENDING' && (order as PurchaseOrder & { can_collect?: boolean }).can_collect !== false
+  const collectible = !!order && requiresCollection(order) && !!order.paid_at && order.status === 'PENDING' && (order as PurchaseOrder & { can_collect?: boolean }).can_collect !== false
   return <KioskFrame title={t('details')} back="/profile/orders"><div className="terminal-orders">
     <div className="terminal-orders-toolbar"><h1>{t('details')}</h1><Button disabled={busy} onClick={() => void load()}>{t('refresh')}</Button></div>
     {error && <Alert>{t(error)}</Alert>}
-    {!order ? <p role="status">{t('checking')}</p> : <><div className="terminal-order-scroll"><OrderSummary order={order} /></div><div className="terminal-order-actions">
-      {order.status === 'PENDING' && <Button disabled={busy} onClick={() => setConfirm('cancel')}>{t('cancel')}</Button>}
+    {!order ? <p role="status">{t('checking')}</p> : <><div className="terminal-order-scroll"><OrderSummary order={order} />{isUnfinishedCheckout(order) && <CheckoutRecovery order={order} updated={setOrder} />}</div><div className="terminal-order-actions">
+      {order.status === 'PENDING' && !isUnfinishedCheckout(order) && <Button disabled={busy} onClick={() => setConfirm('cancel')}>{t('cancel')}</Button>}
       <Button disabled={busy || cartBusy} onClick={() => setConfirm('reorder')}>{t('reorder')}</Button>
       {collectible && <Button variant="primary" disabled={busy} onClick={() => setConfirm('collect')}>{t('collect')}</Button>}
     </div></>}

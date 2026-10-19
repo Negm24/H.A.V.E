@@ -2,7 +2,7 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
 const origin = 'http://localhost:5174'
 const id = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
-const terminal = { serial_number: 'HAVE-TEST-001', display_name: 'Cairo collection Terminal', address_en: 'Cairo test address', address_ar: 'عنوان اختبار القاهرة', status: 'AVAILABLE' }
+const terminal = { serial_number: 'HAVE-TEST-001', display_name: 'Cairo collection Terminal', address_en: 'Cairo test address', address_ar: 'عنوان اختبار القاهرة', status: 'OFFLINE', is_disabled: false, occupancy: 'FREE', cart_total_quantity: 0, cart_available: true }
 const customer = { id: 'HAV-C876-000000000024', account_type: 'CUSTOMER', first_name: 'Hub', last_name: 'Tester', phone_number: '+201099998876', email: 'hub-tester@example.test', date_of_birth: '24-01-2005', phone_verified_at: '2026-10-10T00:00:00Z' }
 const product = { id: 1, sku: 'DEMO-1', category_id: 1, name_en: 'Demo medicine', name_ar: 'دواء تجريبي', active_ingredient: 'Demo', strength: '500 mg', dosage_form: 'Tablets', pack_description: '24 tablets', usage_instructions_en: 'Demo only.', usage_instructions_ar: 'للعرض فقط.', warnings_en: 'Demo only.', warnings_ar: 'للعرض فقط.', symptom_tags: [], price: '10.00', currency: 'EGP', requires_prescription: false, max_quantity_per_order: 5, stock_quantity: 12, quantity_limit: 5, image_url: null }
 
@@ -24,6 +24,8 @@ async function fixture(context: BrowserContext, options: { paid?: boolean; compl
     else if (path === '/api/v1/hub/orders/terminals/') response = [terminal]
     else if (path === '/api/v1/hub/catalogue/categories/') response = { items: [{ id: 1, name_en: 'Pain & fever', name_ar: 'الألم والحمى', product_count: 1, image_url: null }], availability_scope: 'TERMINAL', terminal_serial: terminal.serial_number, observed_at: '2026-10-16T12:00:00Z' }
     else if (path === '/api/v1/hub/catalogue/products/') response = { items: [product], availability_scope: 'TERMINAL', terminal_serial: terminal.serial_number, observed_at: '2026-10-16T12:00:00Z' }
+    else if (path.endsWith('/cart/version/')) response = { version: cart().version }
+    else if (path.endsWith('/orders/summary/')) response = { awaiting_collection_count: options.paid && !options.completed ? 1 : 0, at_terminal_count: 0, elsewhere_count: options.paid && !options.completed ? 1 : 0, collection_terminals: [] }
     else if (path.startsWith('/api/v1/hub/cart/')) {
       if (method === 'PUT') { quantity = Number(body.quantity); version++ }
       if (method === 'DELETE') { quantity = 0; version++ }
@@ -35,7 +37,7 @@ async function fixture(context: BrowserContext, options: { paid?: boolean; compl
     else if (path === '/api/v1/hub/payments/cards/') response = { cards: [], setup_message: 'Save in hosted checkout' }
     else if (path.endsWith('/cancel/')) { status = 'CANCELLED'; response = order() }
     else if (path.endsWith('/reorder/')) { quantity = 1; version++; response = cart() }
-    else if (path === `/api/v1/hub/orders/${id}/`) response = order()
+    else if (path === `/api/v1/hub/orders/${id}/`) response = { ...order(), collection_required: true, cart_preserved: false, payment_state: options.paid || options.completed ? 'PAID' : 'AWAITING_PAYMENT', can_resume: false }
     await route.fulfill({ status: code, contentType: 'application/json', body: response === undefined ? '' : JSON.stringify(response) })
   })
   await context.route('https://payments.kashier.io/**', route => route.fulfill({ contentType: 'text/html', body: '<h1>Kashier hosted test checkout</h1>' }))

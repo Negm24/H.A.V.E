@@ -1,9 +1,13 @@
 // @vitest-environment node
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { createServer, type IncomingMessage, type ServerResponse, type IncomingHttpHeaders } from 'node:http'
 import type { ViteDevServer } from 'vite'
 import { kioskProxy, resolveTerminalCredentials, terminalMethod, trustedKioskRequest } from './kiosk-proxy'
+
+vi.mock('node:fs', async original => { const fs = await original<typeof import('node:fs')>(); return { ...fs, readFileSync: vi.fn(fs.readFileSync) } })
+beforeEach(() => vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ hubPublicOrigin: 'https://laptop.example.ts.net', kioskPublicOrigin: 'https://laptop.example.ts.net:8443', kioskAccessPassword: 'private-test-password' })))
 
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals() })
 
@@ -14,8 +18,14 @@ it('only grants device authority to the exact supported Terminal routes', () => 
   expect(terminalMethod('/api/v1/terminals/cart/comparison/')).toBeUndefined()
   expect(terminalMethod('/api/v1/terminals/cart/choice/')).toBeUndefined()
   expect(terminalMethod('/api/v1/terminals/orders/checkout/')).toBe('POST')
+  expect(terminalMethod('/api/v1/terminals/cart/version/')).toBe('GET')
+  expect(terminalMethod('/api/v1/terminals/orders/summary/')).toBe('GET')
+  expect(terminalMethod('/api/v1/terminals/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resume/')).toBe('POST')
+  expect(terminalMethod('/api/v1/hub/cart/version/')).toBeUndefined()
+  expect(terminalMethod('/api/v1/payments/return/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/')).toBeUndefined()
   expect(terminalMethod('/api/v1/terminals/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/result/')).toBe('GET')
   expect(terminalMethod('/api/v1/terminals/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/result/end/')).toBe('POST')
+  expect(terminalMethod('/api/v1/terminals/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/result/continue/')).toBe('POST')
   expect(terminalMethod('/api/v1/terminals/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/result/activity/')).toBe('POST')
   expect(terminalMethod('/api/v1/hub/cart/')).toBeUndefined()
   expect(terminalMethod('/api/v1/terminals/cart/choice/anything/')).toBeUndefined()
@@ -43,7 +53,7 @@ it('selects only an exact unique configured simulator; rejects serials, missing 
   expect(resolveTerminalCredentials({ ...simulatorConfig, TERMINAL_SERIAL: 'legacy', TERMINAL_KEY: 'legacy-key' })).toBeUndefined()
 })
 
-async function proxyResponse(contentType = 'application/json', configured = true, simulator?: string, publicRequest = false) {
+async function proxyResponse(contentType = 'application/json', configured = true, simulator?: string, publicRequest = false, paymentRead = false) {
   vi.stubEnv('TERMINAL_SERIAL', 'TEST-001')
   vi.stubEnv('TERMINAL_KEY', configured ? 'test-installation-secret' : '')
   const calls: IncomingHttpHeaders[] = []
@@ -64,11 +74,15 @@ async function proxyResponse(contentType = 'application/json', configured = true
   req.url = '/api/v1/terminals/sessions/'; req.method = 'POST'
   req.headers = { host: 'localhost:5173', origin: 'http://localhost:5173', cookie: 'sessionid=owner', 'x-terminal-key': 'spoof', 'x-terminal-serial': 'spoof' }
   if (publicRequest) {
-    vi.stubEnv('KIOSK_PUBLIC_HOST', 'test-kiosk.trycloudflare.com')
-    req.headers.host = 'test-kiosk.trycloudflare.com'
-    req.headers.origin = 'https://test-kiosk.trycloudflare.com'
+    req.headers.host = 'laptop.example.ts.net:8443'
+    req.headers.origin = 'https://laptop.example.ts.net:8443'
     req.headers['x-have-forwarded-proto'] = 'spoofed'
     req.headers['x-forwarded-proto'] = 'http'
+  }
+  if (paymentRead) {
+    req.method = 'GET'
+    req.url = '/api/v1/terminals/orders/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/result/'
+    req.headers.cookie = 'sessionid=owner; have_hub_refresh=private-hub; __Host-have_kiosk_test=gate; have_payment_' + 'a'.repeat(32) + '=receipt'
   }
   if (simulator !== undefined) req.headers['x-terminal-simulator'] = simulator
   let body = '', status = 200
@@ -105,10 +119,15 @@ it('forwards only the trusted HTTPS marker for an exact public Kiosk request', a
   const { calls, body } = await proxyResponse('application/json', true, firstId, true)
   expect(calls[0]?.['x-have-forwarded-proto']).toBe('https')
   expect(calls[0]?.['x-forwarded-proto']).toBeUndefined()
-  expect(calls[0]?.host).toBe('test-kiosk.trycloudflare.com')
+  expect(calls[0]?.host).toBe('laptop.example.ts.net:8443')
   expect(calls[0]?.['x-terminal-key']).toBe('first-private-key')
   expect(calls[0]?.cookie).toBeUndefined()
   expect(body).not.toContain('first-private-key')
+})
+
+it('does not forward Hub, owner or gate cookies shared by hostname across HTTPS ports', async () => {
+  const { calls } = await proxyResponse('application/json', true, firstId, true, true)
+  expect(calls[0]?.cookie).toBe('have_payment_' + 'a'.repeat(32) + '=receipt')
 })
 
 it('routes two simulator selectors to different server-held credentials without leaking the selector upstream', async () => {

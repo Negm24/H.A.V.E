@@ -69,3 +69,15 @@ class PurchaseConcurrencyTests(TransactionTestCase):
         self.assertEqual(self.stock.quantity_on_hand, 4)
         self.assertEqual(Receipt.objects.filter(order=order).count(), 1)
         self.assertEqual(StockReservation.objects.get().status, StockReservation.Status.CONSUMED)
+
+    def test_cross_app_new_keys_cannot_create_two_unpaid_attempts_for_customer_machine(self):
+        def create():
+            return reserve_order(terminal=self.terminal, customer=self.user.customer,
+                items={str(self.product.pk): 2}, cart_version="same-saved-basket", email=self.user.email,
+                channel="HUB", idempotency_key=uuid4().hex, prevent_duplicate_checkout=True).pk
+        result = self.parallel(create)
+        self.assertEqual(sum(row is not None for row in result), 1)
+        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(StockReservation.objects.get().quantity, 2)
+        self.stock.refresh_from_db()
+        self.assertEqual(self.stock.quantity_on_hand, 12)

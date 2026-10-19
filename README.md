@@ -20,7 +20,7 @@ device proxy and Docker backend/worker still need an explicit deployment arrange
 
 Hub and kiosk now browse the PostgreSQL catalogue. Hub shows timestamped, network-wide advisory stock without a Terminal picker; kiosk shows its own machine. One Redis cart per customer is shared across both, expiring one day after an actual change (`CART_DATA_EXPIRY=86400` in root `.env`). Guest baskets remain temporary. Logout clears local identity but preserves saved baskets; conflicting guest/saved baskets require a choice immediately after Terminal login. No new migrations are needed for this update. Purchasing, paid orders and Terminal collection remain unimplemented requirements.
 
-Start the apps with `docker compose --profile frontend up -d --build`. Open Hub at http://localhost:5174 and kiosk at http://localhost:5173. For purchase/phone HTTPS testing, follow the [two-tunnel procedure](frontend/README.md#free-https-purchase-testing--2026-10-17). The catalogue/cart code map and manual cross-app tests are in the increment guides and frontend README.
+Start the apps with `docker compose --profile frontend up -d --build`. Open Hub at http://localhost:5174 and kiosk at http://localhost:5173. For purchase/phone HTTPS testing, follow the [stable HTTPS procedure](frontend/README.md#stable-https-testing-with-tailscale--2026-10-18). The catalogue/cart code map and manual cross-app tests are in the increment guides and frontend README.
 
 ## Start locally
 
@@ -99,20 +99,53 @@ Orders and allocated stock reservations are durable PostgreSQL records. Paid Hub
 docker compose exec backend python manage.py migrate
 ~~~
 
-Root .env requires KASHIER_DEFAULT_TEST_KEY, KASHIER_SECRET_KEY, KASHIER_MERCHANT_ID, PAYMENTS_PUBLIC_BASE_URL (Hub tunnel origin) and KIOSK_PUBLIC_BASE_URL (Kiosk tunnel origin). Start using the two-tunnel procedure below before migrating/testing; existing migrations need no reset. Keys are backend/worker-only, never frontend variables. See [the complete purchase test walkthrough](backend/AUTH_GUIDE.md#kashier-test-purchases-and-collection--2026-10-17). No physical printing, ETA, real money or direct card entry in H.A.V.E.
+Root .env retains KASHIER_DEFAULT_TEST_KEY, KASHIER_SECRET_KEY and KASHIER_MERCHANT_ID. Public payment origins come from private development/access.local.json. See the stable HTTPS instructions below and [the purchase test walkthrough](backend/AUTH_GUIDE.md#kashier-test-purchases-and-collection--2026-10-17). Never enter real card data in this prototype.
 
 
-## Free local HTTPS purchase testing — 2026-10-17
+## Stable HTTPS development — 2026-10-18
 
-This supersedes the historical localhost-return and earlier tunnel instructions.
-Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
-apps. Kiosk requires the local test-access password; Hub remains reachable for signed
-Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
-Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
-Only exact configured hosts are trusted, device keys stay server-side, and cookies
-over the tunnels are Secure. Database records, purchase policies and session timings
-are unchanged. No migration, real charge, Git commit or push is part of this update.
+The 2026-10-17 temporary Cloudflare setup is retired. Windows Tailscale Funnel
+provides stable HTTPS to the existing Docker apps: Hub on 443, Kiosk on 8443.
+One private, ignored development/access.local.json stores both exact public origins
+and the existing Kiosk access password; no recurring .env address changes or new
+connector containers. Terminal keys remain server-side in frontend/.env.
+HTTPS cookies/CSRF, debug-page protection, payment verification and session policies
+remain enforced. Phone access is public even with Tailscale disconnected; Kiosk
+still requires its password. Keep the laptop awake during payment tests.
+See [current setup and acceptance checks](frontend/README.md#stable-https-testing-with-tailscale--2026-10-18).
+Kashier's actual :8443 return and physical-phone camera/public-access checks remain
+manual acceptance, not implied by automated test success.
+## Customer shopping recovery — 2026-10-18
 
-See [start/configure/test/stop instructions](frontend/README.md#free-https-purchase-testing--2026-10-17).
-Restarting either tunnel changes its URL; update root .env and recreate apps without
-restarting the other tunnel. Do not recreate tunnels while a payment is in flight.
+Customer carts are now shared per customer **and selected Terminal**, not per app.
+Guests remain session-only. Sign in again after a Kiosk reload to recover the saved
+machine basket; no authentication or sensitive draft is stored in browser storage.
+Profile highlights paid orders awaiting collection; History lists unfinished
+checkouts separately with Continue payment and Cancel checkout.
+
+Apply the additive migrations and restart the existing services:
+
+~~~powershell
+docker compose exec backend python manage.py migrate
+docker compose restart backend order-worker
+docker compose --profile frontend up -d
+~~~
+
+No new environment variables, credentials or networking changes are required.
+New Kashier sessions return through the existing Hub HTTPS origin, then the
+authorised app; existing provider return URLs still work. Both configured app
+origins must remain available. Follow [the new regression walkthrough](backend/AUTH_GUIDE.md#customer-shopping-recovery--2026-10-18).
+Public Funnel DNS is an unresolved external limitation, not fixed by this increment.
+
+## Kiosk payment continuation — 2026-10-18
+
+Successful Kiosk payments now offer **Continue session / End session**. Continue
+reconnects only the same still-valid session; expired/replaced sessions still
+require sign-in. Completing an unpaid checkout resumed at its assigned Kiosk
+dispenses there while that session is live. Completing through Hub requires
+collection. My Profile and the number-only History badge include awaiting-payment
+attention, without calling unpaid orders ready to collect.
+
+No migration or .env update is needed. Restart `order-worker` after updating the
+code, keep the existing apps/backend running, and follow the new payment-return
+walkthrough in [the testing guide](backend/AUTH_GUIDE.md#payment-return-continuation--2026-10-18).

@@ -1,5 +1,6 @@
 from decimal import Decimal, InvalidOperation
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -11,6 +12,7 @@ from apps.orders.models import Order
 from apps.payments.models import PaymentTransaction
 from apps.payments.security.webhook import verify_webhook
 from apps.payments.services.kashier_services import saved_cards
+from apps.payments.services.payment_services import payment_return_destination
 from ..serializers.payment_serializers import SavedCardsOutputSerializer, WebhookInputSerializer
 
 
@@ -44,4 +46,22 @@ class KashierWebhookView(CustomerSessionView):
             # Persist a wake-up, not untrusted success. Worker verifies the stored
             # session and merchant/order/amount independently against sandbox.
             PaymentTransaction.objects.filter(order=order, status__in=["PENDING", "UNKNOWN"]).update(next_attempt_at=timezone.now())
+            # A signed notification after a definitively closed checkout is a
+            # reason to READ again, never permission to dispense or recapture.
+            if order.status == "CANCELLED" and not order.paid_at:
+                PaymentTransaction.objects.filter(order=order, operation="CAPTURE", status="FAILED").update(
+                    status="UNKNOWN", next_attempt_at=timezone.now())
         return Response({"received": True})
+
+
+class PaymentReturnView(CustomerSessionView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(tags=["Payments · Kashier"], responses={302: None, **ERRORS},
+        description="Navigation only. Ignores browser success/redirect parameters; provider reconciliation is server-side.")
+    def get(self, request, order_id):
+        response = HttpResponseRedirect(payment_return_destination(order_id))
+        response["Cache-Control"] = "no-store"
+        response["Referrer-Policy"] = "no-referrer"
+        return response

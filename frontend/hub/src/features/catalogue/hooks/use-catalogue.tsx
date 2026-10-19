@@ -26,18 +26,22 @@ export function HubCatalogueProvider({ children }: { children: ReactNode }) {
   const [terminal, setTerminal] = useState<PurchaseTerminal | null>(null)
   const current = useRef(state), generation = useRef(0), active = useRef<AbortController | null>(null)
   const flight = useRef<Promise<void> | null>(null), mutation = useRef<Promise<void>>(Promise.resolve())
+  const cartRead = useRef<Promise<void> | null>(null)
   const cartRevision = useRef(0), blockedUntil = useRef(0)
   current.current = state
   const update = (expected: number, values: Partial<Snapshot>) => {
     if (expected !== generation.current || active.current?.signal.aborted) return
     current.current = { ...current.current, ...values }; setState(current.current)
   }
-  const readCart = async (expected: number, signal: AbortSignal) => {
+  const readCart = (expected: number, signal: AbortSignal): Promise<void> => {
+    if (cartRead.current) return cartRead.current
     const revision = cartRevision.current
-    try {
-      const cart = await session.authorized(token => hubCartApi.get(token, signal, terminal?.serial_number), true)
-      if (revision === cartRevision.current) update(expected, { cart, cartError: false })
-    } catch { if (revision === cartRevision.current) update(expected, { cartError: true }) }
+    const request = session.authorized(token => hubCartApi.get(token, signal, terminal?.serial_number), true)
+      .then(cart => { if (revision === cartRevision.current) update(expected, { cart, cartError: false }) })
+      .catch(() => { if (revision === cartRevision.current) update(expected, { cartError: true }) })
+      .finally(() => { if (cartRead.current === request) cartRead.current = null })
+    cartRead.current = request
+    return request
   }
   const refresh = (): Promise<void> => {
     if (!active.current || active.current.signal.aborted || status !== 'authenticated' || !terminal) return Promise.resolve()
@@ -57,10 +61,10 @@ export function HubCatalogueProvider({ children }: { children: ReactNode }) {
   useEffect(() => { setTerminal(null) }, [status, customer?.id])
   useEffect(() => {
     const expected = ++generation.current, controller = new AbortController()
-    active.current = controller; flight.current = null; mutation.current = Promise.resolve(); blockedUntil.current = 0
+    active.current = controller; flight.current = null; cartRead.current = null; mutation.current = Promise.resolve(); blockedUntil.current = 0
     current.current = initial; setState(initial); showCart(false)
     if (status !== 'authenticated' || !customer || !terminal) return () => controller.abort()
-    let timer: ReturnType<typeof setTimeout>, cycle = 0
+    let timer: ReturnType<typeof setTimeout>, versionTimer: ReturnType<typeof setTimeout>, cycle = 0, versionFlight = false
     const poll = async () => {
       const ticket = ++cycle
       clearTimeout(timer)
@@ -68,9 +72,27 @@ export function HubCatalogueProvider({ children }: { children: ReactNode }) {
       await refresh()
       if (ticket === cycle && !controller.signal.aborted && generation.current === expected) timer = setTimeout(() => void poll(), 15_000)
     }
-    const visible = () => { cycle++; clearTimeout(timer); if (document.visibilityState === 'visible') void poll() }
-    void poll(); document.addEventListener('visibilitychange', visible)
-    return () => { controller.abort(); cycle++; clearTimeout(timer); document.removeEventListener('visibilitychange', visible); generation.current++ }
+    const checkVersion = async () => {
+      if (versionFlight || controller.signal.aborted || generation.current !== expected || document.visibilityState !== 'visible') return
+      clearTimeout(versionTimer); versionFlight = true
+      try {
+        // Prices/stock still refresh every 15s. This cheap read only checks whether
+        // another Hub tab or the physical Terminal changed this saved basket.
+        if (!current.current.busy && !cartRead.current) {
+          const revision = cartRevision.current
+          const result = await session.authorized(token => hubCartApi.version(token, terminal.serial_number, controller.signal), true)
+          if (!controller.signal.aborted && revision === cartRevision.current && (result.version !== current.current.cart?.version || current.current.cartError)) await readCart(expected, controller.signal)
+        }
+      } catch { if (!controller.signal.aborted) update(expected, { cartError: true }) }
+      finally { versionFlight = false; if (!controller.signal.aborted && document.visibilityState === 'visible') versionTimer = setTimeout(() => void checkVersion(), 2_000) }
+    }
+    const visible = () => {
+      cycle++; clearTimeout(timer); clearTimeout(versionTimer)
+      if (document.visibilityState === 'visible') { void poll(); void checkVersion() }
+    }
+    void poll(); versionTimer = setTimeout(() => void checkVersion(), 2_000)
+    document.addEventListener('visibilitychange', visible); window.addEventListener('focus', visible)
+    return () => { controller.abort(); cycle++; clearTimeout(timer); clearTimeout(versionTimer); document.removeEventListener('visibilitychange', visible); window.removeEventListener('focus', visible); generation.current++ }
   }, [status, customer?.id, session, terminal?.serial_number])
   useEffect(() => {
     if (!state.limitedUntil) return
@@ -100,7 +122,10 @@ export function HubCatalogueProvider({ children }: { children: ReactNode }) {
         update(expected, { mutationError: error instanceof ApiError && error.status === 409 ? 'conflict' : error instanceof ApiError && error.status === 429 ? 'limited' : error instanceof ApiError && error.status === 400 ? 'quantityError' : 'unconfirmed' })
         // A timeout may have followed a successful write. Reconcile with a safe
         // read; never repeat a quantity mutation automatically.
-        await readCart(expected, signal)
+        // Any older in-flight read may have observed pre-mutation state and is
+        // intentionally ignored by its revision guard. Reconcile after it ends.
+        await cartRead.current
+        if (expected === generation.current && !signal.aborted) await readCart(expected, signal)
       }
     }).finally(() => { if (mutation.current === queued) update(expected, { busy: false }) })
     mutation.current = queued

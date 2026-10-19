@@ -4,12 +4,16 @@ import { Button } from '@have/shared/ui/controls'
 import { KioskFrame } from '../../../layouts/KioskFrame'
 import { useSession } from '../../session/hooks/use-session'
 import { useNavigate } from 'react-router-dom'
+import { useCollectionSummary } from '../../orders/hooks/use-collection-summary'
+import '../styles/collection.css'
 
 export function ProfilePage() {
   const { t } = useTranslation('dashboard')
   const { controller, state } = useSession()
+  const { summary, refresh } = useCollectionSummary()
+  const attention = summary?.attention_count ?? (summary?.awaiting_collection_count ?? 0) + (summary?.awaiting_payment_count ?? 0)
   const navigate = useNavigate()
-  useEffect(() => { void controller.refreshIdentity() }, [controller])
+  useEffect(() => { void controller.refreshIdentity(); void refresh() }, [controller, refresh])
   const customer = state.customer
   const items = customer ? [
     ['name', `${customer.first_name} ${customer.last_name}`], ['phone', customer.phone_number],
@@ -19,7 +23,7 @@ export function ProfilePage() {
     <p className="page-intro">{t('readOnly')}</p><dl className="profile-grid">{items.map(([label, value]) => <div key={label}><dt>{t(label!)}</dt><dd><bdi>{value}</bdi></dd></div>)}</dl>
     <div className="profile-actions">
       <Button disabled={state.busy} onClick={() => void controller.refreshIdentity()}>{t('refreshProfile')}</Button>
-      <Button onClick={() => navigate('/profile/orders')}>{t('orders')}</Button>
+      <Button onClick={() => navigate('/profile/orders')}>{t('orders')}{attention > 0 && <span className="collection-count collection-count--history">{attention}</span>}</Button>
     </div>
   </KioskFrame>
 }

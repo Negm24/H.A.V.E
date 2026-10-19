@@ -8,6 +8,10 @@
 .hub-terminal-option>p { margin:0; font-size:14px; color:var(--color-text-secondary); }
 .hub-terminal-option>small { font-size:12px; text-align:match-parent; }
 .hub-terminal-option>b { margin-block-start:auto; padding-block-start:12px; font-size:14px; color:var(--color-primary); }
+.hub-terminal-option--disabled { opacity:.5; cursor:not-allowed; }
+.hub-terminal-option--disabled:hover { border-color:var(--color-border); box-shadow:none; }
+.hub-terminal-option .hub-terminal-unavailable { text-align:center; align-self:center; margin-block:auto; padding-block:18px; color:var(--color-text-primary); }
+.hub-terminal-option .hub-terminal-cart { color:var(--color-primary-dark); font-weight:650; font-size:13px; }
 .hub-availability>small { display:block; margin-block-start:10px; }
 .hub-order-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:18px; margin-block:28px 16px; }
 .hub-order-heading h1 { font-size:25px; overflow-wrap:anywhere; margin-block:8px 0; text-align:match-parent; }
@@ -36,7 +40,9 @@
 .hub-order-actions { display:flex; flex-wrap:wrap; gap:12px; margin-block:24px; }
 .hub-order-actions>.have-button { min-height:44px; padding:8px 18px; font-size:14px; }
 .hub-order-list { display:grid; gap:16px; margin-block-start:24px; }
-.hub-app a.hub-order-card { display:block; color:var(--color-text-primary); text-decoration:none; background:white; border:1px solid var(--color-border); border-radius:16px; padding:22px; }
+.hub-app .hub-order-card { display:block; color:var(--color-text-primary); text-decoration:none; background:white; border:1px solid var(--color-border); border-radius:16px; padding:22px; }
+.hub-orders>section { margin-block:30px; }
+.hub-checkout-deadline { font-size:14px; font-weight:650; color:var(--color-primary-dark); background:var(--color-accent-soft); padding:12px 16px; border-radius:10px; }
 .hub-order-card>div { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:14px; }
 .hub-order-card>div:first-child { margin-block-end:14px; }
 .hub-order-card>p { font-size:14px; color:var(--color-text-secondary); }

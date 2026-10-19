@@ -42,3 +42,10 @@
 .terminal-collection-remaining { display:block; margin-block-start:4px; color:var(--color-text-secondary); font-size:15px; }
 .terminal-refund-notice { padding:12px; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); font-size:16px; }
 .terminal-refund-review { color:var(--color-emergency); border-color:var(--color-emergency); }
+.terminal-unfinished { display:flex; flex-direction:column; gap:12px; margin-block-end:18px; }
+.terminal-unfinished h2 { font-size:21px; }
+.terminal-unfinished>article { padding:12px; border:1px solid var(--color-border); border-radius:12px; background:var(--color-surface); }
+.terminal-unfinished .terminal-order-row { margin:0 0 8px; padding:10px; }
+.checkout-recovery { padding:12px; border:1px solid var(--color-border); border-radius:10px; background:var(--color-accent-soft); font-size:16px; }
+.checkout-recovery p { margin-block:6px 10px; }
+.checkout-deadline { font-weight:700; font-variant-numeric:tabular-nums; }

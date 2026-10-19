@@ -2,7 +2,7 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Plugin } from 'vite'
-import { publicHost } from './tunnel-origin.ts'
+import { publicOrigin, readDevelopmentAccess } from './development-access.ts'
 
 const COOKIE = '__Host-have_kiosk_test'
 const LIFETIME = 4 * 60 * 60 * 1000
@@ -31,7 +31,7 @@ function gatePage(res: ServerResponse, status: number, returnPath: string, messa
 ${message ? `<p role="alert">${escape(message)}</p>` : ''}<form method="post" action="${UNLOCK}">
 <input type="hidden" name="return_to" value="${escape(safeReturnPath(returnPath))}">
 <label for="password">Test access password</label><input id="password" name="password" type="password" autocomplete="current-password" maxlength="256" required autofocus>
-<button type="submit">Unlock</button></form><p>Use the password in your laptop's private root .env.</p></html>`)
+<button type="submit">Unlock</button></form><p>Use kioskAccessPassword from your laptop's private development/access.local.json.</p></html>`)
 }
 
 export function createKioskTestGate({ host, password, now = Date.now }: { host?: string; password: string; now?: () => number }) {
@@ -93,7 +93,8 @@ export function kioskTestGate(): Plugin {
   return {
     name: 'private-kiosk-test-access',
     configureServer(server) {
-      const gate = createKioskTestGate({ host: publicHost(5173), password: process.env.KIOSK_TEST_ACCESS_PASSWORD || '' })
+      const origin = publicOrigin(5173)
+      const gate = createKioskTestGate({ host: origin ? new URL(origin).host : undefined, password: readDevelopmentAccess()?.kioskAccessPassword || '' })
       // Installed before both Vite's assets and the device credential proxy.
       server.middlewares.use(gate.middleware)
       server.httpServer?.prependListener('upgrade', (req, socket) => {

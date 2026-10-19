@@ -77,7 +77,7 @@ Preserve `frontend/.env` device credentials. Rebuild because shared exports chan
 docker compose --profile frontend up -d --build backend kiosk hub advisor admin
 ```
 
-Use the two-tunnel instructions below for public HTTPS testing.
+Use the stable HTTPS instructions below for public HTTPS testing.
 
 Do not delete volumes or rotate credentials. Shared source changes hot-reload normally;
 manifest/export changes require rebuild. See [Hub guide](CODEX-Increment-3.md) for
@@ -268,7 +268,7 @@ Verified: 47 unit tests, 41 browser tests (including real Hub/kiosk integration)
 143 backend regression tests, all packages' TypeScript checks, four builds and
 no new migrations. Screenshots checked English/Arabic responsive layouts.
 
-For current HTTPS phone testing, use the two-tunnel procedure below.
+For current HTTPS phone testing, use the stable HTTPS procedure below.
 
 ## Verification update — 2026-10-16
 
@@ -312,165 +312,259 @@ Browser live tests use dedicated local accounts/Terminals and no provider charge
   and dispensing remain explicitly simulated. No commit or push was made.
 
 
-## Free HTTPS purchase testing — 2026-10-17
+## Stable HTTPS testing with Tailscale — 2026-10-18
 
-This replaces the previous tunnel setup and the abandoned static-hosting experiment.
-Both apps still run on your laptop in Docker. No account, domain, API token or paid
-hosting is needed. The optional `compose.tunnels.yaml` uses the verified pinned
-`cloudflare/cloudflared:2026.10.1` image, HTTP/2 transport and two independent
-Quick Tunnels. No database/Redis ports or tunnel-management ports are published
-by this override. Existing loopback SQLTools ports in the base file remain local.
+The applications still run in Docker on your laptop. Windows Tailscale Funnel
+publishes them over stable HTTPS; no additional connector containers, domain
+purchase, port forwarding, or recurring .env address edits are required.
 
-### First start / after tunnel recreation
+### One-time setup
 
-1. In the private root `.env`, set a strong test-access password (16+ characters).
-   Do not overwrite an existing env file or change its database/payment secrets:
+1. Install/sign in to Tailscale on Windows and ensure its service is running.
+   Approve MagicDNS, HTTPS certificates and Funnel if prompted. Inspect existing
+   mappings before configuring these ports; do not reset unrelated services.
 
-   ```dotenv
-   KIOSK_TEST_ACCESS_PASSWORD=replace-with-a-long-random-private-password
-   HUB_TUNNEL_HOST=
-   KIOSK_TUNNEL_HOST=
-   PAYMENTS_PUBLIC_BASE_URL=
-   KIOSK_PUBLIC_BASE_URL=
-   ```
+~~~powershell
+& 'C:\Program Files\Tailscale\tailscale.exe' status
+& 'C:\Program Files\Tailscale\tailscale.exe' funnel status
+~~~
 
-   Device serials/keys/simulator selectors remain in private `frontend/.env`.
-   No tunnel account token is needed. The password belongs to the local Kiosk
-   test-access gate, not H.A.V.E customer login. Never put it in VITE_* variables,
-   frontend/.env, chat or Git. This machine already has a generated value in root .env.
+2. Copy the example to a private file (fresh setups only; never overwrite an
+   existing file). Supply the actual hostname reported by Tailscale:
 
-2. Start the local apps, then the two tunnels (PowerShell, repository root):
+~~~powershell
+Copy-Item development/access.example.json development/access.local.json
+~~~
 
-   ```powershell
-   docker compose --profile frontend up -d db redis backend kiosk hub
-   docker compose -f compose.yaml -f compose.tunnels.yaml --profile tunnel up -d --no-deps hub-tunnel kiosk-tunnel
-   docker compose -f compose.yaml -f compose.tunnels.yaml logs --tail 40 hub-tunnel kiosk-tunnel
-   ```
+~~~json
+{
+  "hubPublicOrigin": "https://your-laptop.your-tailnet.ts.net",
+  "kioskPublicOrigin": "https://your-laptop.your-tailnet.ts.net:8443",
+  "kioskAccessPassword": "your-private-test-password-at-least-16-characters"
+}
+~~~
 
-   On a fresh clone add `--build` to the first command. Do not rebuild/recreate
-   tunnels just to edit app source. The tunnel logs print two different HTTPS
-   `trycloudflare.com` URLs; identify each by its service name.
+This existing machine's password was migrated privately, not regenerated.
+The JSON is Git-ignored and mounted read-only outside Vite's served filesystem.
+It contains no customer credentials. Terminal credentials/selectors remain in
+frontend/.env; database, Django, SMTP and Kashier secrets stay in root .env.
+Never put the access password or device keys in VITE_* variables or Git.
 
-3. Copy those exact public values into root `.env`:
+3. From the repository root, start Docker services, then configure the two
+   background Funnel mappings. Add --build on a fresh checkout.
 
-   ```dotenv
-   HUB_TUNNEL_HOST=actual-hub-name.trycloudflare.com
-   KIOSK_TUNNEL_HOST=actual-kiosk-name.trycloudflare.com
-   PAYMENTS_PUBLIC_BASE_URL=https://actual-hub-name.trycloudflare.com
-   KIOSK_PUBLIC_BASE_URL=https://actual-kiosk-name.trycloudflare.com
-   ```
+~~~powershell
+docker compose --profile frontend up -d db redis backend order-worker kiosk hub
+& 'C:\Program Files\Tailscale\tailscale.exe' funnel --bg --https=443 http://127.0.0.1:5174
+& 'C:\Program Files\Tailscale\tailscale.exe' funnel --bg --https=8443 http://127.0.0.1:5173
+~~~
 
-   Host entries have no scheme/port/path. Base URLs are full HTTPS origins.
-   Keep your existing Kashier TEST keys/merchant ID and SMTP settings unchanged.
+Hub uses the hostname's default HTTPS port; Kiosk uses the SAME hostname with
+:8443. Those are two app entrances, not one port per vending machine.
+Both HAVE-TEST-001/002 use the Kiosk origin plus their existing ?terminal=SELECTOR.
+Preserve the Tailscale device identity/name; ordinary restarts reuse the links.
 
-4. Apply the app configuration WITHOUT restarting the tunnels:
+### Everyday use
 
-   ```powershell
-   docker compose -f compose.yaml -f compose.tunnels.yaml --profile frontend up -d --no-deps --force-recreate backend kiosk hub
-   docker compose -f compose.yaml -f compose.tunnels.yaml up -d --no-deps --force-recreate order-worker
-   ```
+1. Start Docker Desktop and ensure Windows Tailscale is connected.
+2. Run the docker compose startup command above. Background Funnel settings
+   normally resume automatically; inspect funnel status if links do not respond.
+3. Open the saved Hub address, and Kiosk address with its simulator selector.
+4. On Kiosk's unlock screen, enter kioskAccessPassword from the private JSON.
+   It is not a customer's four-digit PIN.
 
-   Wait for backend health before testing. Source edits hot-reload. Environment
-   changes require recreating the affected apps/worker, not the tunnel containers.
+No routine .env editing or URL replacement. If the Tailscale hostname is
+deliberately changed, edit the private JSON once and restart the apps.
 
-### What to open and verify
+After changing the JSON, recreate backend first and wait for health:
 
-- Hub: its generated HTTPS URL. `/api/v1/health/` must return `{"status":"ok"}`
-  without an interactive gate. Hub camera scanning now has an HTTPS context.
-- Kiosk: its generated URL plus `/?terminal=YOUR_EXISTING_SIMULATOR_ID`. Enter the
-  root .env KIOSK_TEST_ACCESS_PASSWORD on **Unlock test Kiosk**, then use the app. The
-  existing selector chooses the device; it is not a device key or substitute for
-  password gate. Do not share simulator links or use real patient data.
-- Anonymous Kiosk navigation must show the local unlock form, not the app. Scripts,
-  APIs and WebSocket upgrades fail with 401 until unlocked, without login redirects.
-  The gate runs before the device proxy and all Vite assets. Hub never uses this gate.
-- The gate uses a signed, host-only Secure/HttpOnly/SameSite=Lax cookie with a fixed
-  four-hour lifetime. It survives Kashier's top-level return but never restores a
-  customer session. Restarting Kiosk or changing the password invalidates the gate
-  cookie; unlock again. Localhost remains unchanged. Unlock POST requires matching
-  Origin, bounds its input, limits attempts and never echoes/logs the password.
-- Anonymous Kiosk requests must not reach the app/device
-  API. Hub must never supply device credentials. Kiosk trusts only the configured
-  exact HTTPS host and matching Origin/Fetch Metadata, plus its existing fixed
-  Terminal-route/method allowlist.
-- Browser API calls remain same-origin. Private frontend proxies strip client
-  forwarding headers and supply an internal HTTPS marker. Django tunnel settings
-  trust that marker only on exact configured hosts, secure cookies over HTTPS and
-  disable debug tracebacks. Local HTTP remains supported. Tunnel mode intentionally
-  omits Swagger/debug routes; use base Compose mode for localhost Swagger.
-- Start a new checkout from the public app origin, not localhost: cookies set on
-  localhost cannot authorize a result on the public Kiosk origin. Terminal returns
-  go directly to its own HTTPS `/payment-return`, retaining order/simulator IDs;
-  there is no public-to-local bridge and no general customer-login restoration.
-- Hub returns go to its owned order page. Kashier webhook URL is
-  `https://HUB_HOST/api/v1/payments/kashier/webhook/`. It remains unauthenticated
-  at the tunnel layer, with HMAC/provider verification enforced by Django.
-- Follow the existing backend AUTH_GUIDE purchase walkthrough. First save a test
-  card during a Hub purchase, then test a signed-in Kiosk purchase. Guests require
-  email and simulated printing. H.A.V.E never accepts raw card details.
-- Enter only Kashier's current sandbox test data on Kashier's own page; if a listed
-  historical expiry is rejected by its hosted form, use its **use testing data**
-  control/current provider guidance rather than a real card. Payment capture,
-  saving cards, emails and refunds require manual provider/account acceptance.
+~~~powershell
+docker compose up -d --no-deps --force-recreate --wait --wait-timeout 90 backend
+docker compose --profile frontend up -d --no-deps --force-recreate order-worker kiosk hub
+~~~
 
-### Stop, restart and limitations
+### What remains protected
 
-```powershell
-docker compose -f compose.yaml -f compose.tunnels.yaml stop hub-tunnel kiosk-tunnel
-docker compose -f compose.yaml -f compose.tunnels.yaml logs --tail 50 hub-tunnel kiosk-tunnel backend order-worker
-```
+- Only the two configured HTTPS origins are trusted, including Kiosk's port.
+  Browser forwarding headers are stripped before private proxies supply their
+  HTTPS marker. Secure cookies and exact CSRF checks remain enforced.
+- Public development sets DEBUG=False; mock SMS still works through its separate
+  explicit opt-in. Swagger is not enabled in public mode.
+- Kiosk's four-hour signed Secure/HttpOnly/Lax password cookie protects documents,
+  modules, API requests and HMR upgrades. Restarting Kiosk invalidates it; unlock
+  again. Localhost remains available without this gate.
+- Cookies are not isolated by port. Kiosk's device proxy forwards only appropriate
+  order-result cookies, never Hub refresh, owner or gate cookies.
+- Device keys remain server-side; only allowed Terminal paths/methods receive
+  device headers. PostgreSQL/Redis ports remain loopback-only.
+- Malformed JSON fails clearly. Missing JSON permits localhost development only,
+  not a public wildcard fallback. To return to localhost-only mode, disable these
+  Funnel mappings, privately move the JSON out of the mounted directory, then
+  restart backend/worker/frontends. Do not delete any database volume.
 
-Keep the laptop, Docker and both tunnels running until all test checkouts finish.
-A tunnel process restart/recreation creates a new hostname: repeat discovery,
-env update and app recreation. Existing checkout return/webhook URLs are immutable
-provider-session data; changing env does not repair them. Do not open duplicate
-payments to compensate for an uncertain result. The worker reconciles stored
-provider references; inspect the original order.
+### Phone, camera and Kashier tests
 
-Quick Tunnels have no uptime guarantee, allow 200 in-flight requests each, and
-do not support SSE (the current apps use ordinary requests/polling, not SSE).
-Kiosk API tests should use localhost or an unlocked browser, never remove the
-password gate to make a test work. It is development protection, not fleet device auth.
+1. Disconnect Tailscale on the phone and use mobile data. Both URLs must work:
+   this distinguishes PUBLIC Funnel from private Serve or private tailnet access.
+2. Sign into Hub and test reload/refresh/logout. Start both Kiosk selectors,
+   unlock, choose a language, browse and reset.
+3. From Hub choose Sign in to kiosk, grant camera permission, scan the real
+   Kiosk QR, review the Terminal and approve/reject. Camera frames stay local.
+4. Start purchases from the HTTPS app origin, not localhost. First save a test
+   card during a Hub purchase; signed-in Terminal checkout requires a saved card.
+   Guests supply receipt email and mandatory simulated printing.
+5. Complete only Kashier's sandbox test-card flow on Kashier's hosted page.
+   H.A.V.E never takes card numbers/CVV. Hub return and signed webhook use the
+   configured Hub origin. Terminal return uses Kiosk :8443 and retains the selector.
+6. Verify order/receipt status from Django, never browser success parameters.
+   An unsigned webhook must be rejected. The worker preserves independent
+   reconciliation, stock, email and refund behavior.
 
-To return completely to localhost mode, stop both tunnels and recreate
-`backend order-worker kiosk hub` with the base Compose file and frontend profile.
-Local Swagger returns at `http://localhost:8000/api/docs/`. Purchase integration
-still requires the public HTTPS origins. Never use `down -v`.
+Kashier's documentation does not explicitly guarantee every nonstandard redirect
+port. Actual sandbox payment and Kiosk :8443 return require user-operated acceptance;
+do not claim completion merely because HTTPS pages or mocked tests pass.
+Physical-phone camera, mobile-data public access, and sleep/wake recovery also
+require their respective real-device checks. No automatic card submission,
+real payment, duplicate charge or refund retry is part of setup verification.
 
-Reference: https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/
+### Status, stop and troubleshooting
 
-### Password-gate correction — 2026-10-17
+~~~powershell
+& 'C:\Program Files\Tailscale\tailscale.exe' status
+& 'C:\Program Files\Tailscale\tailscale.exe' funnel status
+docker compose ps
+docker compose logs --tail 50 backend order-worker hub kiosk
+~~~
 
-Cloudflare's Quick Tunnel email sessions failed during real use: asset requests
-were redirected to its login broker, appearing as CORS failures. This matches
-https://github.com/cloudflare/cloudflared/issues/1752 . The earlier anonymous-gate
-check below did not prove a completed email session remained usable. The local
-password gate supersedes that email setup. No Django CORS relaxation, public device
-key, customer-auth change or payment change is involved. Hub's URL is unchanged;
-only Kiosk's tunnel was recreated, and its configured payment return origin updated.
+- Funnel reports "Available within your tailnet" rather than "Available on the
+  internet": confirm Funnel is enabled, rather than only Serve.
+- 502: check the corresponding Hub/Kiosk container is ready; Funnel does not host it.
+- Kiosk unavailable: keep the full ?terminal=SELECTOR, check the private mapping
+  in frontend/.env and backend/Redis health. Do not rotate working device keys.
+- "Unlock test Kiosk": enter the JSON password again after restart/expiry.
+- Service stopped or signed out: open the Windows Tailscale app and reconnect.
+- Works only while the phone's Tailscale is connected: that proves private tailnet
+  access, not public Funnel. Check public DNS independently of laptop MagicDNS:
 
-Password-gate verification: all 84 unit tests, all workspace typechecks and four
-app builds passed. The affected browser suite passed 39 cases; two optional local
-live-auth cases were not enabled in that run. A separate real public-browser check
-passed wrong-password rejection, successful unlock, secure-cookie attributes, module
-loading after eight seconds, reload, a real guest catalogue and Start over, with no
-page JavaScript/CORS errors. Anonymous modules/APIs remain blocked. Password/device
-keys were absent from all four browser bundles. No payment was submitted.
+~~~powershell
+curl.exe -sS 'https://dns.google/resolve?name=YOUR-LAPTOP.YOUR-TAILNET.ts.net&type=A'
+curl.exe -sS 'https://dns.google/resolve?name=YOUR-LAPTOP.YOUR-TAILNET.ts.net&type=AAAA'
+~~~
 
-### Verified checkpoint — 2026-10-17
+  Status 3 means NXDOMAIN (the public name is missing). Do not fix this by editing
+  app origins, resetting all Funnel mappings, or reinstalling the device. Allow
+  initial DNS publication/cache expiry, then reconnect Tailscale once. If public
+  records remain missing, resolve the Tailscale publication problem before testing
+  payments; private camera access does not make Kashier webhooks reachable.
+- Sleep disconnects the server. Keep the laptop awake during payments; no tool can
+  serve a local Docker app while the machine sleeps. After wake the SAME addresses
+  should recover once Windows networking, Tailscale and Docker are working.
+- Do not rename/re-enroll the Tailscale device during outstanding payments.
+  Existing provider sessions retain their original return/webhook addresses.
 
-- 282 backend tests, 79 frontend unit tests, and all 87 Docker browser tests passed.
-  All workspace typechecks/four app builds, OpenAPI validation and no-migration-drift
-  checks passed. The existing large-bundle advisories are non-blocking.
-- Both tunnels connected using HTTP/2. Public Hub health, login, Secure/HttpOnly/
-  Strict refresh cookies, reload restoration and logout passed with the fictional
-  Kiosk Tester account. An unsigned public webhook was rejected by Django.
-- Anonymous Kiosk requests redirect to login.trycloudflare.com/authorize and show
-  Cloudflare Access's email form, not the app. Completing the permitted-email code,
-  returning from a real Kashier checkout and actual card/provider outcomes remain
-  user-operated acceptance checks. No verification email or card payment was
-  submitted by this verification.
-- Old tunnel configuration/container/image and account-token env entry were
-  removed. Remote Workers applications remain untouched. Existing PostgreSQL data,
-  device/payment credentials and requirement snapshots were preserved. No commit,
-  push, database reset or schema migration was made.
+Disable only these two mappings, preserving unrelated Tailscale settings:
+
+~~~powershell
+& 'C:\Program Files\Tailscale\tailscale.exe' funnel --https=443 off
+& 'C:\Program Files\Tailscale\tailscale.exe' funnel --https=8443 off
+~~~
+
+Reference: https://tailscale.com/docs/reference/tailscale-cli/funnel
+
+### Migration verification — 2026-10-18
+
+- 286 backend tests, 92 frontend unit tests, all package typechecks and four app
+  builds passed. Standard browser checks: 79 passed, 9 optional checks skipped.
+- Exact-origin HTTPS, Secure CSRF cookies, unsigned-webhook rejection, both
+  simulator guest flows and the password gate passed over the laptop's private
+  Tailscale path. Private settings/device keys were absent from browser bundles.
+- Initial public resolver checks returned NXDOMAIN despite enabled Funnel
+  mappings. The opt-in E2E_PUBLIC test checks external DNS first and failed at
+  this prerequisite, separate from the passing regression suite.
+- Follow-up: the user confirmed that BOTH HTTPS apps load perfectly on the iPhone
+  with Tailscale disconnected and Wi-Fi off. Public mobile-data page access is
+  therefore user-verified. Google/Cloudflare resolver checks from this environment
+  still returned NXDOMAIN afterward: DNS visibility is inconsistent, not proven
+  universally fixed. Keep the working origins/mappings; do not reset them based
+  solely on a failed resolver check. A matching upstream symptom is reported at
+  https://github.com/tailscale/tailscale/issues/21829 ; its cause is not assumed
+  proven for this machine.
+- User-operated Kashier payment/8443 return, camera QR login and sleep/wake checks
+  remain pending. No card submission, payment or refund was performed.
+## Customer shopping recovery — 2026-10-18
+
+This supersedes the historical separate signed-in carts: select a machine in Hub;
+its saved basket is also loaded when that customer signs in at that Kiosk. Sign-in
+discards guest items, never merges them. Two-second visible version checks sync
+other-app changes; catalogue/stock refreshes remain 15 seconds. Logout/reset does
+not delete saved baskets. A failed cart read is not an empty basket.
+
+My Profile attracts attention for paid, uncollected orders. Order History's badge
+contains only the count. Kiosk explicitly names other collection machines.
+Hub's picker includes saved quantities, disabled machines and privacy-safe usage
+warnings; missing Redis usage information is shown as unknown.
+
+Unfinished checkouts have Continue payment/Cancel checkout and a fixed countdown.
+Resume reuses the original provider session/snapshot/deadline; never pays twice or
+extends the 15-minute window. Remote customer completion requires collection.
+New provider sessions use the configured Hub return handler; Kiosk still receives
+only its own short-lived order cookie and simulator selector.
+
+Code: shared API `cart.ts`, `terminal.ts`, `purchase.ts` and generated schema;
+each app's `features/orders/hooks/`, `services/`, pages and feature styles.
+Hub picker: `features/catalogue/pages/TerminalsPage.tsx`. Cart coordination stays
+app-specific. No app imports another app; UI remains bilingual and responsive.
+
+~~~powershell
+docker compose exec backend python manage.py migrate
+docker compose restart backend order-worker
+docker compose exec hub pnpm check
+~~~
+
+Browser regressions include `hub-shopping-recovery.spec.ts` and
+`kiosk-shopping-recovery.spec.ts`; they mock provider redirects and never submit
+cards. See the backend guide's Customer shopping recovery section for a full
+cross-app/manual sandbox walkthrough. No new .env values or Funnel changes.
+
+Verification — 2026-10-18: 116 frontend unit tests, all four typechecks/builds,
+90 browser regressions (nine opt-in real/public tests skipped), plus the separately
+enabled real two-machine shared-customer-cart test passed. The latter restored
+original fixture quantities and submitted no payment. Backend: 319 tests, valid
+OpenAPI, additive migrations applied, no model drift. Real Kashier completion and
+public DNS/webhook acceptance remain manual; no automatic card submission.
+
+Checkout-loop correction — 2026-10-18: an existing attempt now opens recovery,
+not a misleading stock conflict. A rejected stale-cart draft is refreshed for
+manual review; uncertain requests keep their original idempotency key. The Kiosk
+recovery panel has a working status Refresh. Uncertain cancellation has specific
+bilingual guidance, and financial-review details keep polling. Expired attempts
+with missing provider sessions are resolved by the worker only after the documented
+complete provider absence checks. No .env change or migration is required.
+
+## Payment result continuation — 2026-10-18
+
+The Kiosk result now offers Continue session / End session after verified completed
+payment. Explicit Continue reconnects only its exact live session through the new
+device/cookie-protected `POST /api/v1/terminals/orders/{id}/result/continue/`;
+ordinary page reload does not restore authentication. The bearer remains in memory,
+with the original server maximum's remaining lifetime. Expired/replaced sessions
+require sign-in. End and the 60-second private-result reset clear the proof/session.
+
+Kiosk-resumed unpaid attempts now dispense immediately at their assigned machine
+while its bound session remains live, including originally Hub-created attempts.
+Hub resume retains collection. My Profile distinguishes awaiting-payment from
+collection attention; Order History keeps a combined number-only badge. Result
+language comes from its authorised order until continuation adopts session state.
+
+Code: Kiosk `PaymentReturnPage`, session controller and routes; shared purchase
+client/generated types; exact Kiosk proxy allowlist; both app dashboards/profiles
+and feature locales. No new package, migration, environment value or networking
+change. Run `docker compose exec hub pnpm check`, the shopping-recovery/order
+browser suites, and restart `order-worker`. Follow backend/AUTH_GUIDE.md's
+payment-return walkthrough for user-operated live Kashier verification.
+
+Verification — 2026-10-18 (payment continuation): 119 frontend unit tests, all
+four typechecks/builds and 100 browser regressions pass (nine opt-in live/public
+cases skipped). Backend: 340 tests pass; OpenAPI validates and no migration drift.
+This includes Arabic/English guest/customer Continue/End at 1024×600 and late
+receipt-activity cleanup. No real or automatic sandbox card submission occurred.

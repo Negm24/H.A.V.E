@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { request as httpRequest, type IncomingMessage, type ServerResponse, type IncomingHttpHeaders } from 'node:http'
 import { request as httpsRequest } from 'node:https'
 import { loadEnv, type Plugin } from 'vite'
-import { requestOrigin } from './tunnel-origin.ts'
+import { requestOrigin } from './development-access.ts'
 
 const methods = new Map([
   ['/api/v1/terminals/sessions/', 'POST'],
@@ -15,12 +15,14 @@ const methods = new Map([
 
 export function terminalMethod(path: string): string | undefined {
   if (path === '/api/v1/terminals/orders/') return 'GET'
+  if (path === '/api/v1/terminals/orders/summary/') return 'GET'
   if (path === '/api/v1/terminals/orders/checkout/') return 'POST'
   if (/^\/api\/v1\/terminals\/orders\/[0-9a-f-]{36}\/(?:result\/)?$/.test(path)) return 'GET'
-  if (/^\/api\/v1\/terminals\/orders\/[0-9a-f-]{36}\/(?:cancel|collect|reorder|result\/(?:end|activity))\/$/.test(path)) return 'POST'
+  if (/^\/api\/v1\/terminals\/orders\/[0-9a-f-]{36}\/(?:cancel|collect|reorder|resume|result\/(?:end|activity|continue))\/$/.test(path)) return 'POST'
   if (path === '/api/v1/terminals/catalogue/categories/' || path === '/api/v1/terminals/catalogue/products/') return 'GET'
   if (/^\/api\/v1\/terminals\/catalogue\/products\/[1-9][0-9]*\/$/.test(path)) return 'GET'
   if (path === '/api/v1/terminals/cart/') return 'GET,DELETE'
+  if (path === '/api/v1/terminals/cart/version/') return 'GET'
   if (/^\/api\/v1\/terminals\/cart\/items\/[1-9][0-9]*\/$/.test(path)) return 'PUT'
   if (methods.has(path)) return methods.get(path)
   if (/^\/api\/v1\/auth\/customers\/terminal\/qr-login\/[0-9a-f-]{36}\/$/.test(path)) return 'GET'

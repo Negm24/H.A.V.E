@@ -35,7 +35,7 @@ PATHS = {
 }
 
 
-@override_settings(DEBUG=True, AUTH_CONSOLE_SMS=True,
+@override_settings(DEBUG=False, AUTH_CONSOLE_SMS=True,
                    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class RecoveryTests(SessionFixtures, TestCase):
     def setUp(self):
@@ -229,8 +229,8 @@ class RecoveryTests(SessionFixtures, TestCase):
         self.assertEqual(response.status_code, 202)
         self.assertFalse(self.redis.exists(challenge_key("CUSTOMER", response.json()["challenge_id"])))
 
-    @override_settings(DEBUG=False)
-    def test_no_mock_sms_outside_development(self):
+    @override_settings(AUTH_CONSOLE_SMS=False)
+    def test_no_mock_sms_without_explicit_opt_in(self):
         self.assertEqual(self.request_code().status_code, 503)
         self.sms.assert_not_called()
 
@@ -264,7 +264,7 @@ class RecoveryTests(SessionFixtures, TestCase):
             operate(self.terminal, "login", guest, user=verified)
 
 
-@override_settings(DEBUG=True, AUTH_CONSOLE_SMS=True,
+@override_settings(DEBUG=False, AUTH_CONSOLE_SMS=True,
                    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class RecoveryConcurrencyTests(SessionFixtures, TransactionTestCase):
     def setUp(self):

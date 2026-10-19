@@ -544,35 +544,87 @@ the shared Docker test-tunnel instructions when Hub access is needed from kiosk.
   sessions ended. No payment-provider purchase was attempted by this run.
 
 
-## Free local HTTPS purchase testing — 2026-10-17
+## Stable HTTPS development — 2026-10-18
 
-This supersedes the historical localhost-return and earlier tunnel instructions.
-Hub and Kiosk now use two independent Cloudflare Quick Tunnels to the existing Docker
-apps. Kiosk requires the local test-access password; Hub remains reachable for signed
-Kashier webhooks. There is no paid hosting or public-to-local redirect bridge.
-Terminal returns use KIOSK_PUBLIC_BASE_URL; Hub returns/webhooks use PAYMENTS_PUBLIC_BASE_URL.
-Only exact configured hosts are trusted, device keys stay server-side, and cookies
-over the tunnels are Secure. Database records, purchase policies and session timings
-are unchanged. No migration, real charge, Git commit or push is part of this update.
+The 2026-10-17 temporary Cloudflare setup is retired. Windows Tailscale Funnel
+provides stable HTTPS to the existing Docker apps: Hub on 443, Kiosk on 8443.
+One private, ignored development/access.local.json stores both exact public origins
+and the existing Kiosk access password; no recurring .env address changes or new
+connector containers. Terminal keys remain server-side in frontend/.env.
+HTTPS cookies/CSRF, debug-page protection, payment verification and session policies
+remain enforced. Phone access is public even with Tailscale disconnected; Kiosk
+still requires its password. Keep the laptop awake during payment tests.
+See [current setup and acceptance checks](README.md#stable-https-testing-with-tailscale--2026-10-18).
+Kashier's actual :8443 return and physical-phone camera/public-access checks remain
+manual acceptance, not implied by automated test success.
 
-See [start/configure/test/stop instructions](README.md#free-https-purchase-testing--2026-10-17).
-Restarting either tunnel changes its URL; update root .env and recreate apps without
-restarting the other tunnel. Do not recreate tunnels while a payment is in flight.
+## Shared cart-button presentation — 2026-10-18
 
-### Kiosk test-access correction — 2026-10-17
+Hub and Kiosk use shared/src/ui/cart-button.tsx, re-exported by ui/catalogue.
+Its icon, primary quantity badge and 300ms revision glow are styled in
+shared/src/styles/catalogue.css under #cart-button. Initial hydration and
+unchanged reads do not flash; reduced motion disables the glow. No cart/API,
+checkout, session, or click-handler behavior changes.
+## Customer shopping recovery — 2026-10-18
 
-The Quick Tunnel email session proved unreliable after real verification: scripts
-were redirected back to Cloudflare login and blocked as cross-origin resources.
-`tooling/kiosk-test-gate.ts` now protects public documents, modules, API requests
-and WebSocket upgrades before the device proxy. Unlock with KIOSK_TEST_ACCESS_PASSWORD
-from private root .env, not a customer PIN. A signed, host-only HttpOnly/Secure/Lax
-cookie lasts four hours without extending customer authentication. Password changes
-or Kiosk server restart require unlocking again; localhost remains unchanged.
-No external authentication service, customer-auth policy, CORS wildcard, new
-dependency, database migration, payment or device credential change is introduced.
+Current rules supersede session-only signed-in baskets: customer+physical-Terminal
+Redis carts are shared with Hub. PIN/QR success discards guest items then loads
+the saved machine basket; failure preserves guests. Refresh still returns to
+attract; reauthenticate to recover saved items. No browser token storage.
+Two-second visible/focus revision checks and 15-second stock refreshes never
+renew activity/cart expiry; CAS conflicts require another explicit user choice.
 
-Verified: 84 unit tests, 39 affected browser cases, all workspace typechecks/four
-builds; separate real public unlock/reload/catalogue/reset check passed with no
-JavaScript/CORS errors. Two optional live-auth browser cases were not enabled in
-the affected suite. Existing device credentials and purchase records are preserved;
-no card payment, Git commit or push was performed.
+Profile attention distinguishes orders at this machine versus elsewhere; its
+Order History entry has a number-only badge. Summary hooks ignore late identity
+responses and poll only visible authenticated sessions.
+
+`features/orders/hooks/use-checkout-attempt.tsx` keeps only in-memory guest
+attempt/idempotency context for in-session recovery. Customer History separates
+Unfinished checkouts, supports explicit resume/cancel and fixed remaining time.
+Resume at the assigned machine enforces saved-card requirements. Remote payment
+or a finished original session makes a customer order collection-required;
+channel alone is not proof it should automatically dispense.
+
+New Kashier sessions return via Hub's neutral handler, then Kiosk's existing
+order-scoped receipt screen; old return URLs remain supported. Cookies, device
+allowlist, 60-second receipt limit and next-visitor revocation remain enforced.
+The app shows a notice when newer cart edits prevented paid-snapshot cleanup.
+
+After additive migrations, restart backend/order-worker; no new environment
+settings. Manual tests: Hub basket → sign into same machine → edit → Hub updates
+within two seconds; Start over and sign in again recovers it. Check other-machine
+isolation, guest discard, countdown/resume, cancelled/unknown outcomes, badges,
+Arabic, inactivity-warning priority and no prepayment physical-stock changes.
+Automated coverage is in feature unit tests plus kiosk-shopping-recovery.spec.ts.
+Actual Kashier card entry and external Funnel/webhook reachability are manual,
+not proven by mocked browser tests. Networking work remains excluded.
+
+## Checkout-loop correction — 2026-10-18
+
+Checkout follows the existing owned attempt returned by Django rather than
+mislabeling it as unavailable stock. A definitive CART_CHANGED rejection clears
+only the rejected in-memory request, reloads the basket and requires review before
+a new explicit payment. Unknown responses still keep their original key/snapshot.
+Ended attempts return their result and offer Back instead of endless retries.
+CheckoutRecovery has a read-only Refresh action; expired Continue payment is not
+offered, and uncertain cancellation has specific bilingual guidance. Checking
+detail screens continue polling, including REVIEW_REQUIRED financial checks.
+Original guests may read only the same valid session's individual checkout.
+See backend/AUTH_GUIDE.md for expired missing-session recovery and live resolution;
+no network, credential, stock-reset, payment submission or schema migration change.
+
+## Payment result continuation — 2026-10-18
+
+`PaymentReturnPage` offers Continue session / End session after verified completed
+payment. Continue explicitly consumes a device+order-cookie proof to reconnect the
+same live session with a rotated memory-only token and remaining original maximum;
+expired/replaced/revoked sessions cannot return. End closes that exact session;
+60-second receipt privacy remains. AppRoutes lets the authorised result control
+its language before a session is adopted, including Arabic after hosted redirect.
+
+An unpaid checkout resumed at its assigned Kiosk now authorises immediate simulated
+dispensing in its live session, not a second collection action. Hub resume remains
+collection-required. Profile highlights include distinct awaiting-payment wording;
+History is a combined number-only badge. Session controller, API wrapper/proxy,
+locales and browser/unit coverage are updated. See backend/AUTH_GUIDE.md for the
+manual flow and expired-session safety checks; no new env values or migrations.

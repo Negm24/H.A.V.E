@@ -15,7 +15,7 @@ from apps.accounts.services.customer_services.registration import create_custome
 from apps.accounts.services.doctor_services.registration import create_doctor_account
 
 
-@override_settings(DEBUG=True, AUTH_CONSOLE_SMS=True,
+@override_settings(DEBUG=False, AUTH_CONSOLE_SMS=True,
                    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class CustomerSignupTests(TestCase):
     """Integration tests: isolated Redis keys and Django's separate test database."""
@@ -218,8 +218,8 @@ class CustomerSignupTests(TestCase):
         challenge = self.sms.call_args.kwargs["challenge_id"]
         self.assertFalse(self.redis.exists(_challenge_key(challenge)))
 
-    @override_settings(DEBUG=False)
-    def test_console_sms_disabled_outside_local_debug(self):
+    @override_settings(AUTH_CONSOLE_SMS=False)
+    def test_console_sms_disabled_without_explicit_opt_in(self):
         self.assertEqual(self.start_signup().status_code, 503)
         self.sms.assert_not_called()
 

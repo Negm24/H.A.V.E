@@ -57,6 +57,12 @@ def get_cart(*, user_id=None, terminal=None, raw_token=""):
     return _project(result, terminal, user_id)
 
 
+def get_cart_version(*, user_id=None, terminal=None, raw_token=""):
+    """Authentication and atomic session checks, without inventory/price queries."""
+    result = transition("read", user_id=user_id, terminal=terminal, raw_token=raw_token)
+    return {"version": result["saved"]["version"]}
+
+
 def change_cart(*, expected_version, user_id=None, terminal=None, raw_token="", product_id=None, quantity=0, clear=False):
     context = dict(user_id=user_id, terminal=terminal, raw_token=raw_token)
     before = transition("read", **context)

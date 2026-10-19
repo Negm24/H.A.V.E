@@ -6,6 +6,7 @@ from apps.carts.security.state import transition
 from apps.carts.services.cart_services import cart_data
 from apps.orders.models import Order
 from apps.orders.services.order_services import reserve_order
+from apps.orders.services.errors import CheckoutConflict
 from apps.payments.services import kashier_services
 
 
@@ -30,10 +31,10 @@ def checkout_order(*, user, terminal, raw_token, session_id, data, channel):
     context = dict(user_id=user.pk if customer else None, terminal=terminal, raw_token=raw_token)
     cart = transition("read", **context)["saved"]
     if cart.get("version", "empty") != data["cart_version"]:
-        raise AuthError("The cart changed. Reload it before checkout.", 409)
+        raise CheckoutConflict("The cart changed. Reload it before checkout.", "CART_CHANGED")
     return reserve_order(terminal=terminal, customer=customer, items=cart.get("items") or {},
         cart_version=data["cart_version"], email=email, language=data["language"], print_requested=print_requested,
-        channel=channel, idempotency_key=key, terminal_session_id=session_id)
+        channel=channel, idempotency_key=key, terminal_session_id=session_id, prevent_duplicate_checkout=True)
 
 
 def reorder(order, *, user_id, terminal, raw_token, expected_version, replace_existing):

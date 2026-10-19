@@ -4,14 +4,17 @@ from rest_framework.response import Response
 
 from apps.accounts.api.views.shared_views import CustomerSessionView, ERRORS
 from apps.carts.api.serializers.cart_serializers import CartOutputSerializer
-from apps.orders.api.serializers.order_serializers import CheckoutInputSerializer, CheckoutOutputSerializer, OrderOutputSerializer, ReorderInputSerializer
+from apps.orders.api.serializers.order_serializers import CheckoutInputSerializer, CheckoutOutputSerializer, OrderOutputSerializer, ReorderInputSerializer, ResumeCheckoutInputSerializer, OrderSummaryOutputSerializer, CheckoutErrorOutputSerializer
 from apps.orders.services.order_services import fulfil_order
 from apps.payments.models import PaymentTransaction
 from apps.payments.security.return_authorization import cookie_name, return_payment
 from apps.payments.services.payment_services import reconcile
 from apps.terminals.security.authentication import TerminalSessionAuthentication
 from apps.terminals.security.permissions import HasTerminalAccess
-from .shared_views import TERMINAL, _data, OrderViewBase, CheckoutView, OrdersView, OrderDetailView, OrderCancelView, OrderReorderView
+from .shared_views import TERMINAL, _data, OrderViewBase, CheckoutView, OrdersView, OrderDetailView, OrderCancelView, OrderReorderView, OrderResumeView, OrderSummaryView
+from apps.orders.api.serializers.order_serializers import PaymentSessionContinuationOutputSerializer
+from apps.accounts.api.serializers.customer_serializers import CustomerIdentityOutputSerializer
+from apps.payments.services.session_return_services import finish_return, can_continue
 
 
 class TerminalOrderView(OrderViewBase):
@@ -26,12 +29,24 @@ class TerminalOrdersView(OrdersView, TerminalOrderView):
         return super().get(request)
 
 
+class TerminalOrderSummaryView(OrderSummaryView, TerminalOrderView):
+    @extend_schema(tags=[TERMINAL], responses={200: OrderSummaryOutputSerializer, **ERRORS})
+    def get(self, request):
+        return super().get(request)
+
+
+class TerminalOrderResumeView(OrderResumeView, TerminalOrderView):
+    @extend_schema(tags=[TERMINAL], request=ResumeCheckoutInputSerializer, responses={200: CheckoutOutputSerializer, **ERRORS})
+    def post(self, request, order_id):
+        return super().post(request, order_id)
+
+
 class TerminalCheckoutView(CheckoutView, TerminalOrderView):
     authentication_classes = [TerminalSessionAuthentication]
     permission_classes = [HasTerminalAccess]
     terminal_flow = True
 
-    @extend_schema(tags=[TERMINAL], request=CheckoutInputSerializer, responses={200: CheckoutOutputSerializer, **ERRORS})
+    @extend_schema(tags=[TERMINAL], request=CheckoutInputSerializer, responses={200: CheckoutOutputSerializer, 409: CheckoutErrorOutputSerializer, **ERRORS})
     def post(self, request):
         return super().post(request)
 
@@ -77,6 +92,7 @@ class TerminalPaymentResultView(CustomerSessionView):
         data = _data(payment.order)
         # Return only the specific receipt; never customer/profile/session credentials.
         data["customer_id"] = None
+        data["can_continue_session"] = can_continue(payment, request.auth["terminal"])
         return Response(data)
 
 
@@ -85,9 +101,20 @@ class TerminalPaymentResultEndView(TerminalPaymentResultView):
 
     @extend_schema(tags=[TERMINAL], request=None, responses={204: None, **ERRORS})
     def post(self, request, order_id):
-        payment = return_payment(request, order_id, request.auth["terminal"])
-        PaymentTransaction.objects.filter(pk=payment.pk).update(return_ended_at=timezone.now())
+        finish_return(request, order_id, request.auth["terminal"])
         response = Response(status=204)
+        response.delete_cookie(cookie_name(order_id), path=f"/api/v1/terminals/orders/{order_id}/", samesite="Lax")
+        return response
+
+
+class TerminalPaymentContinueView(TerminalPaymentResultEndView):
+    @extend_schema(tags=[TERMINAL], request=None, responses={200: PaymentSessionContinuationOutputSerializer, **ERRORS},
+        description="Explicit one-use receipt-cookie/device handoff to the same live session; never revives an expired/replaced session.")
+    def post(self, request, order_id):
+        data, user = finish_return(request, order_id, request.auth["terminal"], continue_session=True)
+        if user:
+            data["customer"] = CustomerIdentityOutputSerializer(user).data
+        response = Response(data)
         response.delete_cookie(cookie_name(order_id), path=f"/api/v1/terminals/orders/{order_id}/", samesite="Lax")
         return response
 

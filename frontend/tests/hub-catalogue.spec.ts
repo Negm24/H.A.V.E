@@ -11,7 +11,7 @@ const products = Array.from({ length: 9 }, (_, index) => ({
   max_quantity_per_order: 5, stock_quantity: index === 7 ? 0 : 12, quantity_limit: index >= 7 ? 0 : 5, image_url: null,
 }))
 const categories = [{ id: 1, name_en: 'Pain & fever', name_ar: 'الألم والحمى', product_count: 9, image_url: null }]
-const terminal = { serial_number: 'HAVE-TEST-001', display_name: 'Test Terminal', address_en: 'Cairo test address', address_ar: 'عنوان اختبار القاهرة', status: 'AVAILABLE' }
+const terminal = { serial_number: 'HAVE-TEST-001', display_name: 'Test Terminal', address_en: 'Cairo test address', address_ar: 'عنوان اختبار القاهرة', status: 'OFFLINE', is_disabled: false, occupancy: 'FREE', cart_total_quantity: 0, cart_available: true }
 
 async function mockCatalogue(context: BrowserContext, options: { outage?: boolean; conflict?: boolean; uncertain?: boolean } = {}) {
   let authenticated = false, version = 0, quantity = 0, conflict = options.conflict, puts = 0
@@ -35,6 +35,11 @@ async function mockCatalogue(context: BrowserContext, options: { outage?: boolea
     else if (path === '/api/v1/hub/catalogue/categories/') response = { items: categories, availability_scope: 'TERMINAL', observed_at: '2026-10-15T12:00:00Z' }
     else if (path === '/api/v1/hub/catalogue/products/') response = { items: products, availability_scope: 'NETWORK', observed_at: '2026-10-15T12:00:00Z' }
     else if (path.startsWith('/api/v1/hub/catalogue/products/')) response = { product: products[Number(path.split('/').at(-2)) - 1], availability_scope: 'NETWORK', observed_at: '2026-10-15T12:00:00Z' }
+    else if (path.endsWith('/cart/version/')) {
+      if (options.outage) { status = 503; response = { detail: 'Unavailable' } }
+      else response = { version: cart().version }
+    }
+    else if (path.endsWith('/orders/summary/')) response = { awaiting_collection_count: 0, at_terminal_count: 0, elsewhere_count: 0, collection_terminals: [] }
     else if (path.startsWith('/api/v1/hub/cart/')) {
       if (options.outage) { status = 503; response = { detail: 'Unavailable' } }
       else if (method === 'PUT') {
@@ -76,6 +81,10 @@ test('Hub browse, sort, search, details and saved cart use customer APIs without
   await expect(page.locator('[data-product-id="9"]').getByRole('button', { name: 'Add', exact: true })).toBeDisabled()
   await page.locator('[data-product-id="1"]').getByRole('button', { name: 'Add', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Cart · 1', exact: true })).toBeVisible()
+  await expect(page.locator('#cart-button svg')).toBeVisible()
+  await expect(page.locator('#cart-button .have-cart-badge')).toHaveText('1')
+  await expect(page.locator('#cart-button')).toHaveText('1')
+  if (process.env.E2E_VISUAL === 'true') await page.screenshot({ path: 'test-results/hub-cart-button.png', fullPage: true })
   await page.getByRole('link', { name: '⌕ Search', exact: true }).click()
   await page.getByLabel('Search medicines or ingredients').fill('panadl')
   await expect(page.locator('.product-card')).toHaveCount(1)

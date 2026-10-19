@@ -7,12 +7,17 @@ export type PurchaseTerminal = components['schemas']['CollectionTerminalOutput']
 export type OrderItem = components['schemas']['OrderItemOutput']
 export type PurchaseOrder = components['schemas']['OrderOutput']
 export type SavedCard = components['schemas']['SavedCardOutput']
+export type OrderCollectionSummary = components['schemas']['OrderSummaryOutput']
+export type ResumeResult = components['schemas']['CheckoutOutput']
 export type CheckoutInput = components['schemas']['CheckoutInput'] & {
   terminal_serial: string; language: 'en' | 'ar'; print_requested: false
 }
 export type CheckoutResult = components['schemas']['CheckoutOutput']
+export type PaymentContinuedSession = components['schemas']['PaymentSessionContinuationOutput']
 const base = '/api/v1/hub/orders/'
 export const hubPurchaseApi = {
+  summary: (token: string, signal?: AbortSignal) => request<OrderCollectionSummary>(base + 'summary/', { bearerToken: token, signal }),
+  resume: (token: string, id: string, signal?: AbortSignal) => request<ResumeResult>(base + `${encodeURIComponent(id)}/resume/`, { method: 'POST', body: {}, bearerToken: token, signal }),
   terminals: (token: string, signal?: AbortSignal) => request<PurchaseTerminal[]>(base + 'terminals/', { bearerToken: token, signal }),
   checkout: (token: string, body: CheckoutInput, signal?: AbortSignal) => request<CheckoutResult>(base + 'checkout/', { method: 'POST', body, bearerToken: token, signal }),
   list: (token: string, signal?: AbortSignal) => request<PurchaseOrder[]>(base, { bearerToken: token, signal }),
@@ -34,6 +39,8 @@ export function isHostedCheckoutUrl(value: string): boolean {
 
 const terminalBase = '/api/v1/terminals/orders/'
 export const terminalPurchaseApi = {
+  summary: (token: string, signal?: AbortSignal) => terminalRequest<OrderCollectionSummary>(terminalBase + 'summary/', { bearerToken: token, signal }),
+  resume: (token: string, id: string, body: { return_simulator_id?: string } = {}, signal?: AbortSignal) => terminalRequest<ResumeResult>(terminalBase + `${encodeURIComponent(id)}/resume/`, { method: 'POST', body, bearerToken: token, signal }),
   checkout: (token: string, body: Omit<CheckoutInput, 'terminal_serial' | 'print_requested'> & { print_requested: boolean; return_simulator_id?: string }, signal?: AbortSignal) => terminalRequest<CheckoutResult>(terminalBase + 'checkout/', { method: 'POST', bearerToken: token, body, signal }),
   list: (token: string, signal?: AbortSignal) => terminalRequest<PurchaseOrder[]>(terminalBase, { bearerToken: token, signal }),
   detail: (token: string, id: string, signal?: AbortSignal) => terminalRequest<PurchaseOrder>(terminalBase + `${encodeURIComponent(id)}/`, { bearerToken: token, signal }),
@@ -42,5 +49,6 @@ export const terminalPurchaseApi = {
   reorder: (token: string, id: string, cart_version: string, replace_existing: boolean, signal?: AbortSignal) => terminalRequest<CustomerCart>(terminalBase + `${encodeURIComponent(id)}/reorder/`, { method: 'POST', body: { cart_version, replace_existing }, bearerToken: token, signal }),
   result: (id: string, signal?: AbortSignal) => terminalRequest<PurchaseOrder>(terminalBase + `${encodeURIComponent(id)}/result/`, { signal }),
   endResult: (id: string, signal?: AbortSignal) => terminalRequest<void>(terminalBase + `${encodeURIComponent(id)}/result/end/`, { method: 'POST', body: {}, signal }),
+  continueResult: (id: string, signal?: AbortSignal) => terminalRequest<PaymentContinuedSession>(terminalBase + `${encodeURIComponent(id)}/result/continue/`, { method: 'POST', body: {}, signal }),
   resultActivity: (id: string, signal?: AbortSignal) => terminalRequest<void>(terminalBase + `${encodeURIComponent(id)}/result/activity/`, { method: 'POST', body: {}, signal }),
 }

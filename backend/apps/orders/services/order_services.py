@@ -74,7 +74,8 @@ def _locked_inventory(terminal, product_ids):
 
 
 def reserve_order(*, terminal, items, cart_version, email, channel, idempotency_key,
-                  customer=None, language="en", print_requested=False, terminal_session_id=None):
+                  customer=None, language="en", print_requested=False, terminal_session_id=None,
+                  prevent_duplicate_checkout=False):
     """Allocate FEFO stock and snapshot current prices, idempotently.
 
     The API must read the authenticated cart and verify its supplied version
@@ -109,6 +110,18 @@ def reserve_order(*, terminal, items, cart_version, email, channel, idempotency_
             previous = _existing_order(str(idempotency_key), fingerprint)
             if previous:
                 return previous
+            if prevent_duplicate_checkout:
+                # The Terminal row serializes both apps' checkout creation.
+                # Never let a new idempotency key bypass an unfinished attempt.
+                active = Order.objects.filter(terminal=current_terminal, customer=customer,
+                    paid_at__isnull=True, status__in=[Order.Status.PENDING, Order.Status.REVIEW_REQUIRED])
+                if customer is None:
+                    active = active.filter(terminal_session_id=terminal_session_id)
+                unfinished = active.order_by("created_at", "pk").first()
+                if unfinished:
+                    from apps.orders.services.errors import CheckoutConflict
+                    raise CheckoutConflict("An unfinished checkout already exists. Continue or cancel it before starting another purchase.",
+                        "CHECKOUT_EXISTS", unfinished.pk)
             products = {row.pk: row for row in Product.objects.select_for_update(of=("self",)).filter(
                 pk__in=items, is_active=True, category__is_active=True,
             ).order_by("pk")}
@@ -154,6 +167,7 @@ def reserve_order(*, terminal, items, cart_version, email, channel, idempotency_
             if not Decimal("0.00") < subtotal <= Decimal("9999999999.99"):
                 raise AuthError("The checkout amount is outside the supported range.", 400)
             order = Order.objects.create(terminal=current_terminal, customer=customer, channel=channel,
+                collection_required=channel == Order.Channel.HUB,
                 subtotal=subtotal, customer_payable_amount=subtotal, email_receipt_to=email,
                 language=language, print_requested=print_requested, idempotency_key=str(idempotency_key),
                 checkout_fingerprint=fingerprint, cart_version=str(cart_version), terminal_session_id=terminal_session_id,
@@ -209,14 +223,21 @@ def mark_paid(order_id, amount=None):
     if order.paid_at:
         return order
     now = timezone.now()
+    if order.status == Order.Status.REVIEW_REQUIRED and order.payment_uncertain:
+        active_lines = StockReservation.objects.filter(order_product__order=order, status="ACTIVE",
+            quantity=F("order_product__quantity_requested")).values_list("order_product_id", flat=True)
+        if order.items.exists() and not order.items.exclude(pk__in=active_lines).exists():
+            # This was an unpaid reconciliation hold, not a stock/dispense
+            # failure. Verified late notification can resume its held purchase.
+            order.status = Order.Status.PENDING
     order.total_paid = amount
     order.paid_at = now
     order.payment_uncertain = False
-    if order.channel == Order.Channel.HUB and order.status != Order.Status.CANCELLED:
+    if order.collection_required and order.status != Order.Status.CANCELLED:
         order.collection_deadline = now + timedelta(seconds=getattr(settings, "ORDER_COLLECTION_SECONDS", 86400))
         StockReservation.objects.filter(order_product__order=order, status=StockReservation.Status.ACTIVE).update(expires_at=order.collection_deadline)
-    order.save(update_fields=["total_paid", "paid_at", "payment_uncertain", "collection_deadline"])
-    if order.channel == Order.Channel.HUB:
+    order.save(update_fields=["total_paid", "paid_at", "payment_uncertain", "collection_deadline", "status"])
+    if order.collection_required or order.status == Order.Status.CANCELLED:
         _receipt(order)
     return order
 
@@ -348,9 +369,22 @@ def order_data(order):
     order = Order.objects.select_related("terminal").prefetch_related("items", "receipt").get(pk=order.pk)
     receipt = getattr(order, "receipt", None)
     stamp = lambda value: value.isoformat() if value else None
+    payment = order.payments.filter(operation="CAPTURE").first()
+    if order.paid_at:
+        payment_state = "PAID"
+    elif order.status == Order.Status.CANCELLED:
+        payment_state = "EXPIRED" if order.cancellation_reason == "CHECKOUT_EXPIRED" else "FAILED"
+    elif order.status == Order.Status.REVIEW_REQUIRED or order.expires_at <= timezone.now() or (payment and not payment.checkout_url):
+        payment_state = "CHECKING_PAYMENT"
+    else:
+        payment_state = "AWAITING_PAYMENT"
     return {
         "id": str(order.pk), "order_number": order.order_number, "status": order.status,
         "channel": order.channel, "customer_id": order.customer_id,
+        "collection_required": order.collection_required, "payment_state": payment_state,
+        "cart_preserved": order.cart_preserved,
+        "can_resume": bool(payment_state == "AWAITING_PAYMENT" and payment and payment.checkout_url
+            and payment.status not in ("SUCCEEDED", "FAILED")),
         "terminal": {"serial_number": order.terminal_id, "display_name": order.terminal.display_name,
             "address_en": order.terminal.address_en, "address_ar": order.terminal.address_ar},
         "currency": order.currency, "subtotal": _money(order.subtotal),

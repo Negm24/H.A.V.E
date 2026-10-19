@@ -1,4 +1,4 @@
-"""Purchase increment: Hub-per-machine and Terminal-session cart regressions."""
+"""Customer-and-machine shared baskets, with isolated temporary guest carts."""
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from unittest.mock import patch
@@ -65,14 +65,14 @@ class CustomerCartTests(SessionFixtures, TestCase):
     def key(self, terminal=None):
         return customer_cart_key(self.user.pk, (terminal or self.terminal).pk)
 
-    def test_hub_machine_carts_and_terminal_carts_are_separate_with_local_stock(self):
+    def test_same_customer_machine_cart_is_shared_with_terminal_with_local_stock(self):
         self.assertEqual(self.hub_put(5).json()["items"][0]["product"]["stock_quantity"], 6)
-        self.assertEqual(self.terminal_cart().json()["items"], [])
+        self.assertEqual(self.terminal_cart().json()["total_quantity"], 5)
         self.assertEqual(self.hub(terminal=self.terminal2).json()["items"], [])
         self.assertEqual(cart_services.get_cart(user_id=self.user.pk, terminal=self.terminal2, raw_token=self.token2)["items"], [])
         self.terminal_put(3)
         self.hub_put(2, terminal=self.terminal2)
-        self.assertEqual(self.hub().json()["total_quantity"], 5)
+        self.assertEqual(self.hub().json()["total_quantity"], 3)
         self.assertEqual(self.hub(terminal=self.terminal2).json()["total_quantity"], 2)
         self.assertEqual(self.terminal_cart().json()["total_quantity"], 3)
         self.assertEqual(self.hub_put(3, terminal=self.terminal2).status_code, 400)
@@ -125,6 +125,39 @@ class CustomerCartTests(SessionFixtures, TestCase):
         with ThreadPoolExecutor(max_workers=2) as workers:
             self.assertCountEqual(list(workers.map(update, [2, 3])), ["ok", 409])
 
+    def test_cross_app_version_reads_are_lightweight_and_never_renew_deadlines(self):
+        initial = self.hub_put(1).json()
+        self.redis.expire(self.key(), 100)
+        before = self.state()
+        with patch("apps.carts.services.cart_services.availability", side_effect=AssertionError("Version reads must not query stock")):
+            hub_version = self.hub(suffix="version/")
+            kiosk_version = self.terminal_cart(suffix="version/")
+        self.assertEqual(hub_version.status_code, 200)
+        self.assertEqual(kiosk_version.json(), {"version": initial["version"]})
+        self.assertEqual(hub_version.json(), kiosk_version.json())
+        self.assertLessEqual(self.redis.ttl(self.key()), 100)
+        self.assertEqual(self.state(), before)
+        changed = self.terminal_put(2, version=initial["version"]).json()
+        self.assertNotEqual(changed["version"], initial["version"])
+        self.assertEqual(self.hub(suffix="version/").json()["version"], changed["version"])
+        self.assertEqual(self.hub_put(3, version=initial["version"]).status_code, 409)
+
+    def test_saved_cart_survives_one_hour_absence_and_fresh_kiosk_signin(self):
+        initial = self.hub_put(3).json()
+        self.redis.expire(self.key(), 86400 - 3600)
+        self.change_state(last_activity_at=0)
+        self.assertEqual(self.terminal_cart().status_code, 401)
+        self.token = self.terminal_login(self.start_guest()).json()["session_token"]
+        restored = self.terminal_cart().json()
+        self.assertEqual((restored["version"], restored["total_quantity"]), (initial["version"], 3))
+        self.assertLessEqual(self.redis.ttl(self.key()), 86400 - 3600)
+
+    def test_version_read_outage_and_expired_terminal_are_not_empty_carts(self):
+        with patch("apps.carts.security.state.get_redis_client", side_effect=RedisConnectionError):
+            self.assertEqual(self.hub(suffix="version/").status_code, 503)
+        self.change_state(last_activity_at=0)
+        self.assertEqual(self.terminal_cart(suffix="version/").status_code, 401)
+
     def test_terminal_end_expiry_and_next_visitor_destroy_only_terminal_basket(self):
         self.hub_put(2)
         self.terminal_put(1)
@@ -133,7 +166,7 @@ class CustomerCartTests(SessionFixtures, TestCase):
         self.assertEqual(self.terminal_cart(token=guest).json()["items"], [])
         self.change_state(last_activity_at=0)
         self.assertEqual(self.terminal_cart(token=guest).status_code, 401)
-        self.assertEqual(self.hub().json()["total_quantity"], 2)
+        self.assertEqual(self.hub().json()["total_quantity"], 1)
 
     def test_guest_login_discards_guest_cart_without_adoption_or_clock_restart(self):
         guest = self.start_guest()
@@ -159,10 +192,10 @@ class CustomerCartTests(SessionFixtures, TestCase):
         self.terminal_put(2, token=guest)
         self.token = self.terminal_login(guest).json()["session_token"]
         current = self.terminal_cart().json()
-        self.assertEqual(current["total_quantity"], 0)
+        self.assertEqual(current["total_quantity"], 1)
         self.assertFalse(current["comparison_required"])
         self.terminal_put(3)
-        self.assertEqual(self.hub().json()["total_quantity"], 1)
+        self.assertEqual(self.hub().json()["total_quantity"], 3)
 
     def test_failed_login_keeps_guest_basket_unchanged(self):
         guest = self.start_guest()
@@ -180,7 +213,7 @@ class CustomerCartTests(SessionFixtures, TestCase):
             with self.assertRaises(AuthError) as error:
                 transition(mode, user_id=self.user.pk, terminal=self.terminal, raw_token=self.token)
             self.assertEqual(error.exception.status, 410)
-        self.assertEqual(self.hub().json()["total_quantity"], 1)
+        self.assertEqual(self.hub().json()["total_quantity"], 2)
         self.assertEqual(self.terminal_cart().json()["total_quantity"], 2)
 
     def test_reductions_and_removals_allow_unavailable_prescription_lines(self):
@@ -206,7 +239,7 @@ class CustomerCartTests(SessionFixtures, TestCase):
         self.assertEqual(cart_services.get_cart(user_id=other.pk, terminal=self.terminal)["items"], [])
         self.assertEqual(self.client.get(HUB_CART + "?terminal_serial=" + self.terminal.pk, **self.headers).status_code, 401)
         self.assertEqual(self.hub(token=self.token).status_code, 401)
-        self.assertEqual(self.terminal_cart().json()["items"], [])
+        self.assertEqual(self.terminal_cart().json()["total_quantity"], 1)
 
     def test_hub_requires_valid_selected_terminal(self):
         headers = {"HTTP_AUTHORIZATION": "Bearer " + self.access}
@@ -251,9 +284,10 @@ class CustomerCartTests(SessionFixtures, TestCase):
         self.assertEqual(self.client.post(HUB + f"qr-login/{qr['challenge_id']}/confirm/", {"approve": True}, format="json", **hub_headers).status_code, 200)
         self.token = self.client.post(TERM + f"qr-login/{qr['challenge_id']}/complete/", **terminal_headers).json()["session_token"]
         cart = self.terminal_cart().json()
-        self.assertEqual((cart["total_quantity"], cart["version"]), (0, "empty"))
+        self.assertEqual(cart["total_quantity"], 1)
+        self.assertNotEqual(cart["version"], "empty")
         self.assertIsNotNone(initial["created_at"])
-        self.assertIsNone(cart["created_at"])
+        self.assertIsNotNone(cart["created_at"])
         self.assertFalse(cart["comparison_required"])
         self.assertEqual(self.hub().json()["total_quantity"], 1)
 
@@ -297,13 +331,23 @@ class CustomerCartTests(SessionFixtures, TestCase):
             terminal_id=self.terminal.pk, cart_version=original["version"])
         changed = self.hub_put(2).json()
         self.redis.expire(self.key(), 100)
-        clear_purchased_cart(paid)
+        self.assertFalse(clear_purchased_cart(paid))
         self.assertEqual(self.hub().json()["total_quantity"], 2)
         self.assertLessEqual(self.redis.ttl(self.key()), 100)
         paid.cart_version = changed["version"]
-        clear_purchased_cart(paid)
+        self.assertTrue(clear_purchased_cart(paid))
         self.assertEqual(self.hub().json()["items"], [])
         self.assertFalse(self.redis.exists(self.key()))
+
+    def test_paid_customer_terminal_checkout_cleans_shared_basket_not_next_guest(self):
+        original = self.hub_put(2).json()
+        paid = SimpleNamespace(paid_at=timezone.now(), channel="TERMINAL", customer_id=self.user.pk,
+            terminal_id=self.terminal.pk, terminal_session_id=self.state()["session_id"], cart_version=original["version"])
+        guest = self.start_guest()
+        self.terminal_put(1, token=guest)
+        self.assertTrue(clear_purchased_cart(paid))
+        self.assertEqual(self.hub().json()["items"], [])
+        self.assertEqual(self.terminal_cart(token=guest).json()["total_quantity"], 1)
 
     def test_paid_terminal_cart_cleanup_preserves_next_visitor_and_session_clocks(self):
         original = self.terminal_put(1).json()

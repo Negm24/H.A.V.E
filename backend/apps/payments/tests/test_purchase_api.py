@@ -78,7 +78,7 @@ class PurchaseApiTests(SessionFixtures, TestCase):
             response = self.checkout(version, return_simulator_id=selector)
         self.assertEqual(response.status_code, 200, response.data)
         order_id = response.data["order"]["id"]
-        self.assertEqual(create.call_args.args[1], f"https://kiosk.example/payment-return?order_id={order_id}&terminal={selector}")
+        self.assertEqual(create.call_args.args[1], f"https://test.example/api/v1/payments/return/{order_id}/")
         cookie = next(iter(response.cookies.values()))
         self.assertTrue(cookie["httponly"])
         self.assertEqual(cookie["path"], f"/api/v1/terminals/orders/{order_id}/")

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AttractPage } from '../features/session/pages/AttractPage'
 import { LanguagePage } from '../features/session/pages/LanguagePage'
 import { GuestHomePage } from '../features/session/pages/GuestHomePage'
@@ -20,8 +20,11 @@ import { PaymentReturnPage } from '../features/orders/pages/PaymentReturnPage'
 
 export function AppRoutes() {
   const { state } = useSession()
+  const { pathname } = useLocation()
   const { i18n } = useTranslation()
-  useEffect(() => { void i18n.changeLanguage(state.language || 'en') }, [i18n, state.language])
+  // A hosted return has no in-memory session yet; its authorised result owns the
+  // receipt language until Continue adopts it or End returns to attract.
+  useEffect(() => { if (pathname !== '/payment-return') void i18n.changeLanguage(state.language || 'en') }, [i18n, state.language, pathname])
   const home = state.phase === 'guest' ? '/guest' : state.phase === 'customer' ? '/dashboard'
     : state.phase === 'language' || state.phase === 'starting' ? '/language' : '/'
   return <Routes>

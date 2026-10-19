@@ -7,6 +7,10 @@ class CartVersionInputSerializer(serializers.Serializer):
     expected_version = serializers.CharField(max_length=64)
 
 
+class CartRevisionOutputSerializer(serializers.Serializer):
+    version = serializers.CharField()
+
+
 class CartQuantityInputSerializer(CartVersionInputSerializer):
     quantity = serializers.IntegerField(min_value=0, max_value=2147483647)
 

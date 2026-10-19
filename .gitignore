@@ -7,6 +7,10 @@
 *.p12
 *.pfx
 .secrets/
+development/access.local.json
+# Local SQL editor sessions and personal planning scratchpad (not app source)
+*.session.sql
+/plan-mode.txt
 # Cloudflare/Vercel local secrets and generated deployment state (not source config)
 .dev.vars
 .dev.vars.*

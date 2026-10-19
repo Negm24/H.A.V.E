@@ -39,7 +39,17 @@ class OrderMaintenanceTests(TestCase):
         return mark_paid(order.pk), capture
 
     def test_restart_recovers_payment_committed_before_terminal_fulfilment(self):
-        order, _ = self.paid(channel="TERMINAL")
+        from uuid import uuid4
+        from apps.accounts.security.state import get_redis_client
+        from apps.terminals.security.state import session_key
+        from apps.terminals.services.session_services import operate
+        override = override_settings(AUTH_REDIS_PREFIX="have:test:worker:" + uuid4().hex + ":")
+        override.enable(); self.addCleanup(override.disable)
+        self.addCleanup(get_redis_client().delete, session_key(self.terminal.pk))
+        self.user.phone_verified_at = timezone.now(); self.user.save(update_fields=["phone_verified_at"])
+        _, guest = operate(self.terminal, "start")
+        state, _ = operate(self.terminal, "login", guest, user=self.user)
+        order, _ = self.paid(channel="TERMINAL", terminal_session_id=state["session_id"])
         self.assertEqual(order.status, "PENDING")
         result = run_cycle()
         order.refresh_from_db()
@@ -154,6 +164,21 @@ class OrderMaintenanceTests(TestCase):
         self.assertEqual(self.clear_cart.call_count, 2)
         run_cycle()
         self.assertEqual(self.clear_cart.call_count, 2)
+
+    def test_later_basket_edits_are_reported_as_preserved_after_paid_cleanup(self):
+        order, _ = self.paid()
+        self.clear_cart.return_value = False
+        run_cycle()
+        order.refresh_from_db()
+        self.assertTrue(order.cart_preserved)
+        self.assertIsNotNone(order.cart_cleanup_completed_at)
+
+    def test_cancelled_late_capture_does_not_clear_the_customer_basket(self):
+        order, _ = self.paid()
+        Order.objects.filter(pk=order.pk).update(status="CANCELLED", cancellation_reason="CHECKOUT_EXPIRED")
+        with patch("apps.payments.services.worker_services.process_refund"):
+            run_cycle()
+        self.clear_cart.assert_not_called()
 
     def test_database_outage_does_not_discard_worker_process(self):
         output, errors = StringIO(), StringIO()

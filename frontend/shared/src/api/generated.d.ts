@@ -15,7 +15,7 @@ export interface paths {
          * Get a CSRF token
          * @description Keep the response cookie and send csrf_token as X-CSRFToken on POST requests. This is not a login token.
          */
-        get: operations["v1_auth_csrf_retrieve"];
+        get: operations["auth_csrf_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -37,7 +37,7 @@ export interface paths {
          * Request customer pin reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_customers_hub_pin_reset_request_create"];
+        post: operations["auth_customers_hub_pin_reset_request_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -54,7 +54,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Scan the QR displayed by a Terminal (does not approve login) */
-        post: operations["v1_auth_customers_hub_qr_login_scan_create"];
+        post: operations["auth_customers_hub_qr_login_scan_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -74,7 +74,7 @@ export interface paths {
          * Start customer signup or resend a code
          * @description Hub only. No account is created until the phone and email are verified. Dates use DD-MM-YYYY. Local mock SMS appears only in the server terminal. Resubmit the full form after resend_after seconds to replace an earlier code. This anonymous flow neither uses nor creates login cookies.
          */
-        post: operations["v1_auth_customers_signup_create"];
+        post: operations["auth_customers_signup_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -91,7 +91,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Generate a QR to display on this guest Terminal */
-        post: operations["v1_auth_customers_terminal_qr_login_create"];
+        post: operations["auth_customers_terminal_qr_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -111,7 +111,7 @@ export interface paths {
          * Request doctor password reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_doctors_password_reset_request_create"];
+        post: operations["auth_doctors_password_reset_request_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -131,7 +131,7 @@ export interface paths {
          * Start a doctor application or resend its code
          * @description No account is created until the SMS code is verified. The local mock SMS appears only in the server terminal. Resubmit the full form after resend_after seconds to replace an earlier code. Verification creates a PENDING application; the owner approves it in the dashboard before the doctor can use Advisor.
          */
-        post: operations["v1_auth_doctors_signup_create"];
+        post: operations["auth_doctors_signup_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -149,7 +149,7 @@ export interface paths {
          * List doctor applications (pending by default)
          * @description Uses the owner session cookie from owner login; no bearer token.
          */
-        get: operations["v1_auth_owners_doctors_list"];
+        get: operations["auth_owners_doctors_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -171,7 +171,7 @@ export interface paths {
          * Request owner password reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_owners_password_reset_request_create"];
+        post: operations["auth_owners_password_reset_request_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -188,7 +188,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Start guest session; replace any previous session on this device */
-        post: operations["v1_terminals_sessions_create"];
+        post: operations["terminals_sessions_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -208,7 +208,7 @@ export interface paths {
          * Verify customer pin reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_customers_hub_pin_reset_verify_create"];
+        post: operations["auth_customers_hub_pin_reset_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -223,7 +223,7 @@ export interface paths {
             cookie?: never;
         };
         /** Check your scanned QR request without renewing its expiry */
-        get: operations["v1_auth_customers_hub_qr_login_retrieve"];
+        get: operations["auth_customers_hub_qr_login_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -245,7 +245,7 @@ export interface paths {
          * Verify the SMS code, then the email code, to create the customer account
          * @description Call twice with the same challenge ID and phone. First send the SMS code: 202 means an email code was sent. Then send the emailed code: 201 creates the customer, without signing them in. Each code expires after 5 minutes and allows 5 incorrect guesses. Replays are rejected.
          */
-        post: operations["v1_auth_customers_signup_verify_create"];
+        post: operations["auth_customers_signup_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -260,7 +260,7 @@ export interface paths {
             cookie?: never;
         };
         /** Poll QR approval without renewing Terminal activity */
-        get: operations["v1_auth_customers_terminal_qr_login_retrieve"];
+        get: operations["auth_customers_terminal_qr_login_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -282,7 +282,7 @@ export interface paths {
          * Verify doctor password reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_doctors_password_reset_verify_create"];
+        post: operations["auth_doctors_password_reset_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -302,7 +302,7 @@ export interface paths {
          * Verify the SMS code, then the email code, to submit the doctor application
          * @description Call twice with the same challenge ID and phone. First send the SMS code: 202 means an email code was sent. Then send the emailed code: 201 creates a PENDING doctor (or reopens a previously rejected application under the limit) and notifies the owner. It does not sign the doctor in. Duplicates and a rejection limit (403) are reported only after both codes are correct.
          */
-        post: operations["v1_auth_doctors_signup_verify_create"];
+        post: operations["auth_doctors_signup_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -317,7 +317,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get one doctor application with times previously rejected */
-        get: operations["v1_auth_owners_doctors_retrieve"];
+        get: operations["auth_owners_doctors_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -339,7 +339,7 @@ export interface paths {
          * Verify owner password reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_owners_password_reset_verify_create"];
+        post: operations["auth_owners_password_reset_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -354,7 +354,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["v1_hub_cart_items_update"];
+        put: operations["hub_cart_items_update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -385,7 +385,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_hub_orders_retrieve"];
+        get: operations["hub_orders_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/return/{order_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Navigation only. Ignores browser success/redirect parameters; provider reconciliation is server-side. */
+        get: operations["payments_return_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -402,7 +419,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["v1_terminals_cart_items_update"];
+        put: operations["terminals_cart_items_update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -417,7 +434,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_terminals_catalogue_products_retrieve"];
+        get: operations["terminals_catalogue_products_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -433,7 +450,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_terminals_orders_retrieve"];
+        get: operations["terminals_orders_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -452,7 +469,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** @description Explicit receipt-screen interaction only. Polling does not renew this private result scope. */
-        post: operations["v1_terminals_orders_result_activity_create"];
+        post: operations["terminals_orders_result_activity_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -469,7 +486,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Record explicit user activity (never background polling) */
-        post: operations["v1_terminals_sessions_activity_create"];
+        post: operations["terminals_sessions_activity_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -486,7 +503,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Customer Hub login (phone + PIN) */
-        post: operations["v1_auth_customers_hub_login_create"];
+        post: operations["auth_customers_hub_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -503,7 +520,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Sign in within a Terminal session; replace the session token */
-        post: operations["v1_auth_customers_terminal_login_create"];
+        post: operations["auth_customers_terminal_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -523,7 +540,7 @@ export interface paths {
          * Advisor sign-in step 1: phone + password
          * @description Never issues tokens. PENDING or REJECTED applications return their status; REJECTED includes can_reapply (sign up again from the login page). Approved doctors receive an mfa_token for step 2; on first sign-in the response also contains the authenticator secret and otpauth_uri to enroll.
          */
-        post: operations["v1_auth_doctors_login_create"];
+        post: operations["auth_doctors_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -543,7 +560,7 @@ export interface paths {
          * Sign in as an owner
          * @description Use an existing privately provisioned owner's phone and password. Sets an HttpOnly session cookie; no JWT or Remember Me. Expires after 10 minutes idle or 2 hours total. Swagger supplies CSRF automatically. Reload docs after login to pick up the rotated CSRF token. Wrong credentials, lockout and unavailable Redis all deny login.
          */
-        post: operations["v1_auth_owners_login_create"];
+        post: operations["auth_owners_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -563,7 +580,7 @@ export interface paths {
          * Complete customer pin reset (sign in again afterward)
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_customers_hub_pin_reset_complete_create"];
+        post: operations["auth_customers_hub_pin_reset_complete_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -580,7 +597,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Explicitly approve or reject login to the displayed Terminal */
-        post: operations["v1_auth_customers_hub_qr_login_confirm_create"];
+        post: operations["auth_customers_hub_qr_login_confirm_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -597,7 +614,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Consume approved QR login and replace the guest token */
-        post: operations["v1_auth_customers_terminal_qr_login_complete_create"];
+        post: operations["auth_customers_terminal_qr_login_complete_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -617,7 +634,7 @@ export interface paths {
          * Advisor sign-in step 2: authenticator code
          * @description Completes enrollment if required, then returns an access token and sets the HttpOnly Advisor refresh cookie. Five wrong codes end the attempt.
          */
-        post: operations["v1_auth_doctors_login_mfa_create"];
+        post: operations["auth_doctors_login_mfa_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -637,7 +654,7 @@ export interface paths {
          * Complete doctor password reset (sign in again afterward)
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_doctors_password_reset_complete_create"];
+        post: operations["auth_doctors_password_reset_complete_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -657,7 +674,7 @@ export interface paths {
          * Approve or reject a pending doctor application
          * @description Approve activates the account (not a login). Reject stores the optional reason, emails it to the doctor (who also sees it at Advisor sign-in), erases the application's personal data and keeps keyed hashes and a rejection counter (FR-82e). Needs the X-CSRFToken header.
          */
-        post: operations["v1_auth_owners_doctors_decision_create"];
+        post: operations["auth_owners_doctors_decision_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -677,7 +694,7 @@ export interface paths {
          * Complete owner password reset (sign in again afterward)
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["v1_auth_owners_password_reset_complete_create"];
+        post: operations["auth_owners_password_reset_complete_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -693,7 +710,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_terminals_orders_result_end_create"];
+        post: operations["terminals_orders_result_end_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -710,7 +727,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** End the guest session (start over / sign out) */
-        post: operations["v1_terminals_sessions_end_create"];
+        post: operations["terminals_sessions_end_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -725,7 +742,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current Hub customer */
-        get: operations["v1_auth_customers_hub_me_retrieve"];
+        get: operations["auth_customers_hub_me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -742,7 +759,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current Terminal customer; does NOT renew activity */
-        get: operations["v1_auth_customers_terminal_me_retrieve"];
+        get: operations["auth_customers_terminal_me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -759,7 +776,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current Advisor doctor */
-        get: operations["v1_auth_doctors_me_retrieve"];
+        get: operations["auth_doctors_me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -779,7 +796,7 @@ export interface paths {
          * Check the signed-in owner
          * @description Uses the session cookie set at login. Run manually; polling counts as activity.
          */
-        get: operations["v1_auth_owners_me_retrieve"];
+        get: operations["auth_owners_me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -798,7 +815,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Rotate Hub refresh cookie and issue new access token */
-        post: operations["v1_auth_customers_hub_refresh_create"];
+        post: operations["auth_customers_hub_refresh_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -815,7 +832,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Rotate Advisor refresh cookie and issue new access token */
-        post: operations["v1_auth_doctors_refresh_create"];
+        post: operations["auth_doctors_refresh_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -832,7 +849,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Sign out of Hub (revoke this refresh session) */
-        post: operations["v1_auth_customers_hub_logout_create"];
+        post: operations["auth_customers_hub_logout_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -849,7 +866,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Sign out of Advisor (revoke this refresh session) */
-        post: operations["v1_auth_doctors_logout_create"];
+        post: operations["auth_doctors_logout_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -866,7 +883,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Sign out the current owner session */
-        post: operations["v1_auth_owners_logout_create"];
+        post: operations["auth_owners_logout_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -882,7 +899,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_auth_owners_orders_cancel_create"];
+        post: operations["auth_owners_orders_cancel_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -898,7 +915,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_auth_owners_orders_reconcile_create"];
+        post: operations["auth_owners_orders_reconcile_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -912,10 +929,26 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_hub_cart_retrieve"];
+        get: operations["hub_cart_retrieve"];
         put?: never;
         post?: never;
-        delete: operations["v1_hub_cart_destroy"];
+        delete: operations["hub_cart_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hub/cart/version/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["hub_cart_version_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -960,7 +993,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_hub_orders_list"];
+        get: operations["hub_orders_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -978,7 +1011,23 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_hub_orders_checkout_create"];
+        post: operations["hub_orders_checkout_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hub/orders/summary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["hub_orders_summary_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -992,7 +1041,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_hub_orders_terminals_list"];
+        get: operations["hub_orders_terminals_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1010,7 +1059,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_hub_orders_cancel_create"];
+        post: operations["hub_orders_cancel_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1026,7 +1075,23 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_hub_orders_reorder_create"];
+        post: operations["hub_orders_reorder_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hub/orders/{order_id}/resume/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["hub_orders_resume_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1040,7 +1105,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_hub_payments_cards_retrieve"];
+        get: operations["hub_payments_cards_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1058,7 +1123,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_payments_kashier_webhook_create"];
+        post: operations["payments_kashier_webhook_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1072,10 +1137,26 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_terminals_cart_retrieve"];
+        get: operations["terminals_cart_retrieve"];
         put?: never;
         post?: never;
-        delete: operations["v1_terminals_cart_destroy"];
+        delete: operations["terminals_cart_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terminals/cart/version/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["terminals_cart_version_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1088,7 +1169,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_terminals_catalogue_categories_list"];
+        get: operations["terminals_catalogue_categories_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1104,7 +1185,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_terminals_catalogue_products_list"];
+        get: operations["terminals_catalogue_products_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1120,7 +1201,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_terminals_orders_list"];
+        get: operations["terminals_orders_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1138,7 +1219,23 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_terminals_orders_checkout_create"];
+        post: operations["terminals_orders_checkout_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terminals/orders/summary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["terminals_orders_summary_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1154,7 +1251,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_terminals_orders_cancel_create"];
+        post: operations["terminals_orders_cancel_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1170,7 +1267,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_terminals_orders_collect_create"];
+        post: operations["terminals_orders_collect_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1186,7 +1283,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["v1_terminals_orders_reorder_create"];
+        post: operations["terminals_orders_reorder_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1201,9 +1298,42 @@ export interface paths {
             cookie?: never;
         };
         /** @description Device credentials plus the checkout's HttpOnly result cookie only. Does not restore customer login. */
-        get: operations["v1_terminals_orders_result_retrieve"];
+        get: operations["terminals_orders_result_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terminals/orders/{order_id}/result/continue/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Explicit one-use receipt-cookie/device handoff to the same live session; never revives an expired/replaced session. */
+        post: operations["terminals_orders_result_continue_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terminals/orders/{order_id}/resume/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["terminals_orders_resume_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1258,6 +1388,9 @@ export interface components {
             expected_version: string;
             quantity: number;
         };
+        CartRevisionOutput: {
+            version: string;
+        };
         CategoryOutput: {
             id: number;
             name_en: string;
@@ -1265,6 +1398,10 @@ export interface components {
             product_count: number;
             /** Format: uri */
             image_url: string | null;
+        };
+        CheckoutErrorOutput: {
+            detail: string;
+            code?: components["schemas"]["CodeEnum"];
         };
         CheckoutInput: {
             terminal_serial?: string;
@@ -1282,14 +1419,29 @@ export interface components {
         CheckoutOutput: {
             order: components["schemas"]["OrderOutput"];
             /** Format: uri */
-            checkout_url: string;
+            checkout_url: string | null;
         };
+        /**
+         * @description * `CART_CHANGED` - CART_CHANGED
+         *     * `PAYMENT_CHECKING` - PAYMENT_CHECKING
+         * @enum {string}
+         */
+        CodeEnum: "CART_CHANGED" | "PAYMENT_CHECKING";
         CollectionTerminalOutput: {
             serial_number: string;
             display_name: string;
             address_en: string;
             address_ar: string;
             status: string;
+            is_disabled?: boolean;
+            occupancy?: components["schemas"]["OccupancyEnum"];
+            cart_total_quantity?: number | null;
+            cart_available?: boolean;
+        };
+        CollectionTerminalSummary: {
+            serial_number: string;
+            display_name: string;
+            count: number;
         };
         CsrfToken: {
             readonly csrf_token: string;
@@ -1514,6 +1666,14 @@ export interface components {
          * @enum {string}
          */
         NextStepEnum: "email";
+        /**
+         * @description * `FREE` - FREE
+         *     * `IN_USE` - IN_USE
+         *     * `OWN_SESSION` - OWN_SESSION
+         *     * `UNKNOWN` - UNKNOWN
+         * @enum {string}
+         */
+        OccupancyEnum: "FREE" | "IN_USE" | "OWN_SESSION" | "UNKNOWN";
         OrderItemOutput: {
             id: number;
             product_id: number;
@@ -1534,6 +1694,10 @@ export interface components {
             order_number: string;
             status: string;
             channel: string;
+            collection_required: boolean;
+            cart_preserved: boolean;
+            payment_state: components["schemas"]["PaymentStateEnum"];
+            can_resume: boolean;
             customer_id: string | null;
             terminal: components["schemas"]["CollectionTerminalOutput"];
             currency: string;
@@ -1566,8 +1730,17 @@ export interface components {
             receipt: components["schemas"]["ReceiptOutput"] | null;
             simulated: boolean;
             can_collect: boolean;
+            can_continue_session?: boolean;
             payment_status: string | null;
             refund_status: string | null;
+        };
+        OrderSummaryOutput: {
+            awaiting_collection_count: number;
+            at_terminal_count: number;
+            elsewhere_count: number;
+            collection_terminals: components["schemas"]["CollectionTerminalSummary"][];
+            awaiting_payment_count?: number;
+            attention_count?: number;
         };
         OwnerIdentity: {
             readonly id: string;
@@ -1584,6 +1757,25 @@ export interface components {
             new_password: string;
             confirm_password: string;
         };
+        PaymentSessionContinuationOutput: {
+            /** Format: uuid */
+            session_id: string;
+            idle_expires_in: number;
+            session_token?: string;
+            token_type?: string;
+            customer?: components["schemas"]["CustomerIdentity"];
+            session_expires_in: number;
+            language: components["schemas"]["LanguageEnum"];
+        };
+        /**
+         * @description * `AWAITING_PAYMENT` - AWAITING_PAYMENT
+         *     * `CHECKING_PAYMENT` - CHECKING_PAYMENT
+         *     * `PAID` - PAID
+         *     * `FAILED` - FAILED
+         *     * `EXPIRED` - EXPIRED
+         * @enum {string}
+         */
+        PaymentStateEnum: "AWAITING_PAYMENT" | "CHECKING_PAYMENT" | "PAID" | "FAILED" | "EXPIRED";
         ProductOutput: {
             id: number;
             sku: string;
@@ -1660,6 +1852,9 @@ export interface components {
             /** @default false */
             replace_existing: boolean;
         };
+        ResumeCheckoutInput: {
+            return_simulator_id?: string;
+        };
         SavedCardOutput: {
             brand: string;
             last_four: string;
@@ -1708,7 +1903,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    v1_auth_csrf_retrieve: {
+    auth_csrf_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -1727,7 +1922,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_pin_reset_request_create: {
+    auth_customers_hub_pin_reset_request_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -1791,7 +1986,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_qr_login_scan_create: {
+    auth_customers_hub_qr_login_scan_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -1855,7 +2050,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_signup_create: {
+    auth_customers_signup_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -1903,7 +2098,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_terminal_qr_login_create: {
+    auth_customers_terminal_qr_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -1961,7 +2156,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_password_reset_request_create: {
+    auth_doctors_password_reset_request_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2025,7 +2220,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_signup_create: {
+    auth_doctors_signup_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2073,7 +2268,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_doctors_list: {
+    auth_owners_doctors_list: {
         parameters: {
             query?: {
                 /** @description Which applications to list. Oldest first. */
@@ -2111,7 +2306,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_password_reset_request_create: {
+    auth_owners_password_reset_request_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2175,7 +2370,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_sessions_create: {
+    terminals_sessions_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2233,7 +2428,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_pin_reset_verify_create: {
+    auth_customers_hub_pin_reset_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2297,7 +2492,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_qr_login_retrieve: {
+    auth_customers_hub_qr_login_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -2357,7 +2552,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_signup_verify_create: {
+    auth_customers_signup_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2421,7 +2616,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_terminal_qr_login_retrieve: {
+    auth_customers_terminal_qr_login_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -2481,7 +2676,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_password_reset_verify_create: {
+    auth_doctors_password_reset_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2545,7 +2740,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_signup_verify_create: {
+    auth_doctors_signup_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2617,7 +2812,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_doctors_retrieve: {
+    auth_owners_doctors_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -2654,7 +2849,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_password_reset_verify_create: {
+    auth_owners_password_reset_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2718,7 +2913,7 @@ export interface operations {
             };
         };
     };
-    v1_hub_cart_items_update: {
+    hub_cart_items_update: {
         parameters: {
             query: {
                 /** @description Selects this customer's separate cart for the collection Terminal. */
@@ -2857,7 +3052,7 @@ export interface operations {
             };
         };
     };
-    v1_hub_orders_retrieve: {
+    hub_orders_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -2917,7 +3112,66 @@ export interface operations {
             };
         };
     };
-    v1_terminals_cart_items_update: {
+    payments_return_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    terminals_cart_items_update: {
         parameters: {
             query?: never;
             header?: never;
@@ -2990,7 +3244,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_catalogue_products_retrieve: {
+    terminals_catalogue_products_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -3050,7 +3304,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_retrieve: {
+    terminals_orders_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -3110,7 +3364,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_result_activity_create: {
+    terminals_orders_result_activity_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3169,7 +3423,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_sessions_activity_create: {
+    terminals_sessions_activity_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3227,7 +3481,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_login_create: {
+    auth_customers_hub_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3291,7 +3545,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_terminal_login_create: {
+    auth_customers_terminal_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3355,7 +3609,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_login_create: {
+    auth_doctors_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3419,7 +3673,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_login_create: {
+    auth_owners_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3467,7 +3721,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_pin_reset_complete_create: {
+    auth_customers_hub_pin_reset_complete_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3531,7 +3785,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_qr_login_confirm_create: {
+    auth_customers_hub_qr_login_confirm_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3597,7 +3851,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_terminal_qr_login_complete_create: {
+    auth_customers_terminal_qr_login_complete_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3657,7 +3911,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_login_mfa_create: {
+    auth_doctors_login_mfa_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3721,7 +3975,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_password_reset_complete_create: {
+    auth_doctors_password_reset_complete_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3785,7 +4039,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_doctors_decision_create: {
+    auth_owners_doctors_decision_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3843,7 +4097,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_password_reset_complete_create: {
+    auth_owners_password_reset_complete_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3907,7 +4161,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_result_end_create: {
+    terminals_orders_result_end_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3966,7 +4220,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_sessions_end_create: {
+    terminals_sessions_end_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4023,7 +4277,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_me_retrieve: {
+    auth_customers_hub_me_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4081,7 +4335,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_terminal_me_retrieve: {
+    auth_customers_terminal_me_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4139,7 +4393,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_me_retrieve: {
+    auth_doctors_me_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4197,7 +4451,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_me_retrieve: {
+    auth_owners_me_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4224,7 +4478,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_refresh_create: {
+    auth_customers_hub_refresh_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4282,7 +4536,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_refresh_create: {
+    auth_doctors_refresh_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4340,7 +4594,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_customers_hub_logout_create: {
+    auth_customers_hub_logout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4397,7 +4651,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_doctors_logout_create: {
+    auth_doctors_logout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4454,7 +4708,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_logout_create: {
+    auth_owners_logout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4480,7 +4734,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_orders_cancel_create: {
+    auth_owners_orders_cancel_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4540,7 +4794,7 @@ export interface operations {
             };
         };
     };
-    v1_auth_owners_orders_reconcile_create: {
+    auth_owners_orders_reconcile_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4606,7 +4860,7 @@ export interface operations {
             };
         };
     };
-    v1_hub_cart_retrieve: {
+    hub_cart_retrieve: {
         parameters: {
             query: {
                 /** @description Selects this customer's separate cart for the collection Terminal. */
@@ -4667,7 +4921,7 @@ export interface operations {
             };
         };
     };
-    v1_hub_cart_destroy: {
+    hub_cart_destroy: {
         parameters: {
             query: {
                 /** @description Selects this customer's separate cart for the collection Terminal. */
@@ -4716,6 +4970,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    hub_cart_version_retrieve: {
+        parameters: {
+            query: {
+                /** @description Selects this customer's separate cart for the collection Terminal. */
+                terminal_serial: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CartRevisionOutput"];
+                };
+            };
+            /** @description Invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             429: {
                 headers: {
@@ -4857,7 +5172,7 @@ export interface operations {
             };
         };
     };
-    v1_hub_orders_list: {
+    hub_orders_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -4915,7 +5230,7 @@ export interface operations {
             };
         };
     };
-    v1_hub_orders_checkout_create: {
+    hub_orders_checkout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4961,6 +5276,14 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutErrorOutput"];
+                };
+            };
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -4979,7 +5302,65 @@ export interface operations {
             };
         };
     };
-    v1_hub_orders_terminals_list: {
+    hub_orders_summary_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummaryOutput"];
+                };
+            };
+            /** @description Invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    hub_orders_terminals_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -5037,7 +5418,7 @@ export interface operations {
             };
         };
     };
-    v1_hub_orders_cancel_create: {
+    hub_orders_cancel_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5097,7 +5478,7 @@ export interface operations {
             };
         };
     };
-    v1_hub_orders_reorder_create: {
+    hub_orders_reorder_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5163,7 +5544,73 @@ export interface operations {
             };
         };
     };
-    v1_hub_payments_cards_retrieve: {
+    hub_orders_resume_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResumeCheckoutInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResumeCheckoutInput"];
+                "multipart/form-data": components["schemas"]["ResumeCheckoutInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutOutput"];
+                };
+            };
+            /** @description Invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    hub_payments_cards_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -5221,7 +5668,7 @@ export interface operations {
             };
         };
     };
-    v1_payments_kashier_webhook_create: {
+    payments_kashier_webhook_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5284,7 +5731,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_cart_retrieve: {
+    terminals_cart_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -5342,7 +5789,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_cart_destroy: {
+    terminals_cart_destroy: {
         parameters: {
             query?: never;
             header?: never;
@@ -5407,7 +5854,65 @@ export interface operations {
             };
         };
     };
-    v1_terminals_catalogue_categories_list: {
+    terminals_cart_version_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CartRevisionOutput"];
+                };
+            };
+            /** @description Invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    terminals_catalogue_categories_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -5465,7 +5970,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_catalogue_products_list: {
+    terminals_catalogue_products_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -5523,7 +6028,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_list: {
+    terminals_orders_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -5581,7 +6086,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_checkout_create: {
+    terminals_orders_checkout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5627,6 +6132,14 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutErrorOutput"];
+                };
+            };
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -5645,7 +6158,65 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_cancel_create: {
+    terminals_orders_summary_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderSummaryOutput"];
+                };
+            };
+            /** @description Invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    terminals_orders_cancel_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5705,7 +6276,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_collect_create: {
+    terminals_orders_collect_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5765,7 +6336,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_reorder_create: {
+    terminals_orders_reorder_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5831,7 +6402,7 @@ export interface operations {
             };
         };
     };
-    v1_terminals_orders_result_retrieve: {
+    terminals_orders_result_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -5848,6 +6419,132 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderOutput"];
+                };
+            };
+            /** @description Invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    terminals_orders_result_continue_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSessionContinuationOutput"];
+                };
+            };
+            /** @description Invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    terminals_orders_resume_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResumeCheckoutInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["ResumeCheckoutInput"];
+                "multipart/form-data": components["schemas"]["ResumeCheckoutInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckoutOutput"];
                 };
             };
             /** @description Invalid input. */

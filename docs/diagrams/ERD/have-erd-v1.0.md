@@ -422,3 +422,25 @@ Implemented tables now include orders, order_products, stock_reservations, payme
 The implementation adds channel, idempotency/fingerprint, checkout version, paid/collection/cancellation timestamps, uncertain-payment state, durable notification retry/lease metadata, and safe cart-cleanup markers. Payment attempts persist provider session/order/transaction references and work leases. Amounts are decimal EGP, never floating point. Product.max_quantity_per_order is nullable: NULL means available-stock-only.
 
 Future insurance/prescription relations and saved_payment_methods remain unimplemented; Kashier currently owns saved tokens. Physical stock changes only at simulated fulfilment. ACTIVE reservations reduce availability until explicitly consumed/released/expired; no physical increment occurs on cancellation. Hub collection deadline is 24 hours from verified payment. Basket state is Redis only: Hub per customer+machine, Terminal per active session. This supersedes the historical shared-cart design notes.
+## Shopping recovery implementation notes — 2026-10-18
+
+Additive Orders 0005 records `collection_required` independently of original
+channel and `cart_preserved` for a newer basket retained at paid cleanup; existing
+Hub records are backfilled as collection-required. Payments 0002 records latest
+authorised `return_app`/`return_terminal_session_id`, retaining original provider
+sessions and financial references. The five order status values are unchanged.
+No cart SQL table is added: existing customer+Terminal Redis baskets serve both
+apps; only guest carts remain session-owned. Reservations affect availability,
+never physical stock until fulfilment. Cross-app resume does not reprice, recreate
+a provider session or reset expiry; remote customer completion requires collection.
+
+### Payment-return clarification — 2026-10-18
+
+No new entity or migration: the existing payment return-app/session fields also
+identify the latest explicitly authorised physical fulfilment session. An unpaid
+attempt resumed at its assigned Kiosk can dispense on verified payment while that
+session remains live, regardless of original channel; Hub completion or an
+expired/replaced session requires collection. Already-paid collection orders keep
+their explicit collection workflow. An explicit one-use result-cookie/device
+handoff may rotate that same live session token without changing its original
+maximum deadline; neither browser parameters nor receipt GET restore identity.

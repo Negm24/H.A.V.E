@@ -8,7 +8,8 @@ from apps.terminals.security.permissions import HasTerminalAccess
 from apps.terminals.api.serializers.cart_serializers import (
     CartOutputSerializer, CartQuantityInputSerializer, CartVersionInputSerializer,
 )
-from apps.terminals.services.cart_services import change_cart, get_cart
+from apps.terminals.services.cart_services import change_cart, get_cart, get_cart_version
+from apps.carts.api.serializers.cart_serializers import CartRevisionOutputSerializer
 
 
 class TerminalCartView(CustomerSessionView):
@@ -37,3 +38,9 @@ class CartItemView(TerminalCartView):
         serializer.is_valid(raise_exception=True)
         return Response(change_cart(request.auth["terminal"], request.auth["raw_token"], product_id=product_id,
                                     **serializer.validated_data))
+
+
+class CartRevisionView(TerminalCartView):
+    @extend_schema(tags=[openapi.TERMINAL_CART], responses={200: CartRevisionOutputSerializer, **ERRORS})
+    def get(self, request):
+        return Response(get_cart_version(request.auth["terminal"], request.auth["raw_token"]))

@@ -4,7 +4,7 @@ import { Readable } from 'node:stream'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { createKioskTestGate, safeReturnPath } from './kiosk-test-gate'
 
-const host = 'kiosk-test.trycloudflare.com', password = 'test-access-only-not-a-real-password'
+const host = 'laptop.example.ts.net:8443', password = 'test-access-only-not-a-real-password'
 function fixture(secret = password) {
   let clock = 1_790_000_000_000
   const gate = createKioskTestGate({ host, password: secret, now: () => clock })

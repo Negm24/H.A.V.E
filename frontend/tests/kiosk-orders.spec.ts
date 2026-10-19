@@ -8,6 +8,7 @@ async function fixture(page: Page, options: { cardGate?: boolean; deniedResult?:
   let quantity = 0, revision = 0
   const cart = () => ({ items: quantity ? [{ product_id: 1, product, quantity, unit_price: '18.50', line_total: (quantity * 18.5).toFixed(2), issues: [] }] : [], total_quantity: quantity, subtotal: (quantity * 18.5).toFixed(2), total: (quantity * 18.5).toFixed(2), currency: 'EGP', has_issues: false, version: `cart-${revision}`, created_at: null, updated_at: null, expires_at: null, comparison_required: false, adoption_notice: null })
   let order = { id: orderId, order_number: 'HAVE-20261016-EXAMPLE', status: 'PENDING', channel: 'HUB', customer_id: customer.id, terminal: { serial_number: 'HAVE-TEST-001', display_name: 'Test Terminal', address_en: 'Cairo test address', address_ar: 'عنوان تجريبي بالقاهرة' }, currency: 'EGP', subtotal: '18.50', total: '18.50', customer_payable_amount: '18.50', total_paid: '18.50', total_refunded: '0.00', email_receipt_to: customer.email, language: 'en', print_requested: true, created_at: '2026-10-16T10:00:00Z', expires_at: '2026-10-16T10:30:00Z', paid_at: '2026-10-16T10:01:00Z', collection_deadline: '2026-10-17T10:01:00Z', completed_at: null as string | null, cancellation_reason: '', can_collect: true, simulated: true, items: [{ id: 'line-1', product_id: 1, name_en: product.name_en, name_ar: product.name_ar, pack_description: product.pack_description, unit_price: '18.50', quantity_requested: 1, quantity_dispensed: 0, line_total: '18.50', dispense_status: 'PENDING' }], receipt: null as Record<string, unknown> | null }
+  Object.assign(order, { collection_required: true, cart_preserved: false, payment_state: 'PAID', can_resume: false })
   order.collection_deadline = new Date(Date.now() + 86_400_000).toISOString()
   if (options.refund) Object.assign(order, { status: 'CANCELLED', cancellation_reason: 'COLLECTION_EXPIRED', refund_status: options.refund, total_refunded: options.refund === 'SUCCEEDED' ? '18.50' : '0.00', can_collect: false })
   if (options.longOrder) order.items = Array.from({ length: 20 }, (_, index) => ({ ...order.items[0]!, id: `line-${index}`, name_en: `Demonstration order product ${index + 1}`, name_ar: `منتج طلب تجريبي ${index + 1}` }))
@@ -24,7 +25,9 @@ async function fixture(page: Page, options: { cardGate?: boolean; deniedResult?:
     else if (path.endsWith('/categories/')) response = [{ id: 1, name_en: 'Demo category', name_ar: 'فئة تجريبية', product_count: 1, image_url: null }]
     else if (path.endsWith('/products/')) response = [product]
     else if (path.includes('/cart/items/')) { quantity = body.quantity; revision++; response = cart() }
+    else if (path.endsWith('/cart/version/')) response = { version: cart().version }
     else if (path.endsWith('/cart/')) response = cart()
+    else if (path.endsWith('/orders/summary/')) response = { awaiting_collection_count: options.refund ? 0 : 1, at_terminal_count: options.refund ? 0 : 1, elsewhere_count: 0, collection_terminals: [] }
     else if (path.endsWith('/orders/checkout/')) {
       if (options.checkoutOffline) { await route.abort('failed'); return }
       if (options.checkoutUnavailable) { status = 503; response = { detail: 'Kashier test payments are unavailable. Check the order before trying again.' } }
@@ -90,7 +93,7 @@ test('signed-in checkout offers go green and explains the saved-card gate withou
 
 test('order history exposes real-shaped details, confirmed collection and receipt', async ({ page }) => {
   const calls = await fixture(page); await start(page, true)
-  await page.getByRole('button', { name: /My profile/ }).click(); await page.getByRole('button', { name: 'Order history', exact: true }).click()
+  await page.getByRole('button', { name: /My profile/ }).click(); await page.getByRole('button', { name: /^Order history(?:\s*\d+)?$/ }).click()
   await page.locator('.terminal-order-row').click()
   await expect(page.getByText('HAVE-20261016-EXAMPLE', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Collect order', exact: true }).click()
@@ -104,7 +107,7 @@ test('order history exposes real-shaped details, confirmed collection and receip
 
 test('cancellation and reorder each require confirmation and use the Terminal cart version', async ({ page }) => {
   const calls = await fixture(page); await start(page, true)
-  await page.getByRole('button', { name: /My profile/ }).click(); await page.getByRole('button', { name: 'Order history', exact: true }).click(); await page.locator('.terminal-order-row').click()
+  await page.getByRole('button', { name: /My profile/ }).click(); await page.getByRole('button', { name: /^Order history(?:\s*\d+)?$/ }).click(); await page.locator('.terminal-order-row').click()
   await page.getByRole('button', { name: 'Cancel order', exact: true }).click()
   expect(calls.some(call => call.path.endsWith('/cancel/'))).toBe(false)
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click()
@@ -119,7 +122,7 @@ test('cancellation and reorder each require confirmation and use the Terminal ca
 
 for (const refund of ['UNKNOWN', 'FAILED', 'SUCCEEDED'] as const) test(`expired collection labels refund ${refund} without claiming an unconfirmed refund`, async ({ page }) => {
   await fixture(page, { refund }); await start(page, true)
-  await page.getByRole('button', { name: /My profile/ }).click(); await page.getByRole('button', { name: 'Order history', exact: true }).click(); await page.locator('.terminal-order-row').click()
+  await page.getByRole('button', { name: /My profile/ }).click(); await page.getByRole('button', { name: /^Order history(?:\s*\d+)?$/ }).click(); await page.locator('.terminal-order-row').click()
   await expect(page.locator('.order-status')).toHaveText('Expired · collection window ended')
   await expect(page.getByRole('button', { name: 'Collect order', exact: true })).toHaveCount(0)
   await expect(page.locator('.terminal-refund-notice')).toContainText(refund === 'SUCCEEDED' ? 'confirmed the refund' : refund === 'FAILED' ? 'needs review' : 'not confirmed yet')
@@ -194,7 +197,7 @@ test('only explicit payment-result interaction renews its private window, thrott
 for (const arabic of [false, true]) test(`long order details scroll internally without hiding actions ${arabic ? 'Arabic' : 'English'}`, async ({ page }) => {
   await fixture(page, { longOrder: true }); await start(page, true, arabic)
   await page.getByRole('button', { name: arabic ? /ملفي الشخصي/ : /My profile/ }).click()
-  await page.getByRole('button', { name: arabic ? 'سجل الطلبات' : 'Order history', exact: true }).click(); await page.locator('.terminal-order-row').click()
+  await page.getByRole('button', { name: arabic ? /^سجل الطلبات(?:\s*\d+)?$/ : /^Order history(?:\s*\d+)?$/ }).click(); await page.locator('.terminal-order-row').click()
   await expect(page.locator('.terminal-order-lines article')).toHaveCount(20)
   await fits(page)
   expect(await page.locator('.terminal-order-scroll').evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true)
@@ -208,5 +211,5 @@ test('a return URL is not proof of payment or permission to view a receipt', asy
   await fixture(page, { deniedResult: true }); await page.goto(`${origin}/payment-return?order_id=${orderId}&success=true`)
   await expect(page.getByRole('alert')).toContainText('private result is unavailable')
   await expect(page.locator('.terminal-receipt')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Done · Start over', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'End session', exact: true })).toBeVisible()
 })

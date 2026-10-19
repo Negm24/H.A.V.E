@@ -49,6 +49,11 @@ async function reset(page: Page) {
   await page.getByRole('button', { name: 'Start over', exact: true }).click()
   await expect(page.getByRole('button', { name: /Touch to start/ })).toBeVisible()
 }
+async function selectMachine(page: Page, serial: string) {
+  await page.locator('.hub-terminal-option').filter({ hasText: serial }).click()
+  const confirmation = page.getByRole('dialog')
+  if (await confirmation.isVisible()) await confirmation.getByRole('button', { name: 'Continue browsing', exact: true }).click()
+}
 async function terminalRead<T>(page: Page, selector: string, token: string, suffix: string): Promise<T> {
   const response = await page.request.get(`${KIOSK}/api/v1/terminals/${suffix}`, { headers: { Authorization: `Bearer ${token}`, Origin: KIOSK, 'X-Terminal-Simulator': selector } })
   expect(response.status()).toBe(200); return response.json() as Promise<T>
@@ -56,7 +61,7 @@ async function terminalRead<T>(page: Page, selector: string, token: string, suff
 
 // Dedicated fixture only. Restore the customer's original per-Terminal Hub cart
 // quantities through authenticated APIs; never reset databases or flush Redis.
-test('real Hub carts are Terminal-scoped and never shared with either kiosk session', async ({ context, page: hub }) => {
+test('real saved customer carts are shared with matching Kiosks but isolated from guests and other machines', async ({ context, page: hub }) => {
   test.skip(process.env.E2E_REAL !== 'true', 'Requires the documented dedicated customer and two provisioned test Terminals.')
   const selectors = [process.env.TERMINAL_HAVE_TEST_001_SIMULATOR_ID, process.env.TERMINAL_HAVE_TEST_002_SIMULATOR_ID]
   test.skip(selectors.some(value => !value), 'Both private simulator selectors must be configured.')
@@ -81,7 +86,7 @@ test('real Hub carts are Terminal-scoped and never shared with either kiosk sess
     const selected = product!, category = categories.find(item => item.id === selected.category_id)!
 
     await hub.bringToFront(); await hub.getByRole('link', { name: /Browse medicines/ }).click()
-    await hub.locator('.hub-terminal-option').filter({ hasText: serials[0] }).click()
+    await selectMachine(hub, serials[0])
     await hub.locator('.hub-category-card').filter({ hasText: category.name_en }).click()
     const hubItem = hub.locator(`.product-card[data-product-id="${selected.id}"]`)
     await hubItem.getByRole('button', { name: 'Add', exact: true }).click()
@@ -97,32 +102,31 @@ test('real Hub carts are Terminal-scoped and never shared with either kiosk sess
     await first.locator(`.product-card[data-product-id="${selected.id}"]`).getByRole('button', { name: 'Add', exact: true }).click()
     await first.getByRole('button', { name: 'Back', exact: true }).click(); await first.getByRole('button', { name: 'Back', exact: true }).click()
     const firstCustomer = await login(first)
-    expect((await terminalRead<Cart>(first, selectors[0]!, firstCustomer, 'cart/')).total_quantity).toBe(0)
+    expect((await terminalRead<Cart>(first, selectors[0]!, firstCustomer, 'cart/')).total_quantity).toBe(2)
     await first.getByRole('button', { name: /Browse medicines/ }).click(); await first.locator('.category-card').filter({ hasText: category.name_en }).click()
     const terminalItem = first.locator(`.product-card[data-product-id="${selected.id}"]`)
-    await terminalItem.getByRole('button', { name: 'Add', exact: true }).click(); await expect(terminalItem.locator('output')).toHaveText('1')
-    await terminalItem.getByRole('button', { name: 'Increase quantity' }).click(); await expect(terminalItem.locator('output')).toHaveText('2')
+    await expect(terminalItem.locator('output')).toHaveText('2')
     await terminalItem.getByRole('button', { name: 'Increase quantity' }).click(); await expect(terminalItem.locator('output')).toHaveText('3')
-    expect((await hubCart(hub.request, access, serials[0])).total_quantity).toBe(2)
+    expect((await hubCart(hub.request, access, serials[0])).total_quantity).toBe(3)
     await second.bringToFront(); const secondCustomer = await login(second)
     expect((await terminalRead<Cart>(second, selectors[1]!, secondCustomer, 'cart/')).total_quantity).toBe(0)
 
     await hub.bringToFront(); await hub.locator('.hub-availability a').click()
-    await hub.locator('.hub-terminal-option').filter({ hasText: serials[1] }).click()
+    await selectMachine(hub, serials[1])
     await expect(hub.getByRole('button', { name: 'Cart · 0', exact: true })).toBeVisible()
     await hub.locator('.hub-category-card').filter({ hasText: category.name_en }).click()
     await hub.locator(`.product-card[data-product-id="${selected.id}"]`).getByRole('button', { name: 'Add', exact: true }).click()
     await expect.poll(async () => (await hubCart(hub.request, access, serials[1])).total_quantity).toBe(1)
-    expect((await hubCart(hub.request, access, serials[0])).total_quantity).toBe(2)
+    expect((await hubCart(hub.request, access, serials[0])).total_quantity).toBe(3)
     expect((await terminalRead<Cart>(first, selectors[0]!, firstCustomer, 'cart/')).total_quantity).toBe(3)
-    expect((await terminalRead<Cart>(second, selectors[1]!, secondCustomer, 'cart/')).total_quantity).toBe(0)
+    expect((await terminalRead<Cart>(second, selectors[1]!, secondCustomer, 'cart/')).total_quantity).toBe(1)
 
     await first.bringToFront(); await reset(first)
     const fresh = await start(first, selectors[0]!)
     expect((await terminalRead<Cart>(first, selectors[0]!, fresh, 'cart/')).total_quantity).toBe(0)
     const freshCustomer = await login(first)
-    expect((await terminalRead<Cart>(first, selectors[0]!, freshCustomer, 'cart/')).total_quantity).toBe(0)
-    expect((await hubCart(hub.request, access, serials[0])).total_quantity).toBe(2)
+    expect((await terminalRead<Cart>(first, selectors[0]!, freshCustomer, 'cart/')).total_quantity).toBe(3)
+    expect((await hubCart(hub.request, access, serials[0])).total_quantity).toBe(3)
   } finally {
     if (changed) {
       // Restore quantities, not historical timestamps. These are fixture-only edits.

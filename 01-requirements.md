@@ -112,10 +112,11 @@ D-4 and D-6 are resolved above. Exact fictional insurance percentages and produc
 - **FR-26** Quantity shall be capped per item by stock level and by any regulatory maximum.
 - **FR-27** Reserve stock atomically at checkout, not cart add. Unpaid checkout has a 15-minute window; uncertain payments retain allocations until reconciled. Paid Hub reservations last until collection or the fixed 24-hour deadline. Reservations reduce availability, not physical stock.
 - **FR-28** The cart shall show a running total, itemised, before any payment step.
-- **FR-28a** Hub carts are separate per customer and selected collection Terminal, with one-day expiry on actual changes only (CART_DATA_EXPIRY=86400). Terminal baskets are session-only for guests and customers. Reset, expiry and session replacement destroy them; authentication, reads and unchanged writes renew neither cart nor session deadlines.
+- **FR-28a** One saved Redis basket belongs to each customer and Terminal, shared by Hub and that physical Kiosk. Actual changes renew one-day expiry (CART_DATA_EXPIRY=86400); reads, login and unchanged writes do not. Customer logout/reset/session expiry clears local access, not this saved basket. Guest baskets remain temporary session state; reset, expiry and replacement destroy them.
 - **FR-28b** PostgreSQL supplies prices and exact-decimal EGP totals. Both apps use the selected machine's available stock minus reservations. NULL per-order cap means stock-only; explicit limits and prescription restrictions remain enforced. Problematic lines stay visible/removable. Cart adds do not reserve stock.
 - **FR-28c** Versioned atomic writes detect concurrent changes to a basket. Stale mutations conflict; reload and ask the user to repeat their choice, never automatically replay it.
-- **FR-28d** Successful PIN/QR login discards the guest Terminal basket while rotating its token and starts an empty customer basket without restarting the session's absolute clock. Failed login keeps the guest basket. It never compares, adopts, merges or loads Hub baskets. Remove the superseded shared-cart chooser.
+- **FR-28d** Successful PIN/QR login discards the guest basket, rotates its token, and loads the customer's saved basket for that machine without restarting authentication deadlines. Failed login preserves guest items. Never adopt or merge legacy session baskets into saved baskets; no comparison chooser is required.
+- **FR-28e** Check basket versions every two seconds while visible and on focus; reload changed data without retrying a mutation. Refresh stock every 15 seconds. Distinguish unavailable cart service from an empty basket; ignore old identity/session responses. Starting or failing checkout never deletes the basket. Paid cleanup clears only the exact purchased basket version; newer edits remain with an explanation.
 
 ### 2.6 Identity and accounts
 
@@ -416,3 +417,44 @@ The revised FR-27/28/53/55/57/97–99 above supersede the historical shared-cart
 Kashier hosted checkout is sandbox-only with immediate test capture. Signed-in Terminal customers need an existing provider-saved card (first saved during a Hub purchase); guests use fresh checkout. Kashier may still show new-card entry, CVV/OTP or sandbox wallets. Every purchase requires receipt email; guests also request printing. Customers choose Print or Go green. Printing/dispensing are explicitly simulated; physical printer, ETA, insurance and prescription checkout remain future work.
 
 Paid Hub orders reserve their selected machine for 24 hours from confirmed payment. Expiry cancels collection, releases allocations once (never increments physical stock), queues a full original-order test refund and emails processing; only provider confirmation triggers refund confirmation email. Owner endpoints support cancellation/reconciliation. Unknown outcomes retain stock and require reconciliation, not blind mutation retries. Current cart edits remain untouched by paid-order expiry/refunds.
+
+## Customer shopping recovery update — 2026-10-18
+
+This update supersedes the separate signed-in Hub/Kiosk basket rules in the historical checkpoints. Customer baskets now share the existing customer+Terminal Redis key. Guest baskets remain private to the active session; existing saved Hub baskets are preserved.
+
+- **FR-100** Highlight My Profile with a collection count and guidance for paid, pending, unexpired collection orders. Order History inside Profile has a number-only badge. Distinguish collection here from orders at another named machine. Refresh summaries on entry/actions and every 15 visible seconds; unpaid/review-required orders are not ready for collection.
+- **FR-101** Hub chooses a Terminal before browsing and displays that customer's saved-basket quantity per machine. Include disabled machines with a disabled, approximately half-opacity control and centred unavailable message. Another guest/customer's valid session shows “This kiosk is physically used by another user.” with an availability warning before browsing. Own sessions need no warning; unreadable occupancy is explicitly unknown. Session usage starts after language selection and never changes hardware status or reveals identity.
+- **FR-102** Reserve only when the customer explicitly opens secure test payment. Retain an immutable item/price snapshot and a fixed 15-minute provider/reservation deadline. Physical stock is unchanged until successful fulfilment. Prevent concurrent duplicate unpaid customer+machine attempts. Show unfinished attempts separately with Continue payment and confirmed Cancel checkout; resumption never creates a provider session or extends its deadline.
+- **FR-103** Customers may resume through either app with ownership checks; Kiosk requires the assigned machine, active authentication and saved-card eligibility. Guests may resume/cancel only in their original valid session. The latest explicitly authorised payment location controls fulfilment: an unpaid attempt resumed at its assigned Kiosk may dispense after verified payment only while that bound session remains valid, regardless of original purchase channel; Hub completion requires collection. An expired/replaced Kiosk session prevents unattended dispensing and requires customer collection instead. Collection retains the existing 24-hour verified-payment window, expiry/refund/email rules.
+- **FR-104** Newly created provider sessions return through the already-configured Hub HTTPS handler, then only the latest authorised configured Hub/Kiosk destination. Never trust browser status parameters. Kiosk results require device authentication plus short-lived order-scoped HttpOnly cookies; preserve simulator selectors, new-visitor revocation and 60-second receipt inactivity. Old provider return screens remain supported.
+- **FR-105** At unpaid expiry, stop offering resume and reconcile/close the provider session before cancellation/releasing allocations. Uncertain outcomes remain Checking payment with durable review work. Honour verified pre-deadline payment even when notification is late. Definitively cancelled purchases never dispense on late payment; queue a full test refund. Never blindly retry uncertain charges/refunds.
+
+No real payments, hardware, Advisor/Admin frontend or networking/DNS changes are included. External webhook/public HTTPS reachability and user-operated Kashier sandbox submissions remain separate acceptance checks.
+
+## Checkout-loop correction — 2026-10-18
+
+An expired attempt whose session-creation response was lost must not remain a
+permanent customer checkout lock. After the original deadline plus a 60-second
+creation-settlement margin, the provider adapter may confirm failed creation only
+after a complete unfiltered merchant-session sweep and a successful complete empty
+provider-order search. A filtered empty search alone, incomplete pagination,
+provider outage or any order match is not proof; those attempts stay protected.
+Confirmed absent creation cancels the unpaid attempt and releases reservations,
+never changing physical stock or deleting the saved basket.
+
+A new checkout request encountering an existing owned unfinished attempt returns
+its immutable snapshot without creating/reopening payment. The user explicitly
+resumes or checks that attempt. A stale-cart rejection before order creation loads
+the current basket for review and permits a fresh explicit request; uncertain
+responses must retain their original idempotency key. Checking-payment screens
+offer a working read-only status refresh and specific cancellation-pending wording,
+not an unrelated stock-conflict error. Guests may read only their exact original
+checkout under the same valid device/session, never general account history.
+
+## Payment return and attention update — 2026-10-18
+
+- **FR-106** Following verified completed Kiosk payment, offer Continue session and End session. Continue explicitly consumes the order-scoped HttpOnly result proof plus device authentication to rotate the token of the exact still-live bound session, keeping its identity, language and original maximum deadline. Never automatically restore login on page load, persist bearer tokens, revive expired/replaced/revoked sessions or authenticate from return parameters. End closes the bound session and clears the private result; the existing 60-second result inactivity reset remains.
+- **FR-107** A successful unpaid checkout resumption at the assigned physical Kiosk authorises immediate simulated dispensing in that currently authenticated session, not a second receive-order step. Resume in Hub remains collection-required. Authorisation happens before provider verification; fulfilment rechecks current session liveness and is idempotent. Already-paid collection orders retain their explicit collection workflow.
+- **FR-108** My Profile attracts attention for both paid collectable orders and actionable awaiting-payment checkouts, with distinct translated wording. The Order History entry shows the combined number only. Expired/checking/review-required attempts never masquerade as ready-to-collect or resumable payments. Background summary reads do not renew authentication, cart or payment deadlines.
+
+This update supersedes historical receipt-only forced-restart and original-channel-always-controls-collection descriptions. Existing idle/absolute authentication limits, saved-card rules, guest isolation and no-unattended-dispensing safeguards remain. No new environment variables, migrations or networking changes are required. Live Kashier submission remains user-operated.

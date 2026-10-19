@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import { kioskProxy } from './kiosk-proxy.ts'
 import { kioskTestGate } from './kiosk-test-gate.ts'
-import { forwardingHeaders, publicHost } from './tunnel-origin.ts'
+import { forwardingHeaders, publicHost } from './development-access.ts'
 
 // Preserve the incoming Host and Origin together: Django's CSRF check sees the
 // browser-facing origin, not an internal Docker hostname. No CORS wildcard needed.
@@ -31,7 +31,7 @@ export function appConfig(port: number) {
       watch: { usePolling: process.env.DOCKER_WATCH === 'true', interval: 300 },
       fs: {
         allow: [fileURLToPath(new URL('..', import.meta.url))],
-        deny: ['.env', '.env.*', '**/.git/**', '**/*.{pem,key,p12,pfx}'],
+        deny: ['.env', '.env.*', '**/.git/**', '**/development/**', '**/*.{pem,key,p12,pfx}'],
       },
       proxy: {
         '/api': {

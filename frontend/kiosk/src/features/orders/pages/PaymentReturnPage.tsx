@@ -13,6 +13,8 @@ export function PaymentReturnPage() {
   const [query] = useSearchParams(), id = query.get('order_id') ?? '', navigate = useNavigate()
   const { t, i18n } = useTranslation('orders'), { controller } = useSession()
   const [order, setOrder] = useState<PurchaseOrder | null>(null), [error, setError] = useState('')
+  const [continuing, setContinuing] = useState(false)
+  const handoffActive = useRef(false)
   const lastTouch = useRef(Date.now()), ending = useRef(false), inFlight = useRef<number | null>(null), generation = useRef(0), privateEnded = useRef(false)
   const privacyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const activityTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined), lastActivity = useRef(-Infinity)
@@ -20,7 +22,7 @@ export function PaymentReturnPage() {
   const finish = useCallback(() => {
     if (ending.current) return
     ending.current = true; generation.current++; clearTimeout(activityTimer.current); activityAbort.current?.abort(); setOrder(null); controller.reset()
-    // The restricted return cookie authorizes this receipt only, never an account.
+    // Close the result proof and only its exact bound session, not a new visitor.
     void terminalPurchaseApi.endResult(id).catch(() => {})
     navigate('/', { replace: true })
   }, [controller, id, navigate])
@@ -30,6 +32,7 @@ export function PaymentReturnPage() {
   }, [finish])
   const touch = useCallback(() => {
     schedulePrivacy()
+    if (handoffActive.current) return
     const renew = () => {
       activityTimer.current = undefined
       if (ending.current || privateEnded.current) return
@@ -48,7 +51,7 @@ export function PaymentReturnPage() {
   }, [finish, id, schedulePrivacy])
   const read = useCallback(async () => {
     const current = generation.current
-    if (inFlight.current === current || document.hidden || ending.current || privateEnded.current) return
+    if (inFlight.current === current || document.hidden || ending.current || privateEnded.current || handoffActive.current) return
     if (!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(id)) { setError('privateResult'); return }
     inFlight.current = current
     try {
@@ -61,6 +64,22 @@ export function PaymentReturnPage() {
       else setError('unavailable')
     } finally { if (inFlight.current === current) inFlight.current = null }
   }, [id, i18n])
+  const continueSession = async () => {
+    if (handoffActive.current || ending.current) return
+    handoffActive.current = true; generation.current++; clearTimeout(activityTimer.current); activityTimer.current = undefined
+    activityAbort.current?.abort()
+    setContinuing(true); setError('')
+    const success = await controller.reconnectPayment(async signal => {
+      try { return await terminalPurchaseApi.continueResult(id, signal) }
+      catch (cause) { setError(cause instanceof ApiError && [401, 403, 409].includes(cause.status) ? 'sessionEnded' : 'unavailable'); throw cause }
+    })
+    if (success) {
+      ending.current = true; generation.current++; clearTimeout(privacyTimer.current); clearTimeout(activityTimer.current)
+      activityAbort.current?.abort(); setOrder(null)
+      navigate(controller.getSnapshot().phase === 'customer' ? '/dashboard' : '/guest', { replace: true })
+    }
+    handoffActive.current = false; setContinuing(false)
+  }
   useEffect(() => {
     ending.current = false; privateEnded.current = false; generation.current++; lastActivity.current = -Infinity; schedulePrivacy(); void read()
     const timer = setInterval(() => { if (Date.now() - lastTouch.current >= 60_000) finish(); else void read() }, 3_000)
@@ -72,6 +91,6 @@ export function PaymentReturnPage() {
     <h1>{t('result')}</h1><p>{t('resultNotice')}</p>
     {error && <Alert>{t(error)}</Alert>}
     <div className="terminal-order-scroll">{order ? <OrderSummary order={order} /> : !error && <p role="status">{t('checking')}</p>}</div>
-    <div className="terminal-order-result-actions"><p>{t('privacy')}</p><Button onClick={() => void read()}>{t('refresh')}</Button><Button variant="primary" onClick={finish}>{t('done')}</Button></div>
+    <div className="terminal-order-result-actions"><p>{t(order?.status === 'COMPLETED' && order.can_continue_session ? 'sessionChoice' : order?.status === 'COMPLETED' ? 'sessionEnded' : 'privacy')}</p><Button disabled={continuing} onClick={() => void read()}>{t('refresh')}</Button>{order?.status === 'COMPLETED' && order.can_continue_session && <Button variant="primary" disabled={continuing} onClick={() => void continueSession()}>{t('continueSession')}</Button>}<Button disabled={continuing} onClick={finish}>{t('endSession')}</Button></div>
   </div></KioskFrame>
 }

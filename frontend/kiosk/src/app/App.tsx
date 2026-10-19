@@ -4,6 +4,8 @@ import { SessionProvider } from '../features/session/hooks/use-session'
 import { AppRoutes } from './routes'
 import './kiosk.css'
 import { CatalogueProvider } from '../features/catalogue/hooks/use-catalogue'
+import { CollectionSummaryProvider } from '../features/orders/hooks/use-collection-summary'
+import { CheckoutAttemptProvider } from '../features/orders/hooks/use-checkout-attempt'
 
 function SimulatorLocation({ id }: { id?: string }) {
   const location = useLocation()
@@ -19,5 +21,5 @@ function SimulatorLocation({ id }: { id?: string }) {
 }
 
 export default function App({ simulatorId }: { simulatorId?: string }) {
-  return <SessionProvider><CatalogueProvider><BrowserRouter><SimulatorLocation id={simulatorId} /><AppRoutes /></BrowserRouter></CatalogueProvider></SessionProvider>
+  return <SessionProvider><CatalogueProvider><CollectionSummaryProvider><CheckoutAttemptProvider><BrowserRouter><SimulatorLocation id={simulatorId} /><AppRoutes /></BrowserRouter></CheckoutAttemptProvider></CollectionSummaryProvider></CatalogueProvider></SessionProvider>
 }

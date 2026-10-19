@@ -4,6 +4,7 @@ export class ApiError extends Error {
     public readonly status: number,
     public readonly retryAfter: number | null = null,
     public readonly fields: Record<string, string> = {},
+    public readonly code: string | null = null,
   ) { super(message); this.name = 'ApiError' }
 }
 
@@ -71,7 +72,8 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       }
     }
     throw new ApiError(typeof detail === 'string' ? detail : 'The request could not be completed.',
-      response.status, retryDelay(response.headers.get('Retry-After')), fields)
+      response.status, retryDelay(response.headers.get('Retry-After')), fields,
+      payload && typeof payload === 'object' && typeof (payload as JsonObject).code === 'string' ? (payload as JsonObject).code as string : null)
   }
   if (payload === undefined) throw new ApiError('The server returned an invalid response.', response.status)
   return payload as T

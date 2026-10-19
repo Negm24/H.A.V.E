@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@have/shared/api'
 import { terminalApi, type CustomerIdentity, type TerminalSession } from '@have/shared/api/terminal'
+import type { PaymentContinuedSession } from '@have/shared/api/purchase'
 import { createSessionController } from '../services/session-controller'
 
 const customer: CustomerIdentity = { id: 'HAV-C678-000000000001', account_type: 'CUSTOMER', first_name: 'Ahmed', last_name: 'Sherif', phone_number: '+201012345678', email: 'test@example.test', date_of_birth: '24-01-2005', phone_verified_at: '2026-10-10T00:00:00Z' }
@@ -23,6 +24,26 @@ beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-10T00:
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers() })
 
 describe('Terminal session lifecycle', () => {
+  it('explicit payment continuation adopts only the server remaining lifetime and keeps the token in memory', async () => {
+    const { controller, api } = fixtures()
+    const reconnect = vi.fn().mockResolvedValue({ ...loggedIn, session_token: 'returned-token', language: 'en', session_expires_in: 90 })
+    expect(await controller.reconnectPayment(reconnect)).toBe(true)
+    expect(controller.getSnapshot()).toMatchObject({ phase: 'customer', customer, remaining: 90 })
+    const work = vi.fn(async () => 'ok'); await controller.request(work)
+    expect(work).toHaveBeenCalledWith('returned-token', expect.any(AbortSignal))
+    expect(api.login).not.toHaveBeenCalled(); expect(api.start).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(90_000)
+    expect(controller.getSnapshot().phase).toBe('attract')
+  })
+  it('ignores a late payment continuation after Start over', async () => {
+    const { controller } = fixtures()
+    let finish!: (value: PaymentContinuedSession) => void
+    const restoring = controller.reconnectPayment(() => new Promise(resolve => { finish = resolve }))
+    await vi.advanceTimersByTimeAsync(0); controller.reset(false)
+    finish({ ...loggedIn, language: 'en', session_expires_in: 90 })
+    expect(await restoring).toBe(false)
+    expect(controller.getSnapshot().phase).toBe('attract')
+  })
   it('starts anonymous and uses rotated token for me and sign-out', async () => {
     const { api, controller, start } = fixtures()
     await start()

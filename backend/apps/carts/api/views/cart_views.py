@@ -4,8 +4,8 @@ from rest_framework.response import Response
 
 from apps.accounts.api.views.shared_views import CustomerSessionView, ERRORS
 from apps.accounts.security.authentication import HubAuthentication
-from apps.carts.api.serializers.cart_serializers import CartOutputSerializer, CartQuantityInputSerializer, CartVersionInputSerializer
-from apps.carts.services.cart_services import change_cart, get_cart
+from apps.carts.api.serializers.cart_serializers import CartOutputSerializer, CartQuantityInputSerializer, CartVersionInputSerializer, CartRevisionOutputSerializer
+from apps.carts.services.cart_services import change_cart, get_cart, get_cart_version
 from apps.terminals.services.selection_services import selected_terminal
 
 
@@ -34,3 +34,11 @@ class HubCartItemView(HubCartView):
         serializer = CartQuantityInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(change_cart(user_id=request.user.pk, terminal=selected_terminal(request), product_id=product_id, **serializer.validated_data))
+
+
+class HubCartRevisionView(HubCartView):
+    http_method_names = ["get", "options"]
+
+    @extend_schema(tags=["Hub · Cart"], responses={200: CartRevisionOutputSerializer, **ERRORS})
+    def get(self, request):
+        return Response(get_cart_version(user_id=request.user.pk, terminal=selected_terminal(request)))

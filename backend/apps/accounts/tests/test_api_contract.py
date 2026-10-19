@@ -88,6 +88,7 @@ class ApiContractTests(SimpleTestCase):
             ("sessions/activity/", "terminal-session-activity"),
             ("sessions/end/", "terminal-session-end"),
             ("cart/", "terminal-cart"),
+            ("cart/version/", "terminal-cart-version"),
             ("cart/items/<int:product_id>/", "terminal-cart-item"),
         ]
         self.assertEqual([(str(p.pattern), p.name) for p in account_routes[:len(expected_accounts)]], expected_accounts)

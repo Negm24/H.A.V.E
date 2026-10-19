@@ -68,3 +68,31 @@ def execute_transition(terminal, mode, now, raw_token, update, *, qr_proof=None)
         token_hash(raw_token), terminal.device_credential_hash, json.dumps(update),
         qr_proof[1] if qr_proof else "",
     )
+
+
+def payment_return_transition(terminal, *, session_id, user_id, credential_version, new_token=None):
+    """Called only after cookie/device payment proof under the Terminal row lock.
+
+    Rotate a still-valid exact session, or end that session only. Neither action
+    may adopt a replacement visitor. No token is kept in a browser cookie.
+    """
+    import time
+    script = """
+    local raw=redis.call('GET',KEYS[1]); if not raw then return false end
+    local state=cjson.decode(raw); local now=tonumber(ARGV[1])
+    if state.session_id ~= ARGV[2] or state.credential_hash ~= ARGV[3] then return false end
+    local owner=state.user_id; if owner == cjson.null or owner == nil then owner='' end
+    if owner ~= ARGV[4] then return false end
+    if ARGV[7] == '' then redis.call('DEL',KEYS[1]); return raw end
+    if now-state.started_at >= tonumber(ARGV[5]) or now-state.last_activity_at >= tonumber(ARGV[6]) then
+        redis.call('DEL',KEYS[1]); return false
+    end
+    if owner ~= '' and state.credential_version ~= ARGV[8] then return false end
+    state.token_hash=ARGV[7]; state.last_activity_at=now
+    local ttl=math.max(1,math.ceil(math.min(tonumber(ARGV[6]),tonumber(ARGV[5])-(now-state.started_at))))
+    local encoded=cjson.encode(state); redis.call('SET',KEYS[1],encoded,'EX',ttl); return encoded
+    """
+    result = get_redis_client().eval(script, 1, session_key(terminal.pk), time.time(), str(session_id),
+        terminal.device_credential_hash, user_id or "", settings.TERMINAL_MAX_SECONDS,
+        settings.TERMINAL_IDLE_SECONDS, token_hash(new_token) if new_token else "", credential_version or "")
+    return json.loads(result) if result else None

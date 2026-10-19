@@ -25,6 +25,8 @@ class Order(models.Model):
     customer = models.ForeignKey("accounts.Customer", null=True, blank=True, on_delete=models.PROTECT, related_name="orders")
     terminal = models.ForeignKey("terminals.Terminal", on_delete=models.PROTECT, related_name="orders", db_column="terminal_serial_number")
     channel = models.CharField(max_length=8, choices=Channel.choices)
+    # Fulfilment is independent of the app that originally opened checkout.
+    collection_required = models.BooleanField(default=False)
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
     currency = models.CharField(max_length=3, default="EGP", editable=False)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
@@ -40,6 +42,7 @@ class Order(models.Model):
     terminal_session_id = models.UUIDField(null=True, blank=True)
     payment_uncertain = models.BooleanField(default=False)
     cart_cleanup_completed_at = models.DateTimeField(null=True, blank=True)
+    cart_preserved = models.BooleanField(default=False)
     cancellation_reason = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()

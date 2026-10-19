@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from '@have/shared/i18n'
 import { Button, Alert } from '@have/shared/ui/controls'
+import { CartButton } from '@have/shared/ui/catalogue'
 import { KioskFrame } from '../../../layouts/KioskFrame'
 import { useSession } from '../../session/hooks/use-session'
 import { useCatalogue } from '../hooks/use-catalogue'
@@ -22,7 +23,7 @@ export function CatalogueFrame({ title, back, children, search = true, controls 
       {controls}
       <Button onClick={() => setModal('guidance')}>{t('help')}</Button>
       {search && <Button aria-label={t('search')} onClick={() => navigate('/browse/search', { state: { from: location.pathname } })}>⌕ {t('search')}</Button>}
-      <Button disabled={!cartAvailable} onClick={() => setModal('cart')}>{t('cartCount', { count: cart.total_quantity })}</Button>
+      <CartButton count={cart.total_quantity} revision={cartAvailable ? cart.version : undefined} disabled={!cartAvailable} onClick={() => setModal('cart')} />
     </div>
     {error && <div className="catalogue-error"><Alert>{t(error)}</Alert><Button onClick={() => void refresh()}>{t('retry')}</Button></div>}
     {!ready ? <div className="catalogue-empty" role="status">{t('loading')}</div> : children}

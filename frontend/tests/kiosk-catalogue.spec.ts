@@ -34,6 +34,8 @@ async function fixture(page: Page) {
       if (data.expected_version !== basket().version) { status = 409; body = { detail: 'Cart changed' } }
       else { quantities[id] = data.quantity; revision++; body = basket() }
     }
+    else if (path.endsWith('/cart/version/')) body = { version: basket().version }
+    else if (path.endsWith('/orders/summary/')) body = { awaiting_collection_count: 0, at_terminal_count: 0, elsewhere_count: 0, collection_terminals: [] }
     else if (path.endsWith('/cart/')) { if (method === 'DELETE') { quantities = {}; revision++ }; body = basket() }
     else if (path.endsWith('/terminal/login/') || path.endsWith('/complete/')) { quantities = {}; revision++; body = { session_id: 'catalogue-test', session_token: 'customer', idle_expires_in: 240, customer } }
     else if (path.endsWith('/qr-login/')) { status = 201; body = { challenge_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', qr_payload: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.demo', status: 'waiting_for_scan', expires_in: 90, generate_again_in: 10 } }
@@ -50,6 +52,8 @@ async function fits(page: Page) {
 for (const arabic of [false, true]) test(`catalogue grids, quantity animation, details, cart and reset ${arabic ? 'Arabic' : 'English'}`, async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 600 }); await fixture(page); await start(page, arabic)
   await expect(page.locator('.category-card')).toHaveCount(10)
+  await expect(page.locator('#cart-button svg')).toBeVisible()
+  await expect(page.locator('#cart-button .have-cart-badge')).toHaveCount(0)
   await fits(page)
   const visibleCategories = await page.locator('.category-card').evaluateAll(nodes => nodes.filter(el => { const r = el.getBoundingClientRect(); return r.top >= 120 && r.bottom <= 544 }).length)
   expect(visibleCategories).toBe(8)
@@ -63,6 +67,9 @@ for (const arabic of [false, true]) test(`catalogue grids, quantity animation, d
   const card = page.locator('.product-card').nth(1)
   await card.getByRole('button', { name: arabic ? 'إضافة' : 'Add', exact: true }).click()
   await expect(card.locator('output')).toHaveText('1')
+  await expect(page.locator('#cart-button .have-cart-badge')).toHaveText('1')
+  await expect(page.locator('#cart-button')).toHaveText('1')
+  if (process.env.E2E_VISUAL === 'true') await page.screenshot({ path: `test-results/cart-button-${arabic ? 'ar' : 'en'}.png` })
   await card.locator('.product-open').click()
   await expect(page.locator('.product-detail')).toBeVisible(); await fits(page)
   if (process.env.E2E_VISUAL === 'true') await page.screenshot({ path: `test-results/details-${arabic ? 'ar' : 'en'}.png` })
