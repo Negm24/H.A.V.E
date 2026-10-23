@@ -22,10 +22,17 @@ class GuidanceTests(unittest.TestCase):
         self.assertIsNone(screening(answers()))
         for key, value in [("history", ["pregnant"]), ("history", ["medicines"]),
                            ("age", ["child"]), ("duration", ["longer"]),
-                           ("severity", ["moderate"]), ("urgent", ["unknown"])]:
+                           ("severity", ["severe"]), ("urgent", ["unknown"])]:
             with self.subTest(key=key, value=value):
                 self.assertEqual(screening({**answers(), key: value}), "needs_advice")
         self.assertEqual(screening({**answers(), "urgent": ["breathing"]}), "urgent")
+
+    def test_moderate_dry_cough_reaches_model_screening(self):
+        data = {"areas": ["throat"], "urgent": ["none"], "throat.feel": ["dry"],
+                "duration": ["days"], "severity": ["moderate"], "age": ["adult"],
+                "history": ["none"]}
+        self.assertIsNone(screening(data))
+        self.assertEqual(screening({**data, "urgent": ["breathing"]}), "urgent")
 
     def test_invalid_and_stale_answers_are_rejected(self):
         for change in [{"areas": ["invented"]}, {"urgent": []}, {"history": None},

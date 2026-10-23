@@ -41,7 +41,7 @@ def screening(answers):
         return "urgent"
     # Conservative demo boundary, not a clinically validated triage algorithm.
     if (answers["age"] != ["adult"] or answers["urgent"] != ["none"]
-            or answers["history"] != ["none"] or answers["severity"] != ["mild"]
+            or answers["history"] != ["none"] or answers["severity"] == ["severe"]
             or answers["duration"] == ["longer"] or answers["areas"] in [["chest"], ["eyes"]]
             or any("unknown" in values for values in answers.values())):
         return "needs_advice"
@@ -80,7 +80,8 @@ def select_with_groq(answers, products, *, api_key, model):
     if len(data) > 24000:
         raise GuidanceUnavailable()
     request = Request("https://api.groq.com/openai/v1/chat/completions", data=data,
-                      headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"})
+                      headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json",
+                               "User-Agent": "HAVE-Kiosk-Demo/1.0", "Accept": "application/json"})
     try:
         with build_opener(NoRedirect()).open(request, timeout=10) as response:
             raw = response.read(65537)

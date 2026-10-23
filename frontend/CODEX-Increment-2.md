@@ -709,3 +709,14 @@ honest no-match result. Try history/unknown/red flags: no medicine suggestion. C
 and reopen: all answers empty. Change main symptom: answer the new safety checklist.
 Stop provider access: a retryable error appears without inventing a result. Repeat in
 Arabic and as a customer, then Start over to confirm identity clearing.
+
+
+## Moderate-symptom demo update — 2026-10-23
+
+Moderate symptom severity alone no longer blocks a Groq request. The reported
+Throat / None / Dry cough / 1–3 days / Moderate case reaches the model when the
+remaining answers are Adult and no medical-history flags. Urgent warnings and
+the other documented restrictions remain. This supersedes the moderate-severity
+restriction in the 2026-10-20 demo entry. Groq may still return no catalogue match.
+A live connection check also identified the need for explicit HTTP User-Agent
+and Accept headers; these are now supplied without exposing credentials.
