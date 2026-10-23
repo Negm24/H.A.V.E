@@ -573,3 +573,6 @@ receipt-activity cleanup. No real or automatic sandbox card submission occurred.
 ## Local AI questionnaire demo — 2026-10-20
 
 The Kiosk help entry now has an optional Groq catalogue-selection experiment for fictional inputs only. See [configuration, privacy limits and Docker checks](CODEX-Increment-2.md#ai-questionnaire-demo--2026-10-20). Existing catalogue/cart/checkout behavior is preserved. A private backend API key is required; no live model evaluation is implied by mocked tests.
+
+
+Experimental questionnaire update — 2026-10-23: The experiment branch sends each completed answer to Groq for a bounded next-question selection (7–9 questions). Entry symptoms and final candidates are filtered against recognised in-stock catalogue ingredients/forms. See the latest dated Increment 2 section for Docker checks, contract regeneration and free-tier quota limitations.

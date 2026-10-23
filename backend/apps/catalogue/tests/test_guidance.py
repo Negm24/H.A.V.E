@@ -2,19 +2,19 @@ import json
 import unittest
 from unittest.mock import patch
 from apps.catalogue.services.guidance_services import (
-    screening, validate_answers, candidates, select_with_groq, GuidanceUnavailable,
+    screening, validate_answers, candidates, select_with_groq, next_with_groq, next_question_candidates, GuidanceUnavailable,
 )
 
 
 def answers():
-    return {"areas": ["head"], "urgent": ["none"], "head.location": ["front"],
+    return {"areas": ["head"], "urgent": ["none"],
             "head.feel": ["ache"], "duration": ["today"], "severity": ["mild"],
             "age": ["adult"], "history": ["none"]}
 
 
 def product(id=1, **overrides):
     return {"id": id, "requires_prescription": False, "stock_quantity": 4,
-            "quantity_limit": 4, "active_ingredient": "Example", "strength": "Example", **overrides}
+            "quantity_limit": 4, "active_ingredient": "Paracetamol", "strength": "500 mg", "dosage_form": "Tablets", **overrides}
 
 
 class GuidanceTests(unittest.TestCase):
@@ -27,8 +27,8 @@ class GuidanceTests(unittest.TestCase):
                 self.assertIsNone(screening({**answers(), key: value}))
         self.assertEqual(screening({**answers(), "urgent": ["breathing"]}), "urgent")
 
-    def test_moderate_dry_cough_reaches_model_screening(self):
-        data = {"areas": ["throat"], "urgent": ["none"], "throat.feel": ["dry"],
+    def test_moderate_sore_throat_reaches_model_screening(self):
+        data = {"areas": ["throat"], "urgent": ["none"], "throat.feel": ["sore"],
                 "duration": ["days"], "severity": ["moderate"], "age": ["adult"],
                 "history": ["none"]}
         self.assertIsNone(screening(data))
@@ -82,3 +82,32 @@ class GuidanceTests(unittest.TestCase):
             with self.assertRaises(GuidanceUnavailable):
                 select_with_groq(answers(), [product()], api_key="", model="test-model")
             opener.assert_not_called()
+
+    def test_partial_answers_and_question_prerequisites(self):
+        self.assertEqual([q['id'] for q in next_question_candidates({'areas': ['head']})], ['head.feel'])
+        choices = next_question_candidates({'areas': ['head'], 'head.feel': ['ache']})
+        self.assertNotIn('urgent', [q['id'] for q in choices])
+        self.assertEqual(next_question_candidates(answers()), [])
+        changed = {**answers(), 'head.feel': ['fever']}
+        changed['urgent'] = ['stiff']
+        self.assertEqual(screening(changed), 'urgent')
+        changed['head.feel'] = ['ache']
+        with self.assertRaises(ValueError):
+            validate_answers(changed)
+
+    def test_catalogue_paths_use_ingredients_forms_stock_and_rx(self):
+        self.assertEqual(candidates([product()], 'head'), [product()])
+        self.assertEqual(candidates([product()], 'stomach'), [])
+        self.assertEqual(candidates([product(active_ingredient='Sodium chloride', dosage_form='Eye drops')], 'nose'), [])
+        self.assertEqual(candidates([product()], 'unknown'), [])
+
+    @patch('apps.catalogue.services.guidance_services._groq_json')
+    def test_ai_next_question_cannot_repeat_skip_or_invent_questions(self, call):
+        call.return_value = {'question_id': 'head.feel'}
+        self.assertEqual(next_with_groq({'areas': ['head']}, [product()], api_key='test', model='test'), 'head.feel')
+        for invalid in ['areas', 'urgent', 'invented', None]:
+            call.return_value = {'question_id': invalid}
+            with self.subTest(invalid=invalid), self.assertRaises(GuidanceUnavailable):
+                next_with_groq({'areas': ['head']}, [product()], api_key='test', model='test')
+        call.return_value = {'question_id': None}
+        self.assertIsNone(next_with_groq(answers(), [product()], api_key='test', model='test'))

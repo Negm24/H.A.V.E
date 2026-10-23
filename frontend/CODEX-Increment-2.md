@@ -734,3 +734,73 @@ input acknowledgement, Demo result title, urgent red-flag stops, stock/Rx
 filters, private credentials and session cleanup remain. Legacy needs_advice
 responses render the neutral no-match text. This supersedes the earlier blanket
 non-emergency exclusions for this local demo branch only.
+
+
+## Experimental AI-selected questionnaire — 2026-10-23
+
+Only on codex/ai-questionnaire-experiments; the saved recommendation branch is preserved.
+The existing Kiosk catalogue, cart, checkout and authentication implementations stay intact.
+
+- The entry cards derive from a frozen snapshot of loaded machine-local catalogue data.
+  A path requires a recognised ingredient/form, positive stock and quantity limit, and
+  non-prescription status. Empty/unreadable catalogue data never creates mock paths.
+  Discovery mappings live in features/symptoms/coverage.ts. They are prototype mappings,
+  not clinical eligibility rules. The backend applies the same exported mappings before
+  sending matching products to the recommendation model and rechecks after inference.
+- Paths: headache, sore throat, muscle/joint aches, fever, blocked nose, heartburn,
+  allergy symptoms and dry skin. Unsupported dry-cough, diarrhoea, general chest-pain,
+  dizziness and arbitrary-other treatment paths are removed. Emergency warnings remain
+  available in the relevant paths even when their treatments are absent.
+- Usually seven questions, maximum nine with both allergy and condition followups.
+  Every completed answer is sent to Groq on Next (multi-select taps are sent together).
+  The model chooses a validated unanswered ID from the finite configured set; it never
+  generates an unlimited questionnaire. No automatic retries or silent model fallback.
+  Null is accepted only after every required question is answered; invalid/repeated IDs
+  show a retryable error without adding questions. The number of required questions
+  stays bounded even when AI changes their order. User-directed editing can revisit them.
+- Urgent cards adapt to selected symptom details, severity and age. For example, headache
+  with fever adds a stiff-neck/light-sensitivity check; a young child's fever path adds
+  a very-young-baby check. These are demonstration prompts, not validated clinical triage.
+  Changing an upstream answer invalidates the old urgent checklist, including None and
+  Not sure. Irrelevant branch answers are pruned; unrelated history answers are preserved.
+- POST terminals/guidance/next-question/ accepts the same demo-consented answer map,
+  now partial, and returns question_id or null for review. It uses existing device and
+  session authentication, a 28-step-requests-per-minute device budget, private backend Groq settings,
+  no answer persistence, and a post-inference session check. Final selection remains
+  the existing explicit POST terminals/guidance/ action with its 30-second cooldown.
+- Each answer now consumes an inference request. Free-provider quotas may be reached;
+  show an honest retryable error rather than looping or manufacturing a next question.
+  The introduction explains transmission before the first answer is sent. Closing,
+  Start over and expiry abort requests and clear the questionnaire as before.
+
+Contract v2 in backend/apps/catalogue/guidance_questions.json exports complete question
+and conditional-option definitions plus coverage mappings. Regenerate after changes:
+
+```powershell
+docker compose exec -T kiosk node tooling/export-questionnaire.ts | Set-Content -Encoding utf8 backend/apps/catalogue/guidance_questions.json
+docker compose exec backend uv run python manage.py test apps.catalogue.tests.test_guidance apps.catalogue.tests.test_guidance_api
+docker compose exec kiosk pnpm typecheck
+docker compose exec kiosk pnpm test
+docker compose exec kiosk pnpm --filter @have/kiosk build
+docker compose exec kiosk pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-catalogue.spec.ts tests/kiosk-guidance.spec.ts --workers=1
+```
+
+Source edits hot-reload; dependency changes require rebuilding images. No dependency
+changes or database migrations are introduced. Source references for the demo discovery
+mappings and warning wording: [NHS paracetamol](https://www.nhs.uk/medicines/paracetamol-for-adults/),
+[cetirizine](https://www.nhs.uk/medicines/cetirizine/about-cetirizine/),
+[pantoprazole](https://www.nhs.uk/medicines/pantoprazole/about-pantoprazole/),
+[decongestants](https://www.nhs.uk/medicines/decongestants/),
+[headaches](https://www.nhs.uk/symptoms/headaches/),
+[sore throat](https://www.nhs.uk/symptoms/sore-throat/),
+[meningitis](https://www.nhs.uk/conditions/meningitis/), and
+[Bepanthen Egypt cream](https://www.bepanthen.eg/en/bepanthens-range/dry-and-sensitive-skin/bepanthen-cream). These references do not certify the seed dataset for clinical use.
+
+
+Verification — 2026-10-23: 17 focused backend tests, all 126 frontend unit tests,
+all package typechecks and the independent Kiosk build pass. Browser checks passed
+29 cases across existing authentication/catalogue and new guidance coverage; three
+real-database fixture checks were skipped because Docker is not running here. A
+fictional live Groq flow sent seven completed answers, accepted only valid next IDs,
+reached review and returned a catalogue item. This verifies integration, not clinical
+suitability. The local preview continues to use explicitly synthetic sessions/stock.

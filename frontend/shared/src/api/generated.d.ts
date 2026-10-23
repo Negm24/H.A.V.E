@@ -1211,6 +1211,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/terminals/guidance/next-question/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Send a completed fictional answer; AI selects one bounded, unasked question ID. */
+        post: operations["terminals_guidance_next_question_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/terminals/orders/": {
         parameters: {
             query?: never;
@@ -1647,6 +1664,9 @@ export interface components {
                 [key: string]: string[];
             };
             demo_consent: boolean;
+        };
+        GuidanceNextOutput: {
+            question_id: string | null;
         };
         GuidanceOutput: {
             status: components["schemas"]["GuidanceOutputStatusEnum"];
@@ -6085,6 +6105,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GuidanceOutput"];
+                };
+            };
+        };
+    };
+    terminals_guidance_next_question_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuidanceInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["GuidanceInput"];
+                "multipart/form-data": components["schemas"]["GuidanceInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuidanceNextOutput"];
                 };
             };
         };
