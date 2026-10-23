@@ -1,9 +1,9 @@
 /** Finite, catalogue-aware demo intake. No AI-generated questions. */
-import { areas, coverage, supportedAreas, type GuideProduct, type Area } from './coverage.ts'
+import { areas, coverage, matchesPath, supportedAreas, type GuideProduct, type Area } from './coverage.ts'
 export type Copy = string
 export type Answers = Record<string, string[]>
 export type Condition = { question: string; values: string[] }
-export type Option = { id: string; label: Copy; exclusive?: boolean; urgent?: boolean; when?: Condition[] }
+export type Option = { id: string; label: Copy; exclusive?: boolean; urgent?: boolean; when?: Condition[]; ingredients?: readonly string[] }
 export type Question = { id: string; title: Copy; kind: 'single' | 'multi'; options: Option[]; hint?: Copy }
 export const MAX_QUESTIONS = 11
 const c = (key: string): Copy => key
@@ -62,8 +62,8 @@ export function definitions(area: Area): Question[] {
   if (area === 'skin') safety.push(o('infection', 'rapid_painful_skin', false, true))
   return [
     { ...q('areas', 'what_is_bothering_you_most', areas.map(value => o(value, coverage[value].label))), hint: 'catalogue_paths_hint' },
-    q(area + '.feel', 'what_does_it_feel_like', feel[area], 'multi'),
-    ...(area === 'back' ? [q('back.context', 'pain_context_title', [o('lower_back', 'context_lower_back'), o('exercise', 'context_exercise'), o('swollen_joint', 'context_swollen_joint'), o('hot_joint', 'context_hot_joint', false, true), unknown()])] : []),
+    q(area + '.feel', 'what_does_it_feel_like', feel[area].map(option => option.id === 'unknown' ? option : ({ ...option, ingredients: area === 'allergy' && option.id === 'hives' ? ['cetirizine', 'loratadine'] : coverage[area].ingredients })), 'multi'),
+    ...(area === 'back' ? [q('back.context', 'pain_context_title', [{ ...o('lower_back', 'context_lower_back'), ingredients: ['ibuprofen'] }, { ...o('exercise', 'context_exercise'), ingredients: coverage.back.ingredients }, { ...o('swollen_joint', 'context_swollen_joint'), ingredients: coverage.back.ingredients }, o('hot_joint', 'context_hot_joint', false, true), unknown()])] : []),
     ...(area === 'stomach' ? [q('stomach.pattern', 'heartburn_pattern_title', [o('occasional', 'heartburn_occasional'), o('frequent', 'heartburn_frequent'), o('night', 'heartburn_night'), unknown()])] : []),
     q('duration', 'how_long_has_it_been', [o('today', 'started_today'), o('days', '1_3_days'), o('longer', '4_days_or_more'), unknown()]),
     q('severity', 'how_much_is_it_bothering_you', [o('mild', 'mild_can_carry_on'), o('moderate', 'moderate_gets_in_the_way'), o('severe', 'severe_cannot_carry_on'), unknown()]),
@@ -79,7 +79,7 @@ export function questions(a: Answers, products?: readonly GuideProduct[]): Quest
   const area = areas.includes(a.areas?.[0] as Area) ? a.areas![0] as Area : areas[0]!
   const allowedAreas = products === undefined ? areas : supportedAreas(products)
   return definitions(area).filter(item => (item.id !== 'allergy.medicine' || has(a, 'history', 'allergy')) && (item.id !== 'conditions' || has(a, 'history', 'condition')) && (item.id !== 'medicines.current' || has(a, 'history', 'medicines')))
-    .map(item => ({ ...item, options: item.options.filter(option => item.id === 'areas' ? allowedAreas.includes(option.id as Area) : !option.when || option.when.some(condition => condition.values.some(value => has(a, condition.question, value)))) }))
+    .map(item => ({ ...item, options: item.options.filter(option => item.id === 'areas' ? allowedAreas.includes(option.id as Area) : (!option.when || option.when.some(condition => condition.values.some(value => has(a, condition.question, value)))) && (products === undefined || !option.ingredients || products.some(product => matchesPath(product, area, option.ingredients)))) }))
 }
 export function selectAnswer(a: Answers, question: Question, value: string): Answers {
   const option = question.options.find(item => item.id === value)

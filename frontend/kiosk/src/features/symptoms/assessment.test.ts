@@ -3,11 +3,25 @@ import { answered, definitions, emergency, MAX_QUESTIONS, nextQuestion, prune, q
 import { areas, supportedAreas, type GuideProduct } from './coverage'
 import en from './locales/en.json'
 import ar from './locales/ar.json'
-const product = (id: number, ingredient: string, form = 'Tablets', stock = 8): GuideProduct => ({ id, active_ingredient: ingredient, dosage_form: form, stock_quantity: stock, quantity_limit: stock, requires_prescription: false })
+const product = (id: number, ingredient: string, form = 'Tablets', stock = 8): GuideProduct => ({ id, strength: 'Demo strength', active_ingredient: ingredient, dosage_form: form, stock_quantity: stock, quantity_limit: stock, requires_prescription: false })
 const ids = (a: Answers) => questions(a).map(q => q.id)
 const base = (area = 'head'): Answers => ({ areas: [area], [area + '.feel']: [area === 'head' ? 'ache' : 'dry'], duration: ['today'], severity: ['mild'], age: ['adult'], urgent: ['none'], history: ['none'] })
 
 describe('finite catalogue-aware questionnaire', () => {
+  it('does not advertise stock that final selection cannot use', () => {
+    const rows = [product(1, 'Paracetamol / Caffeine'), { ...product(2, 'Paracetamol'), name_en: 'Panadol Baby & Infant' }, product(3, 'Paracetamol', 'Oral drops'), { ...product(4, 'Ibuprofen'), strength: null }]
+    expect(supportedAreas(rows)).toEqual([])
+    const back = (rows: GuideProduct[]) => questions({ areas: ['back'] }, rows).find(q => q.id === 'back.context')!.options.map(o => o.id)
+    expect(back([product(5, 'Paracetamol')])).not.toContain('lower_back')
+    expect(back([product(6, 'Ibuprofen')])).toContain('lower_back')
+    expect(back([])).toEqual(['hot_joint', 'unknown'])
+    const allergy = (rows: GuideProduct[]) => questions({ areas: ['allergy'] }, rows).find(q => q.id === 'allergy.feel')!.options.map(o => o.id)
+    expect(allergy([product(7, 'Fexofenadine')])).toEqual(['sneeze', 'eyes', 'unknown'])
+    expect(allergy([product(8, 'Cetirizine')])).toContain('hives')
+    // Stock filtering must never remove factual history or urgent answers.
+    expect(questions({ areas: ['head'], history: ['allergy'] }, []).find(q => q.id === 'allergy.medicine')!.options.map(o => o.id)).toContain('other')
+    expect(questions({ areas: ['head'] }, []).find(q => q.id === 'urgent')!.options.some(o => o.urgent)).toBe(true)
+  })
   it('offers only paths with a matching in-stock non-prescription ingredient and form', () => {
     const rows = [product(1, 'Paracetamol'), product(2, 'Pantoprazole'), product(3, 'Cetirizine'), product(4, 'Dexpanthenol', 'Topical cream'), product(5, 'Xylometazoline hydrochloride', 'Nasal drops')]
     expect(supportedAreas(rows)).toEqual(areas)

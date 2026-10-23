@@ -5,7 +5,7 @@ import ar from '../kiosk/src/features/symptoms/locales/ar.json' with { type: 'js
 
 async function fixture(page: Page, status = 200, outcome = 'demo_recommendation', count = 2) {
   const calls: unknown[] = []
-  const stock = [['Paracetamol', 'Tablets'], ['Pantoprazole', 'Tablets'], ['Cetirizine', 'Tablets'], ['Dexpanthenol', 'Topical cream'], ['Xylometazoline hydrochloride', 'Nasal drops']].map(([active_ingredient, dosage_form], i) => ({ id: i + 1, active_ingredient, dosage_form, stock_quantity: 12, quantity_limit: 3, requires_prescription: false }))
+  const stock = [['Paracetamol', 'Tablets'], ['Pantoprazole', 'Tablets'], ['Cetirizine', 'Tablets'], ['Dexpanthenol', 'Topical cream'], ['Xylometazoline hydrochloride', 'Nasal drops']].map(([active_ingredient, dosage_form], i) => ({ id: i + 1, strength: 'Demo strength', active_ingredient, dosage_form, stock_quantity: 12, quantity_limit: 3, requires_prescription: false }))
   const customer = { id: 'demo-customer', account_type: 'CUSTOMER', first_name: 'Kiosk', last_name: 'Tester', phone_number: '+201099998876', email: 'test@example.test', date_of_birth: '24-01-2005' }
   await page.route('**/api/v1/**', async route => {
     const path = new URL(route.request().url()).pathname
@@ -164,11 +164,22 @@ test('AI cannot repeat a completed question or prematurely finish the guide', as
 
 test('only symptoms supported by the actual catalogue are offered', async ({ page }) => {
   await fixture(page)
-  await page.route('**/api/v1/terminals/catalogue/products/', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 2, active_ingredient: 'Pantoprazole', dosage_form: 'Gastro-resistant tablets', requires_prescription: false, stock_quantity: 8, quantity_limit: 3 }]) }))
+  await page.route('**/api/v1/terminals/catalogue/products/', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 2, strength: '20 mg', active_ingredient: 'Pantoprazole', dosage_form: 'Gastro-resistant tablets', requires_prescription: false, stock_quantity: 8, quantity_limit: 3 }]) }))
   await open(page)
   await expect(page.locator('.symptom-grid .symptom-card')).toHaveCount(1)
   await expect(page.getByRole('button', { name: en.heartburn, exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: en.head, exact: true })).toHaveCount(0)
+})
+
+test('routine followup choices reflect usable stock while urgent and unknown stay available', async ({ page }) => {
+  await fixture(page); await open(page)
+  await page.getByRole('button', { name: en.back_joints, exact: true }).click(); await advance(page, en)
+  await page.getByRole('button', { name: en.muscle_ache, exact: true }).click(); await advance(page, en)
+  await expect(page.getByRole('button', { name: en.context_exercise, exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: en.context_lower_back, exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: en.i_m_not_sure, exact: true })).toBeVisible()
+  await page.getByRole('button', { name: en.context_hot_joint, exact: true }).click()
+  await expect(page.getByRole('heading', { name: en.get_urgent_medical_help_now, exact: true })).toBeVisible()
 })
 test('fever answer adds a specific urgent check and stops immediately when chosen', async ({ page }) => {
   const requests: string[] = []

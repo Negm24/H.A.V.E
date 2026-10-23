@@ -848,3 +848,34 @@ three real-backend cases were skipped because Docker is unavailable. Two fiction
 live Groq checks returned ibuprofen for lower-back pain and separate paracetamol /
 ibuprofen alternatives for exercise soreness. This verifies integration, not clinical
 suitability. The standalone preview still uses synthetic stock and sessions.
+
+## Catalogue-supported cards — 2026-10-23
+
+Routine symptom and pain-context cards now carry explicit ingredient mappings in
+contract v4. Hide a routine card when no usable matching product exists in the
+catalogue snapshot. Discovery now excludes combination products, children's products,
+oral drops and missing strengths, matching the final experiment's restrictions.
+Lower-back pain requires an ibuprofen candidate; the hives card uses cetirizine or
+loratadine, without assuming the seeded fexofenadine 120 mg product covers hives.
+Keep urgent, uncertain, age and medical-history answers available regardless of stock.
+Never hide a contraindication to make an alternative appear suitable. Stock and
+history may still produce no match; no recommendation is guaranteed.
+
+Replace vague head-pressure, facial-pressure and feeling-hot wording with clearer
+headache, cold-related congestion and measured-temperature cards. Expand controlled
+question/choice labels in the model request so terse IDs retain context. No new
+questions, identity data, dependencies, migrations or session changes are introduced.
+The maximum remains 11. Existing Docker export/test/build commands apply; source
+edits hot-reload and dependency changes require rebuilding the frontend image.
+
+References: [NHS fexofenadine](https://www.nhs.uk/medicines/fexofenadine/about-fexofenadine/),
+[NHS decongestants](https://www.nhs.uk/medicines/decongestants/), and
+[NHS paracetamol](https://www.nhs.uk/medicines/paracetamol-for-adults/).
+Mappings remain demo discovery rules, not a clinical validation of Egyptian products.
+
+Verification: 23 focused backend tests, 128 frontend unit tests, all package
+typechecks and the Kiosk build pass. Browser run: 33 passed, three real-backend
+checks skipped, one existing catalogue clock/session test failed with the session
+reset; that test passed on an isolated rerun. All new guidance checks passed. Eight
+fictional adult/no-history live Groq cases (one per path) each returned an item.
+This is a bounded integration check, not proof of clinical suitability for all inputs.

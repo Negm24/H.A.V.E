@@ -1,5 +1,5 @@
 /** Discovery-only demo mappings. They are not prescribing or clinical eligibility rules. */
-export type GuideProduct = { id: number; active_ingredient: string | null; dosage_form: string | null; requires_prescription: boolean; stock_quantity: number; quantity_limit: number }
+export type GuideProduct = { id: number; name_en?: string; strength: string | null; active_ingredient: string | null; dosage_form: string | null; requires_prescription: boolean; stock_quantity: number; quantity_limit: number }
 export const coverage = {
   head: { label: 'head', ingredients: ['paracetamol', 'ibuprofen'], forms: ['tablet', 'caplet', 'capsule', 'oral'] },
   throat: { label: 'throat_cough', ingredients: ['paracetamol', 'ibuprofen'], forms: ['tablet', 'caplet', 'capsule', 'oral'] },
@@ -12,12 +12,14 @@ export const coverage = {
 } as const
 export type Area = keyof typeof coverage
 export const areas = Object.keys(coverage) as Area[]
-export function matchesPath(product: GuideProduct, area: Area) {
+export function matchesPath(product: GuideProduct, area: Area, ingredients: readonly string[] = coverage[area].ingredients) {
   const rule = coverage[area]
   const ingredient = (product.active_ingredient ?? '').toLowerCase()
   const form = (product.dosage_form ?? '').toLowerCase()
   return !product.requires_prescription && product.stock_quantity > 0 && product.quantity_limit > 0
-    && rule.ingredients.some(value => ingredient.includes(value)) && rule.forms.some(value => form.includes(value))
+    && Boolean(product.strength) && !/[+/]/.test(ingredient)
+    && !/baby|infant|children/i.test(product.name_en ?? '') && !form.includes('oral drops')
+    && ingredients.some(value => ingredient.includes(value)) && rule.forms.some(value => form.includes(value))
 }
 export function supportedAreas(products: readonly GuideProduct[]) {
   return areas.filter(area => products.some(product => matchesPath(product, area)))

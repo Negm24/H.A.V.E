@@ -18,6 +18,40 @@ def product(id=1, **overrides):
 
 
 class GuidanceTests(unittest.TestCase):
+    def test_routine_detail_mappings_have_actual_catalogue_candidates(self):
+        rows = [product(), product(2, active_ingredient='Ibuprofen'),
+                product(3, active_ingredient='Xylometazoline hydrochloride', dosage_form='Nasal drops'),
+                product(4, active_ingredient='Magaldrate', dosage_form='Oral suspension'),
+                product(5, active_ingredient='Cetirizine'),
+                product(6, active_ingredient='Dexpanthenol', dosage_form='Topical cream')]
+        from apps.catalogue.services.guidance_services import QUESTIONNAIRE
+        for area, questions in QUESTIONNAIRE.items():
+            for detail in questions[1]['options']:
+                if detail['id'] == 'unknown':
+                    continue
+                data = {**answers(), 'areas': [area], area + '.feel': [detail['id']]}
+                if area != 'head':
+                    del data['head.feel']
+                if area == 'back':
+                    data['back.context'] = ['exercise']
+                if area == 'stomach':
+                    data['stomach.pattern'] = ['occasional']
+                with self.subTest(area=area, detail=detail['id']):
+                    validate_answers(data)
+                    self.assertTrue(eligible_candidates(rows, data))
+
+    def test_per_card_filters_and_discovery_agree(self):
+        unusable = [product(1, active_ingredient='Paracetamol / Caffeine'),
+                    product(2, name_en='Panadol Baby & Infant'),
+                    product(3, dosage_form='Oral drops'), product(4, strength=None)]
+        self.assertEqual(candidates(unusable, 'head'), [])
+        data = {**answers(), 'areas': ['allergy'], 'allergy.feel': ['hives']}
+        del data['head.feel']
+        rows = [product(5, active_ingredient='Fexofenadine hydrochloride', strength='120 mg'), product(6, active_ingredient='Cetirizine')]
+        self.assertEqual([p['id'] for p in eligible_candidates(rows, data)], [6])
+        data['allergy.feel'] = ['eyes']
+        self.assertEqual(len(eligible_candidates(rows, data)), 2)
+
     def test_non_emergency_demo_answers_reach_the_model(self):
         self.assertIsNone(screening(answers()))
         for key, value in [("history", ["pregnant"]),
@@ -64,7 +98,7 @@ class GuidanceTests(unittest.TestCase):
         self.assertTrue(payload["response_format"]["json_schema"]["strict"])
         self.assertNotIn("test-key", request.data.decode())
         sent = json.loads(payload["messages"][1]["content"])
-        self.assertEqual(set(sent), {"answers", "catalogue"})
+        self.assertEqual(set(sent), {"answers", "symptom_context", "catalogue"})
         self.assertNotIn("price", sent["catalogue"][0])
         for bad in ['{"product_ids":[999]}', '{"product_ids":[true]}', '{"product_ids":[1],"dose":"unsafe"}', '{"product_ids":[1,1,1,1]}', 'not JSON']:
             response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {"content": bad}}]}).encode()

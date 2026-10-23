@@ -1016,3 +1016,18 @@ Unknown or insufficient information can yield no match; these seed-data checks a
 not a validated prescribing engine. See the matching Increment 2 entry for sources,
 contract v3 and Docker verification. Source edits hot-reload; dependency changes
 require rebuilding the frontend image. No dependencies or migrations added.
+
+## Catalogue-supported cards — 2026-10-23
+
+Use contract v4 ingredient mappings for individual routine symptom/context choices,
+not only the main symptom. Hide routine choices lacking a matching usable stocked
+product. Match discovery to final selection's exclusions for combinations, children's
+products, oral drops and missing strengths. Lower-back choices need ibuprofen stock;
+hives uses cetirizine/loratadine rather than the seeded fexofenadine 120 mg product.
+Clarify vague head-pressure, facial-pressure and feeling-hot card wording.
+
+Preserve urgent, unknown, age and medical-history answers independently of stock.
+Results can still be empty after history screening or model abstention; never force
+an unrelated medicine or encourage different answers. Send expanded controlled labels
+to the model for context. No extra questions: maximum remains 11. See Increment 2
+for sources and the unchanged Docker export/test/build workflow.

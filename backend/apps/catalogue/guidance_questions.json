@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "max_questions": 11,
   "coverage": {
     "head": {
@@ -166,25 +166,41 @@
             "id": "ache",
             "label": "aching",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "pulse",
             "label": "throbbing",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "pressure",
             "label": "pressure",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "fever",
             "label": "headache_fever",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "unknown",
@@ -622,19 +638,31 @@
             "id": "sore",
             "label": "sore_throat",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "swallow",
             "label": "pain_when_swallowing",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "fever",
             "label": "sore_throat_fever",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "unknown",
@@ -1059,19 +1087,31 @@
             "id": "ache",
             "label": "muscle_ache",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "movement",
             "label": "pain_after_movement",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "joint",
             "label": "joint_stiffness",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "unknown",
@@ -1090,19 +1130,30 @@
             "id": "lower_back",
             "label": "context_lower_back",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "ibuprofen"
+            ]
           },
           {
             "id": "exercise",
             "label": "context_exercise",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "swollen_joint",
             "label": "context_swollen_joint",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "hot_joint",
@@ -1538,19 +1589,31 @@
             "id": "hot",
             "label": "feeling_hot",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "aches",
             "label": "fever_body_aches",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "cold",
             "label": "fever_cold",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
           },
           {
             "id": "unknown",
@@ -1974,19 +2037,31 @@
             "id": "blocked",
             "label": "blocked_nose",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "xylometazoline",
+              "sodium chloride"
+            ]
           },
           {
             "id": "pressure",
             "label": "blocked_nose_pressure",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "xylometazoline",
+              "sodium chloride"
+            ]
           },
           {
             "id": "runny",
             "label": "runny_blocked_nose",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "xylometazoline",
+              "sodium chloride"
+            ]
           },
           {
             "id": "unknown",
@@ -2404,19 +2479,34 @@
             "id": "burning",
             "label": "burning_heartburn",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "pantoprazole",
+              "omeprazole",
+              "magaldrate"
+            ]
           },
           {
             "id": "sour",
             "label": "sour_taste",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "pantoprazole",
+              "omeprazole",
+              "magaldrate"
+            ]
           },
           {
             "id": "meal",
             "label": "heartburn_after_meal",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "pantoprazole",
+              "omeprazole",
+              "magaldrate"
+            ]
           },
           {
             "id": "unknown",
@@ -2871,19 +2961,33 @@
             "id": "sneeze",
             "label": "sneezing_itchy_nose",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "cetirizine",
+              "loratadine",
+              "fexofenadine"
+            ]
           },
           {
             "id": "eyes",
             "label": "itchy_watery_eyes",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "cetirizine",
+              "loratadine",
+              "fexofenadine"
+            ]
           },
           {
             "id": "hives",
             "label": "raised_itchy_rash",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "cetirizine",
+              "loratadine"
+            ]
           },
           {
             "id": "unknown",
@@ -3309,19 +3413,28 @@
             "id": "dry",
             "label": "dry_flaky",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "dexpanthenol"
+            ]
           },
           {
             "id": "rough",
             "label": "rough_dry_skin",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "dexpanthenol"
+            ]
           },
           {
             "id": "irritated",
             "label": "mild_dry_irritation",
             "exclusive": false,
-            "urgent": false
+            "urgent": false,
+            "ingredients": [
+              "dexpanthenol"
+            ]
           },
           {
             "id": "unknown",

@@ -581,3 +581,8 @@ Experimental alternatives update — 2026-10-23: Guidance now supports up to thr
 distinct ingredient alternatives, with targeted muscle/joint, heartburn, allergy and
 current-medicine followups (usually 7–8 questions, maximum 11). Alternatives are not a
 take-together plan. See the latest Increment 2 entry for limits and Docker checks.
+
+Catalogue-card update — 2026-10-23: Individual routine cards now require usable
+matching catalogue stock (contract v4), using the same exclusions as final selection.
+Urgent, uncertain and history answers remain available. See Increment 2 for Docker
+checks and scope limits; a suitable medicine is never guaranteed for every answer.
