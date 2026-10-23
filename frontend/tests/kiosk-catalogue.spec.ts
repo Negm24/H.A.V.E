@@ -84,7 +84,7 @@ for (const arabic of [false, true]) test(`catalogue grids, quantity animation, d
   await expect(page.getByRole('button', { name: /Touch to start/ })).toBeVisible()
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([])
 })
-test('search keyboard, typo matching, details return, sort and guidance skeleton', async ({ page }) => {
+test('search keyboard, typo matching, details return, sort and guidance entry', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 600 }); await fixture(page); await start(page)
   await page.getByRole('button', { name: 'Search', exact: true }).click()
   await page.getByRole('textbox', { name: 'Search', exact: true }).fill('relif')
@@ -97,7 +97,7 @@ test('search keyboard, typo matching, details return, sort and guidance skeleton
   await page.getByRole('button', { name: 'Back', exact: true }).click()
   await expect(page.getByRole('textbox')).toHaveValue('d')
   await page.getByRole('button', { name: 'Need help choosing?', exact: true }).click()
-  await expect(page.getByRole('dialog')).toContainText('Coming soon')
+  await expect(page.getByRole('dialog')).toContainText('AI catalogue demo')
   await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.getByRole('button', { name: 'Back', exact: true }).click()
   await page.locator('.category-card').first().click()

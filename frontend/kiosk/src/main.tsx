@@ -15,10 +15,15 @@ import ordersAr from './features/orders/locales/ar.json'
 import catalogueEn from '@have/shared/i18n/catalogue/en.json'
 import catalogueAr from '@have/shared/i18n/catalogue/ar.json'
 
+import symptomsEn from './features/symptoms/locales/en.json'
+import symptomsAr from './features/symptoms/locales/ar.json'
+
 const selectors = new URLSearchParams(window.location.search).getAll('terminal')
 const simulatorId = selectors.length ? (selectors.length === 1 && /^[a-f0-9]{32}$/.test(selectors[0]!) ? selectors[0] : 'invalid') : undefined
 configureTerminalSimulator(simulatorId)
 const i18n = await createAppI18n('kiosk')
+i18n.addResourceBundle('en', 'symptoms', symptomsEn)
+i18n.addResourceBundle('ar', 'symptoms', symptomsAr)
 i18n.addResourceBundle('en', 'catalogue', catalogueEn)
 i18n.addResourceBundle('ar', 'catalogue', catalogueAr)
 i18n.addResourceBundle('en', 'orders', ordersEn)

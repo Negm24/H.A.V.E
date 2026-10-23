@@ -18,7 +18,9 @@ export function terminalRequest<T>(path: string, options: RequestOptions = {}) {
   return request<T>(path, { ...options, terminalSimulatorId: simulatorId })
 }
 
+export type GuidanceResult = components['schemas']['GuidanceOutput']
 export const terminalApi = {
+  guidance: (token: string, answers: Record<string, string[]>, signal?: AbortSignal) => terminalRequest<GuidanceResult>('/api/v1/terminals/guidance/', { method: 'POST', body: { answers, demo_consent: true }, bearerToken: token, signal }),
   categories: (token: string, signal?: AbortSignal) => terminalRequest<CatalogueCategory[]>('/api/v1/terminals/catalogue/categories/', { bearerToken: token, signal }),
   products: (token: string, signal?: AbortSignal) => terminalRequest<CatalogueProduct[]>('/api/v1/terminals/catalogue/products/', { bearerToken: token, signal }),
   product: (token: string, id: number, signal?: AbortSignal) => terminalRequest<CatalogueProduct>(`/api/v1/terminals/catalogue/products/${id}/`, { bearerToken: token, signal }),

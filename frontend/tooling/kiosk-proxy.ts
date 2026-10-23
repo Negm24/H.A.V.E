@@ -5,6 +5,7 @@ import { loadEnv, type Plugin } from 'vite'
 import { requestOrigin } from './development-access.ts'
 
 const methods = new Map([
+  ['/api/v1/terminals/guidance/', 'POST'],
   ['/api/v1/terminals/sessions/', 'POST'],
   ['/api/v1/terminals/sessions/activity/', 'POST'],
   ['/api/v1/terminals/sessions/end/', 'POST'],

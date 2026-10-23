@@ -628,3 +628,84 @@ collection-required. Profile highlights include distinct awaiting-payment wordin
 History is a combined number-only badge. Session controller, API wrapper/proxy,
 locales and browser/unit coverage are updated. See backend/AUTH_GUIDE.md for the
 manual flow and expired-session safety checks; no new env values or migrations.
+
+
+## AI questionnaire demo — 2026-10-20
+
+Additive work on main 23710f9. Existing catalogue, baskets, purchase flows, identity,
+terminal simulator and session timing are preserved. The Kiosk's existing help
+entry now opens the short card questionnaire using the shared native dialog.
+Hub's guidance placeholder is unchanged. No cart addition or dispensing is triggered.
+
+This requested experiment supersedes the deterministic-only guidance design **for
+this local university demo branch only**. It does not rewrite the team's approved
+root requirements or make the seed catalogue clinically verified. Production use,
+reviewed treatment rules and medicine safety data remain separate work.
+
+After explicit fictional-input acknowledgement, the user completes/reviews answers
+and chooses Get demo recommendation. The backend authenticates the same device and
+session, validates the versioned questionnaire and screens conservatively. Red flags
+stop; uncertain answers, children/older people, pregnancy, medicines/allergy/history,
+chest/eye symptoms, moderate/severe or prolonged symptoms produce no medicine result.
+These are demonstration boundaries, not validated clinical triage.
+
+For the remaining fictional cases, Groq's configurable openai/gpt-oss-120b chooses
+one exact item from current machine-local, in-stock, non-prescription products with
+ingredient/strength data, or returns no match. The response is strictly checked;
+stock and session validity are checked again. The displayed name/strength/stock come
+from the database, never model text. No dosage, generated safety claim, automatic
+cart addition, purchase, reservation or stock mutation is provided. Results carry a
+persistent demo disclaimer. The sample catalogue is not sufficient for real treatment.
+
+Selected answer codes and a small catalogue projection go to Groq, without identity,
+phone, account, token or device credentials. Application code does not persist these
+answers/results. Closing, expiry and Start over clear local state and abort requests;
+closing cannot retract a request already received by the provider. Configure Groq's
+Data Controls for the account before any further testing; use fictional cases only.
+The existing inactivity warning closes the modal as it does other catalogue dialogs.
+
+### Configuration and Docker checks
+
+In the private root .env (never frontend/.env or VITE_*):
+
+```dotenv
+GUIDANCE_DEMO_ENABLED=true
+GROQ_API_KEY=YOUR_PRIVATE_KEY
+GROQ_MODEL=openai/gpt-oss-120b
+```
+
+The endpoint is disabled unless DEBUG and GUIDANCE_DEMO_ENABLED are both true.
+Public HTTPS development disables DEBUG, so this experiment is local-only. Missing
+keys, provider timeout/errors or quota limits yield a visible unavailable state;
+there is no fabricated fallback. A device-wide 30-second cooldown limits requests.
+The provider's free plan has additional account-level quotas. No paid fallback.
+
+```powershell
+docker compose --profile frontend up -d db redis backend kiosk
+docker compose up -d --force-recreate --no-deps backend
+docker compose exec backend uv run python manage.py test apps.catalogue.tests.test_guidance apps.catalogue.tests.test_guidance_api
+docker compose exec kiosk pnpm typecheck
+docker compose exec kiosk pnpm test
+docker compose exec kiosk pnpm build
+docker compose exec kiosk pnpm exec playwright test tests/kiosk-auth.spec.ts tests/kiosk-catalogue.spec.ts tests/kiosk-guidance.spec.ts --workers=1
+```
+
+Normal source edits hot-reload. Dependency/manifest changes require rebuilding the
+frontend image; backend dependency changes require rebuilding backend. No dependency
+or database migration is added by this feature. Existing provisioned credentials and
+sample catalogue should be reused; do not reseed/reset teammate data.
+
+Question branches are in features/symptoms/assessment.ts; the backend validates the
+exported guidance_questions.json. After editing branches, regenerate from the root:
+
+```powershell
+docker compose exec -T kiosk node tooling/export-questionnaire.ts | Set-Content -Encoding utf8 backend/apps/catalogue/guidance_questions.json
+```
+
+Manual acceptance: Browse → Need help choosing? → acknowledge fictional inputs →
+Head / None / Forehead / Aching / Today / Mild / Adult / None → review → request.
+With a configured key and stocked catalogue, inspect the AI-selected demo item or
+honest no-match result. Try history/unknown/red flags: no medicine suggestion. Close
+and reopen: all answers empty. Change main symptom: answer the new safety checklist.
+Stop provider access: a retryable error appears without inventing a result. Repeat in
+Arabic and as a customer, then Start over to confirm identity clearing.

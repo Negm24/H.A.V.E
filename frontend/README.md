@@ -568,3 +568,8 @@ four typechecks/builds and 100 browser regressions pass (nine opt-in live/public
 cases skipped). Backend: 340 tests pass; OpenAPI validates and no migration drift.
 This includes Arabic/English guest/customer Continue/End at 1024×600 and late
 receipt-activity cleanup. No real or automatic sandbox card submission occurred.
+
+
+## Local AI questionnaire demo — 2026-10-20
+
+The Kiosk help entry now has an optional Groq catalogue-selection experiment for fictional inputs only. See [configuration, privacy limits and Docker checks](CODEX-Increment-2.md#ai-questionnaire-demo--2026-10-20). Existing catalogue/cart/checkout behavior is preserved. A private backend API key is required; no live model evaluation is implied by mocked tests.

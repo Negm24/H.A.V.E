@@ -1194,6 +1194,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/terminals/guidance/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Synthetic university-demo answers only. No persistence or stock mutation. */
+        post: operations["terminals_guidance_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/terminals/orders/": {
         parameters: {
             query?: never;
@@ -1625,6 +1642,25 @@ export interface components {
         Error: {
             detail: string;
         };
+        GuidanceInput: {
+            answers: {
+                [key: string]: string[];
+            };
+            demo_consent: boolean;
+        };
+        GuidanceOutput: {
+            status: components["schemas"]["GuidanceOutputStatusEnum"];
+            product: components["schemas"]["ProductOutput"] | null;
+            demo_only: boolean;
+        };
+        /**
+         * @description * `demo_recommendation` - demo_recommendation
+         *     * `no_match` - no_match
+         *     * `urgent` - urgent
+         *     * `needs_advice` - needs_advice
+         * @enum {string}
+         */
+        GuidanceOutputStatusEnum: "demo_recommendation" | "no_match" | "urgent" | "needs_advice";
         HubCategoriesOutput: {
             availability_scope: components["schemas"]["AvailabilityScopeEnum"];
             /** Format: date-time */
@@ -6024,6 +6060,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    terminals_guidance_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuidanceInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["GuidanceInput"];
+                "multipart/form-data": components["schemas"]["GuidanceInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuidanceOutput"];
                 };
             };
         };

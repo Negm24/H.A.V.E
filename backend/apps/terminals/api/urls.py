@@ -4,7 +4,10 @@ from .views.session_views import TerminalStartView, TerminalActivityView, Termin
 from .views.cart_views import CartView, CartItemView, CartRevisionView
 
 
+from apps.catalogue.api.views.guidance_views import GuidanceView
+
 urlpatterns = [
+    path("guidance/", GuidanceView.as_view(), name="terminal-guidance"),
     path("sessions/", TerminalStartView.as_view(), name="terminal-session-start"),
     path("sessions/activity/", TerminalActivityView.as_view(), name="terminal-session-activity"),
     path("sessions/end/", TerminalEndView.as_view(), name="terminal-session-end"),
