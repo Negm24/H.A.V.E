@@ -904,3 +904,17 @@ the other documented restrictions remain. This supersedes the moderate-severity
 restriction in the 2026-10-20 demo entry. Groq may still return no catalogue match.
 A live connection check also identified the need for explicit HTTP User-Agent
 and Accept headers; these are now supplied without exposing credentials.
+
+
+## Demo result presentation update — 2026-10-23
+
+The repeated result-screen disclaimer banner and blanket non-emergency
+needs-advice outcome are removed from the fictional-input demonstration. Valid
+non-emergency questionnaire answers now reach Groq, including medical-history,
+age, duration, severity and uncertainty selections. The model is instructed to
+consider all those answers and may abstain when suitability is unclear. A null
+selection still displays an honest no-match result. The introductory fictional-
+input acknowledgement, Demo result title, urgent red-flag stops, stock/Rx
+filters, private credentials and session cleanup remain. Legacy needs_advice
+responses render the neutral no-match text. This supersedes the earlier blanket
+non-emergency exclusions for this local demo branch only.

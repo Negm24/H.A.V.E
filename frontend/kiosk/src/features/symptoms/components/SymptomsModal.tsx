@@ -63,8 +63,7 @@ export function SymptomsModal({ onClose }: { onClose: () => void }) {
   return <CatalogueModal title={heading} className="symptom-modal" close={onClose} wide>
     <div className="symptom-modal-toolbar"><span>{consent && !result && !busy && !stop && !review && `${t(copy.step)} ${numbers.format(index + 1)} / ${numbers.format(list.length)}`}</span><Button variant="danger" onClick={() => controller.reset()}>{sessionText('startOver')}</Button></div>
     {!consent ? <div className="symptom-flow"><p>{t('ai_intro')}</p><p>{t('ai_privacy')}</p><Button variant="primary" onClick={() => setConsent(true)}>{t('ai_begin')}</Button></div> : busy ? <div role="status" className="symptom-flow"><p>{t('ai_loading')}</p></div> : result ? <div className="symptom-flow">
-      <div className="symptom-notice">{t('ai_disclaimer')}</div>
-      <div className="symptom-result" role="status"><h3>{t(`ai_${result.status}`)}</h3>
+      <div className="symptom-result" role="status"><h3>{t(result.status === 'needs_advice' ? 'ai_no_match' : `ai_${result.status}`)}</h3>
         {result.product && <><h3>{i18n.language === 'ar' ? result.product.name_ar : result.product.name_en}</h3><p><bdi>{result.product.active_ingredient} · {result.product.strength}</bdi></p><p>{result.product.pack_description}</p><p>{t('ai_stock', { count: result.product.stock_quantity })}</p><p>{t('ai_reason')}</p></>}
       </div>
       <div className="symptom-actions"><Button onClick={() => setResult(null)}>{t('ai_back')}</Button><Button onClick={onClose}>{t('close_guide')}</Button></div>

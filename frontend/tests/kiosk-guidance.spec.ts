@@ -54,6 +54,7 @@ for (const arabic of [false, true]) test(`AI recommendation uses answers and cle
   const t = arabic ? ar : en
   await page.getByRole('button', { name: t.ai_submit }).click()
   await expect(page.getByRole('dialog')).toContainText(arabic ? 'منتج كتالوج تجريبي' : 'Demo catalogue item')
+  await expect(page.getByRole('dialog').getByText(t.ai_disclaimer, { exact: true })).toHaveCount(0)
   expect(calls).toHaveLength(1)
   expect(calls[0]).toEqual({ demo_consent: true, answers: { areas: ['head'], urgent: ['none'], 'head.location': ['front'], 'head.feel': ['ache'], duration: ['today'], severity: ['mild'], age: ['adult'], history: ['none'] } })
   const bounds = await page.getByRole('dialog').boundingBox()
@@ -63,6 +64,12 @@ for (const arabic of [false, true]) test(`AI recommendation uses answers and cle
   await page.getByRole('button', { name: t.ai_begin }).click()
   await expect(page.getByRole('button', { name: t.head, exact: true })).toHaveAttribute('aria-pressed', 'false')
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([])
+})
+test('legacy non-emergency outcome shows a neutral no-match result', async ({ page }) => {
+  await fixture(page, 200, 'needs_advice'); await open(page); await complete(page)
+  await page.getByRole('button', { name: en.ai_submit }).click()
+  await expect(page.getByRole('dialog')).toContainText(en.ai_no_match)
+  await expect(page.getByRole('dialog').getByText(en.ai_needs_advice, { exact: true })).toHaveCount(0)
 })
 test('editing main symptom requires a fresh safety checklist', async ({ page }) => {
   await fixture(page); await open(page); await complete(page)

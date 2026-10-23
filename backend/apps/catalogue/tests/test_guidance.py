@@ -18,13 +18,13 @@ def product(id=1, **overrides):
 
 
 class GuidanceTests(unittest.TestCase):
-    def test_screening_is_conservative(self):
+    def test_non_emergency_demo_answers_reach_the_model(self):
         self.assertIsNone(screening(answers()))
         for key, value in [("history", ["pregnant"]), ("history", ["medicines"]),
                            ("age", ["child"]), ("duration", ["longer"]),
                            ("severity", ["severe"]), ("urgent", ["unknown"])]:
             with self.subTest(key=key, value=value):
-                self.assertEqual(screening({**answers(), key: value}), "needs_advice")
+                self.assertIsNone(screening({**answers(), key: value}))
         self.assertEqual(screening({**answers(), "urgent": ["breathing"]}), "urgent")
 
     def test_moderate_dry_cough_reaches_model_screening(self):
@@ -44,7 +44,7 @@ class GuidanceTests(unittest.TestCase):
 
     def test_history_followups_required(self):
         data = {**answers(), "history": ["allergy", "condition"], "allergy.reaction": ["rash"], "conditions": ["heart"]}
-        self.assertEqual(screening(data), "needs_advice")
+        self.assertIsNone(screening(data))
         del data["conditions"]
         with self.assertRaises(ValueError):
             screening(data)
