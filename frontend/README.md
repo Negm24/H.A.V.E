@@ -586,3 +586,8 @@ Catalogue-card update — 2026-10-23: Individual routine cards now require usabl
 matching catalogue stock (contract v4), using the same exclusions as final selection.
 Urgent, uncertain and history answers remain available. See Increment 2 for Docker
 checks and scope limits; a suitable medicine is never guaranteed for every answer.
+
+Empty-result explanations — 2026-10-23: The questionnaire now explains why no demo
+medicine was returned using backend reason codes and bilingual messages. Model
+abstention is distinguished from stock and answer exclusions. See Increment 2 for
+API details and the unchanged Docker verification workflow.

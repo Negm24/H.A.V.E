@@ -46,6 +46,7 @@ class GuidanceApiTests(SimpleTestCase):
         catalogue.side_effect = [[product()], [product(stock_quantity=0)]]
         result = self.send()
         self.assertEqual(result.data["status"], "no_match")
+        self.assertEqual(result.data["no_match_reason"], "stock_changed")
         self.assertIsNone(result.data["product"])
         session.assert_called_once_with(self.terminal, "read", "test-session")
         catalogue.side_effect = [[product()]]
@@ -57,7 +58,24 @@ class GuidanceApiTests(SimpleTestCase):
     @patch("apps.catalogue.api.views.guidance_views.get_redis_client")
     def test_empty_catalogue_does_not_call_model(self, redis, catalogue, model):
         redis.return_value.set.return_value = True
-        self.assertEqual(self.send().data["status"], "no_match")
+        result = self.send()
+        self.assertEqual(result.data["status"], "no_match")
+        self.assertEqual(result.data["no_match_reason"], "no_stock")
+        model.assert_not_called()
+
+    @patch("apps.catalogue.api.views.guidance_views.operate")
+    @patch("apps.catalogue.api.views.guidance_views.select_with_groq", return_value=[])
+    @patch("apps.catalogue.api.views.guidance_views.list_products", return_value=[product()])
+    @patch("apps.catalogue.api.views.guidance_views.get_redis_client")
+    def test_distinguishes_model_abstention_from_answer_exclusion(self, redis, catalogue, model, session):
+        redis.return_value.set.return_value = True
+        result = self.send()
+        self.assertEqual(result.data['no_match_reason'], 'model_no_match')
+        model.assert_called_once()
+        model.reset_mock()
+        result = self.send({'answers': {**answers(), 'age': ['teen']}, 'demo_consent': True})
+        self.assertEqual(result.data['no_match_reason'], 'age_not_supported')
+        self.assertEqual(result.data['recommendations'], [])
         model.assert_not_called()
 
     @patch("apps.catalogue.api.views.guidance_views.operate")
@@ -90,4 +108,5 @@ class GuidanceApiTests(SimpleTestCase):
         result = self.send()
         self.assertEqual([item['product']['id'] for item in result.data['recommendations']], [2, 1])
         self.assertEqual(result.data['product']['id'], 2)
+        self.assertIsNone(result.data['no_match_reason'])
         self.assertEqual(result.data['recommendations'][0]['reason'], 'anti_inflammatory_option')

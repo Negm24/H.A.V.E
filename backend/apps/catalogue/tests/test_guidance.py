@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 from apps.catalogue.services.guidance_services import (
-    screening, validate_answers, candidates, eligible_candidates, select_with_groq, next_with_groq, next_question_candidates, GuidanceUnavailable,
+    screening, validate_answers, candidates, assess_candidates, eligible_candidates, select_with_groq, next_with_groq, next_question_candidates, GuidanceUnavailable,
 )
 
 
@@ -18,6 +18,25 @@ def product(id=1, **overrides):
 
 
 class GuidanceTests(unittest.TestCase):
+    def test_no_match_reasons_describe_the_actual_filter(self):
+        cases = [
+            ([], answers(), 'no_stock'),
+            ([product()], {**answers(), 'age': ['child']}, 'age_not_supported'),
+            ([product()], {**answers(), 'history': ['unknown']}, 'history_uncertain'),
+            ([product()], {**answers(), 'history': ['allergy'], 'allergy.medicine': ['other']}, 'allergy_details'),
+            ([product()], {**answers(), 'history': ['medicines'], 'medicines.current': ['unknown']}, 'medicine_details'),
+            ([product()], {**answers(), 'history': ['medicines'], 'medicines.current': ['blood_thinner']}, 'medicine_interaction'),
+            ([product()], {**answers(), 'history': ['condition'], 'conditions': ['kidney']}, 'condition_details'),
+            ([product()], {**answers(), 'history': ['allergy'], 'allergy.medicine': ['paracetamol']}, 'no_eligible_options'),
+        ]
+        for rows, data, expected in cases:
+            with self.subTest(reason=expected):
+                self.assertEqual(assess_candidates(rows, data), ([], expected))
+        back = {**answers(), 'areas': ['back'], 'back.feel': ['ache'], 'back.context': ['lower_back']}
+        del back['head.feel']
+        self.assertEqual(assess_candidates([product()], back), ([], 'symptom_not_covered'))
+        self.assertEqual(assess_candidates([product()], answers()), ([product()], None))
+
     def test_routine_detail_mappings_have_actual_catalogue_candidates(self):
         rows = [product(), product(2, active_ingredient='Ibuprofen'),
                 product(3, active_ingredient='Xylometazoline hydrochloride', dosage_form='Nasal drops'),

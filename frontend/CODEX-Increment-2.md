@@ -879,3 +879,32 @@ checks skipped, one existing catalogue clock/session test failed with the sessio
 reset; that test passed on an isolated rerun. All new guidance checks passed. Eight
 fictional adult/no-history live Groq cases (one per path) each returned an item.
 This is a bounded integration check, not proof of clinical suitability for all inputs.
+
+## Explain empty guidance results — 2026-10-23
+
+The final guidance response adds nullable `no_match_reason`. Deterministic codes
+distinguish unavailable usable stock, unsupported symptom details, unsupported or
+uncertain age, uncertain history, unspecified allergies/medicines, blood-thinner
+interaction checks, unsupported condition checks and exclusion of all candidates.
+Return `model_no_match` only when eligible products reached the AI and it returned
+no selection. Return `stock_changed` when selected products fail the final availability
+check. Successful and urgent outcomes have a null reason. No raw answers or provider
+text are added to the result or stored.
+
+The modal displays an English/Arabic explanation below the empty-result heading.
+Missing or unrecognised reasons use an honest unspecified-reason fallback. Do not
+invent a clinical explanation for model abstention. Review answers and Close remain
+available, with no additional questions or changes to selection rules or sessions.
+The standalone preview uses the same reason classifier with synthetic stock/sessions.
+
+Regenerate OpenAPI types and run the existing Docker backend guidance tests,
+frontend typechecks/unit tests, Kiosk build and guidance/authentication browser suites.
+Use the Docker workflow above: source edits hot-reload; dependency changes require
+rebuilding images. No dependency changes or migrations are introduced.
+
+Empty-result verification: 25 focused backend tests and 128 frontend unit tests
+pass. All package typechecks, OpenAPI validation and the independent Kiosk build
+pass. Guidance/authentication browser checks: 34 passed, two real-backend cases
+skipped because Docker is unavailable. New browser coverage checks stock, age,
+medicine-detail and model-abstention explanations in English/Arabic plus the legacy
+fallback. These checks use mocked provider responses; no new live model call is needed.

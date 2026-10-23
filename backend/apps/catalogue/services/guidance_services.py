@@ -109,9 +109,16 @@ def ingredient_parts(product):
     return tuple(sorted(part.strip().casefold() for part in re.split(r"[/+]", product.get("active_ingredient") or "") if part.strip()))
 
 
-def eligible_candidates(products, answers):
+NO_MATCH_REASONS = ["no_stock", "symptom_not_covered", "age_not_supported", "history_uncertain",
+                    "allergy_details", "medicine_details", "medicine_interaction", "condition_details",
+                    "no_eligible_options", "model_no_match", "stock_changed"]
+
+
+def assess_candidates(products, answers):
     """Conservative prototype exclusions, not a clinically validated prescribing engine."""
     available = candidates(products, answers["areas"][0])
+    if not available:
+        return [], "no_stock"
     # Use the same per-card catalogue mappings as the UI. Multiple selected
     # details must all be covered; never fill a gap with an unrelated medicine.
     profiles = [option["ingredients"] for question in QUESTIONNAIRE[answers["areas"][0]]
@@ -119,20 +126,26 @@ def eligible_candidates(products, answers):
                 and option["id"] in answers.get(question["id"], [])]
     available = [p for p in available if all(any(value in p["active_ingredient"].casefold()
                  for value in ingredients) for ingredients in profiles)]
+    if not available:
+        return [], "symptom_not_covered"
     age = answers.get("age", ["unknown"])
     history = set(answers.get("history", []))
     allergy = set(answers.get("allergy.medicine", []))
     medicines = set(answers.get("medicines.current", []))
     conditions = set(answers.get("conditions", []))
     # The seed lacks the age/weight and clinical detail needed for these cases.
-    if age not in [["adult"], ["older"]] or "unknown" in history:
-        return []
+    if age not in [["adult"], ["older"]]:
+        return [], "age_not_supported"
+    if "unknown" in history:
+        return [], "history_uncertain"
     if "allergy" in history and (not allergy or allergy & {"other", "unknown"}):
-        return []
-    if "medicines" in history and (not medicines or medicines & {"other", "unknown", "blood_thinner"}):
-        return []
+        return [], "allergy_details"
+    if "medicines" in history and (not medicines or medicines & {"other", "unknown"}):
+        return [], "medicine_details"
+    if "medicines" in history and "blood_thinner" in medicines:
+        return [], "medicine_interaction"
     if "condition" in history and (not conditions or conditions & {"other", "unknown", "kidney", "liver"}):
-        return []
+        return [], "condition_details"
     result = []
     for product in available:
         parts = ingredient_parts(product)
@@ -152,7 +165,11 @@ def eligible_candidates(products, answers):
             if age != ["adult"] or history & {"pregnant", "feeding"} or "nsaid" in allergy or medicines & {"nsaid", "steroid"} or conditions & {"heart", "asthma", "ulcer"}:
                 continue
         result.append(product)
-    return result
+    return result, None if result else "no_eligible_options"
+
+
+def eligible_candidates(products, answers):
+    return assess_candidates(products, answers)[0]
 
 
 def reason_for(product, answers):

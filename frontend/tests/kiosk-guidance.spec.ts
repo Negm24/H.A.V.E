@@ -3,7 +3,7 @@ import { questions, answered } from '../kiosk/src/features/symptoms/assessment.t
 import en from '../kiosk/src/features/symptoms/locales/en.json' with { type: 'json' }
 import ar from '../kiosk/src/features/symptoms/locales/ar.json' with { type: 'json' }
 
-async function fixture(page: Page, status = 200, outcome = 'demo_recommendation', count = 2) {
+async function fixture(page: Page, status = 200, outcome = 'demo_recommendation', count = 2, noMatchReason: string | null = null) {
   const calls: unknown[] = []
   const stock = [['Paracetamol', 'Tablets'], ['Pantoprazole', 'Tablets'], ['Cetirizine', 'Tablets'], ['Dexpanthenol', 'Topical cream'], ['Xylometazoline hydrochloride', 'Nasal drops']].map(([active_ingredient, dosage_form], i) => ({ id: i + 1, strength: 'Demo strength', active_ingredient, dosage_form, stock_quantity: 12, quantity_limit: 3, requires_prescription: false }))
   const customer = { id: 'demo-customer', account_type: 'CUSTOMER', first_name: 'Kiosk', last_name: 'Tester', phone_number: '+201099998876', email: 'test@example.test', date_of_birth: '24-01-2005' }
@@ -29,7 +29,7 @@ async function fixture(page: Page, status = 200, outcome = 'demo_recommendation'
     else if (path.endsWith('/guidance/')) {
       calls.push(route.request().postDataJSON()); code = status
       const recommendations = outcome === 'demo_recommendation' ? Array.from({ length: count }, (_, index) => ({ product: { id: index + 1, name_en: index === 0 ? 'Demo catalogue item' : `Demo alternative ${index + 1}`, name_ar: index === 0 ? 'منتج كتالوج تجريبي' : `بديل تجريبي ${index + 1}`, active_ingredient: `Demo ingredient ${index + 1}`, strength: 'Demo strength', pack_description: 'Demo pack', stock_quantity: 4 }, reason: index === 0 ? 'pain_option' : 'anti_inflammatory_option' })) : []
-      body = { status: outcome, demo_only: true, product: recommendations[0]?.product ?? null, recommendations }
+      body = { status: outcome, demo_only: true, product: recommendations[0]?.product ?? null, recommendations, no_match_reason: noMatchReason }
     }
     await route.fulfill({ status: code, contentType: 'application/json', body: code === 204 ? '' : JSON.stringify(body) })
   })
@@ -99,7 +99,17 @@ test('legacy non-emergency outcome shows a neutral no-match result', async ({ pa
   await fixture(page, 200, 'needs_advice'); await open(page); await complete(page)
   await page.getByRole('button', { name: en.ai_submit }).click()
   await expect(page.getByRole('dialog')).toContainText(en.ai_no_match)
+  await expect(page.getByRole('dialog')).toContainText(en.no_match_unspecified)
   await expect(page.getByRole('dialog').getByText(en.ai_needs_advice, { exact: true })).toHaveCount(0)
+})
+
+for (const arabic of [false, true]) for (const reason of ['no_stock', 'age_not_supported', 'medicine_details', 'model_no_match'] as const) test(`no recommendation explains ${reason} in ${arabic ? 'Arabic' : 'English'}`, async ({ page }) => {
+  await fixture(page, 200, 'no_match', 0, reason); await open(page, arabic); await complete(page, arabic)
+  const t = arabic ? ar : en
+  await page.getByRole('button', { name: t.ai_submit }).click()
+  await expect(page.getByRole('dialog')).toContainText(t[`no_match_${reason}`])
+  await expect(page.locator('.symptom-result-card')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: t.ai_back, exact: true })).toBeVisible()
 })
 test('editing main symptom requires new details and a fresh safety checklist', async ({ page }) => {
   await fixture(page); await open(page); await complete(page)

@@ -1031,3 +1031,13 @@ Results can still be empty after history screening or model abstention; never fo
 an unrelated medicine or encourage different answers. Send expanded controlled labels
 to the model for context. No extra questions: maximum remains 11. See Increment 2
 for sources and the unchanged Docker export/test/build workflow.
+
+## Explain empty guidance results — 2026-10-23
+
+When no medicine is returned, show the backend's `no_match_reason` as a clear
+English/Arabic explanation. Distinguish stock, symptom coverage, age, missing history,
+allergy/medicine/condition checks, all-candidate exclusions, model abstention and final
+stock changes. Do not claim a specific medical reason the model did not supply.
+Missing/unknown reason codes show an unspecified-reason fallback. Keep Review answers
+and Close available. No questionnaire, eligibility, session or language-policy changes.
+See the matching Increment 2 entry for API details and Docker verification.

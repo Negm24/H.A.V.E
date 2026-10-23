@@ -1672,6 +1672,7 @@ export interface components {
             status: components["schemas"]["GuidanceOutputStatusEnum"];
             product: components["schemas"]["ProductOutput"] | null;
             recommendations: components["schemas"]["GuidanceRecommendation"][];
+            no_match_reason: (components["schemas"]["NoMatchReasonEnum"] | components["schemas"]["NullEnum"]) | null;
             demo_only: boolean;
         };
         /**
@@ -1727,6 +1728,23 @@ export interface components {
          * @enum {string}
          */
         NextStepEnum: "email";
+        /**
+         * @description * `no_stock` - no_stock
+         *     * `symptom_not_covered` - symptom_not_covered
+         *     * `age_not_supported` - age_not_supported
+         *     * `history_uncertain` - history_uncertain
+         *     * `allergy_details` - allergy_details
+         *     * `medicine_details` - medicine_details
+         *     * `medicine_interaction` - medicine_interaction
+         *     * `condition_details` - condition_details
+         *     * `no_eligible_options` - no_eligible_options
+         *     * `model_no_match` - model_no_match
+         *     * `stock_changed` - stock_changed
+         * @enum {string}
+         */
+        NoMatchReasonEnum: "no_stock" | "symptom_not_covered" | "age_not_supported" | "history_uncertain" | "allergy_details" | "medicine_details" | "medicine_interaction" | "condition_details" | "no_eligible_options" | "model_no_match" | "stock_changed";
+        /** @enum {unknown} */
+        NullEnum: null;
         /**
          * @description * `FREE` - FREE
          *     * `IN_USE` - IN_USE
