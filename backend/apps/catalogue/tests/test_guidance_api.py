@@ -38,7 +38,7 @@ class GuidanceApiTests(SimpleTestCase):
         self.assertEqual(result["Retry-After"], "30")
 
     @patch("apps.catalogue.api.views.guidance_views.operate")
-    @patch("apps.catalogue.api.views.guidance_views.select_with_groq", return_value=1)
+    @patch("apps.catalogue.api.views.guidance_views.select_with_groq", return_value=[1])
     @patch("apps.catalogue.api.views.guidance_views.list_products")
     @patch("apps.catalogue.api.views.guidance_views.get_redis_client")
     def test_rechecks_stock_and_session(self, redis, catalogue, model, session):
@@ -79,3 +79,15 @@ class GuidanceApiTests(SimpleTestCase):
         result = self.send({"answers": {"areas": ["head"]}, "demo_consent": True}, view=GuidanceNextView)
         self.assertEqual(result.status_code, 409)
         model.assert_not_called()
+
+    @patch('apps.catalogue.api.views.guidance_views.operate')
+    @patch('apps.catalogue.api.views.guidance_views.select_with_groq', return_value=[2, 1])
+    @patch('apps.catalogue.api.views.guidance_views.list_products')
+    @patch('apps.catalogue.api.views.guidance_views.get_redis_client')
+    def test_ranked_alternatives_preserve_order_and_legacy_first_product(self, redis, catalogue, model, session):
+        redis.return_value.set.return_value = True
+        catalogue.return_value = [product(), product(2, active_ingredient='Ibuprofen')]
+        result = self.send()
+        self.assertEqual([item['product']['id'] for item in result.data['recommendations']], [2, 1])
+        self.assertEqual(result.data['product']['id'], 2)
+        self.assertEqual(result.data['recommendations'][0]['reason'], 'anti_inflammatory_option')

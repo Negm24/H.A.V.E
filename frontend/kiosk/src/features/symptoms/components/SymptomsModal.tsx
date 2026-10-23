@@ -49,6 +49,7 @@ export function SymptomsModal({ onClose }: { onClose: () => void }) {
   const index = Math.max(0, list.findIndex(item => item.id === currentId))
   const question = list[index]
   const stop = emergency(answers)
+  const recommendations = result?.recommendations ?? (result?.product ? [{ product: result.product, reason: null }] : [])
   const completeCount = list.filter(item => answered(item, answers)).length
   const numbers = new Intl.NumberFormat(i18n.language)
   const incomplete = Object.values(answers).some(values => values.includes('unknown'))
@@ -86,7 +87,12 @@ export function SymptomsModal({ onClose }: { onClose: () => void }) {
     <div className="symptom-modal-toolbar"><span>{consent && !result && !busy && !stop && !review && `${t(copy.step)} ${numbers.format(Math.min(completeCount + 1, list.length))} / ${numbers.format(list.length)}`}</span><Button variant="danger" onClick={() => controller.reset()}>{sessionText('startOver')}</Button></div>
     {!consent ? <div className="symptom-flow"><p>{t('ai_intro')}</p><p>{t('ai_privacy')}</p>{!supported && <p role="status">{t(catalogueSnapshot === null ? 'guide_loading' : 'guide_no_supported')}</p>}<Button variant="primary" disabled={!supported} onClick={() => setConsent(true)}>{t('ai_begin')}</Button></div> : busy ? <div role="status" className="symptom-flow"><p>{t(routing ? 'ai_next_loading' : 'ai_loading')}</p></div> : result ? <div className="symptom-flow">
       <div className="symptom-result" role="status"><h3>{t(result.status === 'needs_advice' ? 'ai_no_match' : `ai_${result.status}`)}</h3>
-        {result.product && <><h3>{i18n.language === 'ar' ? result.product.name_ar : result.product.name_en}</h3><p><bdi>{result.product.active_ingredient} · {result.product.strength}</bdi></p><p>{result.product.pack_description}</p><p>{t('ai_stock', { count: result.product.stock_quantity })}</p><p>{t('ai_reason')}</p></>}
+        {recommendations.length > 0 && <><p>{t('alternatives_only')}</p><div className="symptom-result-products">{recommendations.map((item, rank) => <article className="symptom-result-card" key={item.product.id}>
+          <span className="symptom-note">{t('alternative_rank', { rank: numbers.format(rank + 1) })}</span>
+          <h3>{i18n.language === 'ar' ? item.product.name_ar : item.product.name_en}</h3>
+          <p><bdi>{item.product.active_ingredient} · {item.product.strength}</bdi></p><p>{item.product.pack_description}</p>
+          <p>{t('ai_stock', { count: item.product.stock_quantity })}</p><p>{t(item.reason ? `reason_${item.reason}` : 'ai_reason')}</p>
+        </article>)}</div></>}
       </div>
       <div className="symptom-actions"><Button onClick={() => setResult(null)}>{t('ai_back')}</Button><Button onClick={onClose}>{t('close_guide')}</Button></div>
     </div> : <div className="symptom-flow">

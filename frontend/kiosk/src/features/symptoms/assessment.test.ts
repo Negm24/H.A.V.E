@@ -18,7 +18,7 @@ describe('finite catalogue-aware questionnaire', () => {
     expect(questions({})[0]!.options.some(o => ['chest', 'eyes', 'other'].includes(o.id))).toBe(false)
     expect(questions({ areas: ['throat'] }).find(q => q.id === 'throat.feel')!.options.some(o => ['dry', 'mucus'].includes(o.id))).toBe(false)
   })
-  it('terminates at review in 7–9 completed questions for every area and history combination', () => {
+  it('terminates at review in 7–11 completed questions for every area and history combination', () => {
     const flags = ['allergy', 'condition', 'medicines', 'pregnant', 'feeding']
     for (const area of areas) for (let mask = 0; mask < 32; mask++) {
       let a: Answers = {}, current: string | null = 'areas', count = 0
@@ -28,7 +28,7 @@ describe('finite catalogue-aware questionnaire', () => {
         for (const value of values.length ? values : ['none']) a = selectAnswer(a, question, value)
         count++; current = nextQuestion(a, question.id)
       }
-      expect(current).toBeNull(); expect(count).toBeGreaterThanOrEqual(7); expect(count).toBeLessThanOrEqual(9)
+      expect(current).toBeNull(); expect(count).toBeGreaterThanOrEqual(7); expect(count).toBeLessThanOrEqual(11)
       expect(questions(a)).toHaveLength(count)
     }
   })
@@ -54,9 +54,9 @@ describe('finite catalogue-aware questionnaire', () => {
   })
   it('has only selected history followups and removes stale ones', () => {
     expect(ids({ history: ['none'] })).not.toContain('conditions')
-    expect(ids({ history: ['allergy', 'condition'] })).toContain('allergy.reaction')
+    expect(ids({ history: ['allergy', 'condition'] })).toContain('allergy.medicine')
     expect(ids({ history: ['allergy', 'condition'] })).toContain('conditions')
-    expect(prune({ ...base(), 'allergy.reaction': ['rash'], conditions: ['heart'] })).not.toHaveProperty('conditions')
+    expect(prune({ ...base(), 'allergy.medicine': ['paracetamol'], conditions: ['heart'] })).not.toHaveProperty('conditions')
     const q = questions(base()).find(q => q.id === 'history')!
     let a = selectAnswer(base(), q, 'allergy'); a = selectAnswer(a, q, 'condition')
     expect(a.history).toEqual(['allergy', 'condition'])
@@ -67,7 +67,7 @@ describe('finite catalogue-aware questionnaire', () => {
       const a: Answers = { areas: [area], [area + '.feel']: definitions(area)[1]!.options.filter(o => o.id !== 'unknown').map(o => o.id), severity: ['severe'], age: ['child'] }
       for (const q of questions(a)) for (const option of q.options.filter(o => o.urgent)) expect(emergency({ ...a, [q.id]: [option.id] })).toBeDefined()
     }
-    expect(emergency({ history: ['allergy'], 'allergy.reaction': ['breathing'] })).toBeUndefined()
+    expect(emergency({ history: ['allergy'], 'allergy.medicine': ['nsaid'] })).toBeUndefined()
   })
   it('provides bilingual labels, unique IDs, bounded cards and no free text', () => {
     for (const area of areas) {
@@ -83,4 +83,14 @@ describe('finite catalogue-aware questionnaire', () => {
       }
     }
   })
+})
+
+it('asks selection-changing followups only on relevant paths and flags', () => {
+  expect(ids({ areas: ['back'] })).toContain('back.context')
+  expect(ids({ areas: ['stomach'] })).toContain('stomach.pattern')
+  expect(ids({ areas: ['head'] })).not.toContain('back.context')
+  expect(ids({ areas: ['head'], history: ['medicines'] })).toContain('medicines.current')
+  expect(ids({ areas: ['head'], history: ['none'] })).not.toContain('medicines.current')
+  const a: Answers = { areas: ['back'], 'back.feel': ['joint'], 'back.context': ['hot_joint'] }
+  expect(emergency(a)?.question.id).toBe('back.context')
 })

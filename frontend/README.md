@@ -576,3 +576,8 @@ The Kiosk help entry now has an optional Groq catalogue-selection experiment for
 
 
 Experimental questionnaire update — 2026-10-23: The experiment branch sends each completed answer to Groq for a bounded next-question selection (7–9 questions). Entry symptoms and final candidates are filtered against recognised in-stock catalogue ingredients/forms. See the latest dated Increment 2 section for Docker checks, contract regeneration and free-tier quota limitations.
+
+Experimental alternatives update — 2026-10-23: Guidance now supports up to three
+distinct ingredient alternatives, with targeted muscle/joint, heartburn, allergy and
+current-medicine followups (usually 7–8 questions, maximum 11). Alternatives are not a
+take-together plan. See the latest Increment 2 entry for limits and Docker checks.

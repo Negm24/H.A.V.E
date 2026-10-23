@@ -5,7 +5,7 @@ export type Answers = Record<string, string[]>
 export type Condition = { question: string; values: string[] }
 export type Option = { id: string; label: Copy; exclusive?: boolean; urgent?: boolean; when?: Condition[] }
 export type Question = { id: string; title: Copy; kind: 'single' | 'multi'; options: Option[]; hint?: Copy }
-export const MAX_QUESTIONS = 9
+export const MAX_QUESTIONS = 11
 const c = (key: string): Copy => key
 const o = (id: string, label: string, exclusive = false, urgent = false, when?: Condition[]): Option => ({ id, label, exclusive, urgent, ...(when ? { when } : {}) })
 const unknown = () => o('unknown', 'i_m_not_sure', true)
@@ -63,19 +63,22 @@ export function definitions(area: Area): Question[] {
   return [
     { ...q('areas', 'what_is_bothering_you_most', areas.map(value => o(value, coverage[value].label))), hint: 'catalogue_paths_hint' },
     q(area + '.feel', 'what_does_it_feel_like', feel[area], 'multi'),
+    ...(area === 'back' ? [q('back.context', 'pain_context_title', [o('lower_back', 'context_lower_back'), o('exercise', 'context_exercise'), o('swollen_joint', 'context_swollen_joint'), o('hot_joint', 'context_hot_joint', false, true), unknown()])] : []),
+    ...(area === 'stomach' ? [q('stomach.pattern', 'heartburn_pattern_title', [o('occasional', 'heartburn_occasional'), o('frequent', 'heartburn_frequent'), o('night', 'heartburn_night'), unknown()])] : []),
     q('duration', 'how_long_has_it_been', [o('today', 'started_today'), o('days', '1_3_days'), o('longer', '4_days_or_more'), unknown()]),
     q('severity', 'how_much_is_it_bothering_you', [o('mild', 'mild_can_carry_on'), o('moderate', 'moderate_gets_in_the_way'), o('severe', 'severe_cannot_carry_on'), unknown()]),
     q('age', 'who_is_this_for', [o('child', 'child_under_12'), o('teen', 'teen_12_17'), o('adult', 'adult_18_64'), o('older', '65_or_older'), unknown()]),
     { ...q('urgent', 'targeted_safety_title', [...safety, none(), unknown()], 'multi'), hint: 'targeted_safety_hint' },
     q('history', 'anything_we_should_know', [o('allergy', 'medicine_allergy_past_reaction'), o('condition', 'an_ongoing_medical_condition'), o('medicines', 'taking_medicines_tried_a_treatment'), o('pregnant', 'pregnant_possibly_pregnant'), o('feeding', 'breastfeeding'), none(), unknown()], 'multi'),
-    { ...q('allergy.reaction', 'what_happened_with_the_medicine', [o('rash', 'rash_itching'), o('breathing', 'breathing_trouble_swelling_fainting'), o('stomach', 'stomach_upset'), o('other', 'another_reaction'), unknown()], 'multi'), hint: 'think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the' },
-    q('conditions', 'which_conditions_apply', [o('heart', 'heart_blood_pressure'), o('asthma', 'asthma_lung_disease'), o('diabetes', 'diabetes'), o('kidney', 'kidney_liver_disease'), o('ulcer', 'ulcer_bleeding_problem'), o('other', 'another_condition'), unknown()], 'multi'),
+    q('allergy.medicine', 'allergy_medicine_title', [o('paracetamol', 'medicine_paracetamol'), o('nsaid', 'medicine_nsaid'), o('antibiotic', 'medicine_antibiotic'), o('other', 'medicine_other'), unknown()], 'multi'),
+    q('medicines.current', 'current_medicines_title', [o('paracetamol', 'medicine_paracetamol'), o('nsaid', 'medicine_nsaid'), o('blood_thinner', 'medicine_blood_thinner'), o('steroid', 'medicine_steroid'), o('other', 'medicine_other'), o('none', 'medicine_none_today', true), unknown()], 'multi'),
+    q('conditions', 'which_conditions_apply', [o('heart', 'heart_blood_pressure'), o('asthma', 'asthma_lung_disease'), o('diabetes', 'diabetes'), o('kidney', 'kidney_condition'), o('liver', 'liver_condition'), o('ulcer', 'ulcer_bleeding_problem'), o('other', 'another_condition'), unknown()], 'multi'),
   ]
 }
 export function questions(a: Answers, products?: readonly GuideProduct[]): Question[] {
   const area = areas.includes(a.areas?.[0] as Area) ? a.areas![0] as Area : areas[0]!
   const allowedAreas = products === undefined ? areas : supportedAreas(products)
-  return definitions(area).filter(item => (item.id !== 'allergy.reaction' || has(a, 'history', 'allergy')) && (item.id !== 'conditions' || has(a, 'history', 'condition')))
+  return definitions(area).filter(item => (item.id !== 'allergy.medicine' || has(a, 'history', 'allergy')) && (item.id !== 'conditions' || has(a, 'history', 'condition')) && (item.id !== 'medicines.current' || has(a, 'history', 'medicines')))
     .map(item => ({ ...item, options: item.options.filter(option => item.id === 'areas' ? allowedAreas.includes(option.id as Area) : !option.when || option.when.some(condition => condition.values.some(value => has(a, condition.question, value)))) }))
 }
 export function selectAnswer(a: Answers, question: Question, value: string): Answers {
@@ -85,7 +88,7 @@ export function selectAnswer(a: Answers, question: Question, value: string): Ans
   const values = question.kind === 'single' ? [value] : current.includes(value) ? current.filter(item => item !== value) : option.exclusive ? [value] : [...current.filter(item => !question.options.find(opt => opt.id === item)?.exclusive), value]
   const updated = { ...a, [question.id]: values }
   // Every upstream answer that may alter urgent cards invalidates the old checklist.
-  if ((question.id === 'areas' || question.id.endsWith('.feel') || ['duration', 'severity', 'age'].includes(question.id)) && JSON.stringify(current) !== JSON.stringify(values)) delete updated.urgent
+  if ((question.id === 'areas' || question.id.endsWith('.feel') || question.id === 'back.context' || ['duration', 'severity', 'age'].includes(question.id)) && JSON.stringify(current) !== JSON.stringify(values)) delete updated.urgent
   return prune(updated)
 }
 export function prune(a: Answers): Answers {

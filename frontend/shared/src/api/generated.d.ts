@@ -1671,6 +1671,7 @@ export interface components {
         GuidanceOutput: {
             status: components["schemas"]["GuidanceOutputStatusEnum"];
             product: components["schemas"]["ProductOutput"] | null;
+            recommendations: components["schemas"]["GuidanceRecommendation"][];
             demo_only: boolean;
         };
         /**
@@ -1681,6 +1682,10 @@ export interface components {
          * @enum {string}
          */
         GuidanceOutputStatusEnum: "demo_recommendation" | "no_match" | "urgent" | "needs_advice";
+        GuidanceRecommendation: {
+            product: components["schemas"]["ProductOutput"];
+            reason: components["schemas"]["ReasonEnum"];
+        };
         HubCategoriesOutput: {
             availability_scope: components["schemas"]["AvailabilityScopeEnum"];
             /** Format: date-time */
@@ -1870,6 +1875,19 @@ export interface components {
             address_en: string;
             address_ar: string;
         };
+        /**
+         * @description * `pain_option` - pain_option
+         *     * `fever_option` - fever_option
+         *     * `anti_inflammatory_option` - anti_inflammatory_option
+         *     * `lower_back_option` - lower_back_option
+         *     * `antacid_option` - antacid_option
+         *     * `acid_reducer_option` - acid_reducer_option
+         *     * `allergy_option` - allergy_option
+         *     * `nasal_option` - nasal_option
+         *     * `skin_option` - skin_option
+         * @enum {string}
+         */
+        ReasonEnum: "pain_option" | "fever_option" | "anti_inflammatory_option" | "lower_back_option" | "antacid_option" | "acid_reducer_option" | "allergy_option" | "nasal_option" | "skin_option";
         ReceiptOutput: {
             /** Format: uuid */
             id: string;

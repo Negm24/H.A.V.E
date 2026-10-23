@@ -997,3 +997,22 @@ experimental contract changes. Those answer maps correctly fail server validatio
 before model inference. HTTP 400 now displays an instruction to refresh and restart
 the questionnaire, rather than misreporting the failure as an unavailable AI. The
 current heartburn flow was verified against live Groq with fictional answers.
+
+## Ranked catalogue alternatives — 2026-10-23
+
+Guidance returns up to three distinct ingredient alternatives, ranked by the model
+from eligible in-stock catalogue products. Alternatives are not a take-together plan;
+fewer results or no match are valid. Preserve the first-result product field for
+compatibility. No doses, cart changes or dispensing actions are introduced.
+
+Add targeted muscle/joint context and heartburn frequency, plus separate followups
+for reported medicine allergies, current medicines and conditions. Usually 7–8
+questions; maximum 11 when every relevant flag applies. Hot swollen joint with fever
+stops for urgent help. Preserve resets, existing sessions and backend language handling.
+
+Group duplicate brands by ingredient before model selection. Apply prototype
+allergy/interaction exclusions and exclude paracetamol alone for lower-back pain.
+Unknown or insufficient information can yield no match; these seed-data checks are
+not a validated prescribing engine. See the matching Increment 2 entry for sources,
+contract v3 and Docker verification. Source edits hot-reload; dependency changes
+require rebuilding the frontend image. No dependencies or migrations added.

@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 from apps.catalogue.services.guidance_services import (
-    screening, validate_answers, candidates, select_with_groq, next_with_groq, next_question_candidates, GuidanceUnavailable,
+    screening, validate_answers, candidates, eligible_candidates, select_with_groq, next_with_groq, next_question_candidates, GuidanceUnavailable,
 )
 
 
@@ -20,7 +20,7 @@ def product(id=1, **overrides):
 class GuidanceTests(unittest.TestCase):
     def test_non_emergency_demo_answers_reach_the_model(self):
         self.assertIsNone(screening(answers()))
-        for key, value in [("history", ["pregnant"]), ("history", ["medicines"]),
+        for key, value in [("history", ["pregnant"]),
                            ("age", ["child"]), ("duration", ["longer"]),
                            ("severity", ["severe"]), ("urgent", ["unknown"])]:
             with self.subTest(key=key, value=value):
@@ -43,7 +43,7 @@ class GuidanceTests(unittest.TestCase):
                 validate_answers({**answers(), **change})
 
     def test_history_followups_required(self):
-        data = {**answers(), "history": ["allergy", "condition"], "allergy.reaction": ["rash"], "conditions": ["heart"]}
+        data = {**answers(), "history": ["allergy", "condition"], "allergy.medicine": ["paracetamol"], "conditions": ["heart"]}
         self.assertIsNone(screening(data))
         del data["conditions"]
         with self.assertRaises(ValueError):
@@ -57,8 +57,8 @@ class GuidanceTests(unittest.TestCase):
     @patch("apps.catalogue.services.guidance_services.build_opener")
     def test_provider_contract_and_privacy(self, opener):
         response = opener.return_value.open.return_value.__enter__.return_value
-        response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {"content": '{"product_id":1}'}}]}).encode()
-        self.assertEqual(select_with_groq(answers(), [product()], api_key="test-key", model="test-model"), 1)
+        response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {"content": '{"product_ids":[1]}'}}]}).encode()
+        self.assertEqual(select_with_groq(answers(), [product()], api_key="test-key", model="test-model"), [1])
         request = opener.return_value.open.call_args.args[0]
         payload = json.loads(request.data)
         self.assertTrue(payload["response_format"]["json_schema"]["strict"])
@@ -66,7 +66,7 @@ class GuidanceTests(unittest.TestCase):
         sent = json.loads(payload["messages"][1]["content"])
         self.assertEqual(set(sent), {"answers", "catalogue"})
         self.assertNotIn("price", sent["catalogue"][0])
-        for bad in ['{"product_id":999}', '{"product_id":true}', '{"product_id":1,"dose":"unsafe"}', 'not JSON']:
+        for bad in ['{"product_ids":[999]}', '{"product_ids":[true]}', '{"product_ids":[1],"dose":"unsafe"}', '{"product_ids":[1,1,1,1]}', 'not JSON']:
             response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {"content": bad}}]}).encode()
             with self.subTest(bad=bad), self.assertRaises(GuidanceUnavailable):
                 select_with_groq(answers(), [product()], api_key="test-key", model="test-model")
@@ -111,3 +111,35 @@ class GuidanceTests(unittest.TestCase):
                 next_with_groq({'areas': ['head']}, [product()], api_key='test', model='test')
         call.return_value = {'question_id': None}
         self.assertIsNone(next_with_groq(answers(), [product()], api_key='test', model='test'))
+
+    def test_selection_changing_followups_are_prioritized(self):
+        self.assertEqual([q['id'] for q in next_question_candidates({'areas': ['back'], 'back.feel': ['ache']})], ['back.context'])
+        self.assertEqual([q['id'] for q in next_question_candidates({'areas': ['head'], 'head.feel': ['ache'], 'history': ['medicines']})], ['medicines.current'])
+        with self.assertRaises(ValueError):
+            validate_answers({**answers(), 'history': ['medicines']})
+
+    def test_pain_context_and_history_filter_the_actual_choices(self):
+        rows = [product(), product(2, active_ingredient='Ibuprofen', strength='400 mg'), product(3, active_ingredient='Paracetamol / Caffeine'), product(4, name_en='Cetal Drops', dosage_form='Oral drops')]
+        back = {**answers(), 'areas': ['back'], 'back.feel': ['ache'], 'back.context': ['lower_back']}
+        back.pop('head.feel')
+        self.assertEqual([p['id'] for p in eligible_candidates(rows, back)], [2])
+        back['history'] = ['condition']; back['conditions'] = ['ulcer']
+        self.assertEqual(eligible_candidates(rows, back), [])
+        a = {**answers(), 'history': ['allergy'], 'allergy.medicine': ['paracetamol']}
+        self.assertEqual([p['id'] for p in eligible_candidates(rows, a)], [2])
+        a = {**answers(), 'history': ['medicines'], 'medicines.current': ['nsaid']}
+        self.assertEqual([p['id'] for p in eligible_candidates(rows, a)], [1])
+        a['medicines.current'] = ['other']
+        self.assertEqual(eligible_candidates(rows, a), [])
+        self.assertEqual(eligible_candidates(rows, {**answers(), 'age': ['child']}), [])
+
+    @patch('apps.catalogue.services.guidance_services._groq_json')
+    def test_ranked_alternatives_are_bounded_and_deduplicate_brands(self, call):
+        rows = [product(), product(2), product(3, active_ingredient='Ibuprofen')]
+        call.return_value = {'product_ids': [3, 1, 2]}
+        self.assertEqual(select_with_groq(answers(), rows, api_key='test', model='test'), [3, 1])
+        sent = call.call_args.args[0]
+        content = json.loads(sent['messages'][1]['content'])
+        self.assertEqual(len(content['catalogue']), 2)
+        call.return_value = {'product_ids': []}
+        self.assertEqual(select_with_groq(answers(), rows, api_key='test', model='test'), [])

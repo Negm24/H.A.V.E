@@ -813,3 +813,38 @@ experimental contract changes. Those answer maps correctly fail server validatio
 before model inference. HTTP 400 now displays an instruction to refresh and restart
 the questionnaire, rather than misreporting the failure as an unavailable AI. The
 current heartburn flow was verified against live Groq with fictional answers.
+
+## Ranked catalogue alternatives — 2026-10-23
+
+The experiment returns up to three ranked alternatives, never a take-together plan.
+Ingredient grouping prevents duplicate brands from outweighing other options. Results
+are restricted to supplied, in-stock, non-prescription products and rechecked after
+inference. Fewer results or no match are valid. The legacy product field remains the
+first alternative. No doses, cart changes or dispensing actions are introduced.
+
+Muscle/joint followups distinguish lower-back pain, exercise soreness, swelling and
+a hot swollen joint with fever (urgent stop). Heartburn asks frequency. Reported
+medicine allergies, current medicines and conditions each trigger their own followup.
+Usually 7–8 questions are needed; the finite maximum is 11 when all flags apply.
+Closing, expiry and Start over still clear answers. Contract v3 uses the Docker export
+command above. Existing language and session handling are preserved.
+
+Prototype filters exclude duplicate ingredients, combination products, adult selection
+for children and specified allergy/interaction flags. Lower-back pain excludes
+paracetamol alone. Ibuprofen exclusions include NSAID allergy, pregnancy, breastfeeding,
+older age, relevant conditions and interacting medicines. Unknown medicines or
+insufficient history can produce no match. These are limited seed-data checks, not a
+validated prescribing engine. Sources: [NHS ibuprofen](https://www.nhs.uk/medicines/ibuprofen-for-adults/),
+[NICE lower-back pain](https://www.nice.org.uk/guidance/ng59/chapter/recommendations),
+and [NHS septic arthritis](https://www.nhs.uk/conditions/septic-arthritis/).
+
+Use the Docker backend, unit, typecheck, build and browser commands above. Source
+edits hot-reload; dependency changes require rebuilding the frontend image. This
+update introduces no dependency changes or migrations.
+
+Verification: 21 focused backend tests, 127 frontend unit tests, all package
+typechecks and the independent Kiosk build pass. Browser checks passed 33 cases;
+three real-backend cases were skipped because Docker is unavailable. Two fictional
+live Groq checks returned ibuprofen for lower-back pain and separate paracetamol /
+ibuprofen alternatives for exercise soreness. This verifies integration, not clinical
+suitability. The standalone preview still uses synthetic stock and sessions.

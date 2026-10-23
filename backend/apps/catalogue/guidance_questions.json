@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "max_questions": 9,
+  "version": 3,
+  "max_questions": 11,
   "coverage": {
     "head": {
       "label": "head",
@@ -416,30 +416,30 @@
         "kind": "multi"
       },
       {
-        "id": "allergy.reaction",
-        "title": "what_happened_with_the_medicine",
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
         "options": [
           {
-            "id": "rash",
-            "label": "rash_itching",
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "breathing",
-            "label": "breathing_trouble_swelling_fainting",
+            "id": "nsaid",
+            "label": "medicine_nsaid",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "stomach",
-            "label": "stomach_upset",
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
             "exclusive": false,
             "urgent": false
           },
           {
             "id": "other",
-            "label": "another_reaction",
+            "label": "medicine_other",
             "exclusive": false,
             "urgent": false
           },
@@ -450,8 +450,56 @@
             "urgent": false
           }
         ],
-        "kind": "multi",
-        "hint": "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the"
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
       },
       {
         "id": "conditions",
@@ -477,7 +525,13 @@
           },
           {
             "id": "kidney",
-            "label": "kidney_liver_disease",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
             "exclusive": false,
             "urgent": false
           },
@@ -799,30 +853,30 @@
         "kind": "multi"
       },
       {
-        "id": "allergy.reaction",
-        "title": "what_happened_with_the_medicine",
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
         "options": [
           {
-            "id": "rash",
-            "label": "rash_itching",
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "breathing",
-            "label": "breathing_trouble_swelling_fainting",
+            "id": "nsaid",
+            "label": "medicine_nsaid",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "stomach",
-            "label": "stomach_upset",
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
             "exclusive": false,
             "urgent": false
           },
           {
             "id": "other",
-            "label": "another_reaction",
+            "label": "medicine_other",
             "exclusive": false,
             "urgent": false
           },
@@ -833,8 +887,56 @@
             "urgent": false
           }
         ],
-        "kind": "multi",
-        "hint": "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the"
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
       },
       {
         "id": "conditions",
@@ -860,7 +962,13 @@
           },
           {
             "id": "kidney",
-            "label": "kidney_liver_disease",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
             "exclusive": false,
             "urgent": false
           },
@@ -973,6 +1081,43 @@
           }
         ],
         "kind": "multi"
+      },
+      {
+        "id": "back.context",
+        "title": "pain_context_title",
+        "options": [
+          {
+            "id": "lower_back",
+            "label": "context_lower_back",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "exercise",
+            "label": "context_exercise",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "swollen_joint",
+            "label": "context_swollen_joint",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "hot_joint",
+            "label": "context_hot_joint",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
       },
       {
         "id": "duration",
@@ -1187,30 +1332,30 @@
         "kind": "multi"
       },
       {
-        "id": "allergy.reaction",
-        "title": "what_happened_with_the_medicine",
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
         "options": [
           {
-            "id": "rash",
-            "label": "rash_itching",
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "breathing",
-            "label": "breathing_trouble_swelling_fainting",
+            "id": "nsaid",
+            "label": "medicine_nsaid",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "stomach",
-            "label": "stomach_upset",
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
             "exclusive": false,
             "urgent": false
           },
           {
             "id": "other",
-            "label": "another_reaction",
+            "label": "medicine_other",
             "exclusive": false,
             "urgent": false
           },
@@ -1221,8 +1366,56 @@
             "urgent": false
           }
         ],
-        "kind": "multi",
-        "hint": "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the"
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
       },
       {
         "id": "conditions",
@@ -1248,7 +1441,13 @@
           },
           {
             "id": "kidney",
-            "label": "kidney_liver_disease",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
             "exclusive": false,
             "urgent": false
           },
@@ -1569,30 +1768,30 @@
         "kind": "multi"
       },
       {
-        "id": "allergy.reaction",
-        "title": "what_happened_with_the_medicine",
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
         "options": [
           {
-            "id": "rash",
-            "label": "rash_itching",
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "breathing",
-            "label": "breathing_trouble_swelling_fainting",
+            "id": "nsaid",
+            "label": "medicine_nsaid",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "stomach",
-            "label": "stomach_upset",
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
             "exclusive": false,
             "urgent": false
           },
           {
             "id": "other",
-            "label": "another_reaction",
+            "label": "medicine_other",
             "exclusive": false,
             "urgent": false
           },
@@ -1603,8 +1802,56 @@
             "urgent": false
           }
         ],
-        "kind": "multi",
-        "hint": "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the"
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
       },
       {
         "id": "conditions",
@@ -1630,7 +1877,13 @@
           },
           {
             "id": "kidney",
-            "label": "kidney_liver_disease",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
             "exclusive": false,
             "urgent": false
           },
@@ -1945,30 +2198,30 @@
         "kind": "multi"
       },
       {
-        "id": "allergy.reaction",
-        "title": "what_happened_with_the_medicine",
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
         "options": [
           {
-            "id": "rash",
-            "label": "rash_itching",
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "breathing",
-            "label": "breathing_trouble_swelling_fainting",
+            "id": "nsaid",
+            "label": "medicine_nsaid",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "stomach",
-            "label": "stomach_upset",
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
             "exclusive": false,
             "urgent": false
           },
           {
             "id": "other",
-            "label": "another_reaction",
+            "label": "medicine_other",
             "exclusive": false,
             "urgent": false
           },
@@ -1979,8 +2232,56 @@
             "urgent": false
           }
         ],
-        "kind": "multi",
-        "hint": "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the"
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
       },
       {
         "id": "conditions",
@@ -2006,7 +2307,13 @@
           },
           {
             "id": "kidney",
-            "label": "kidney_liver_disease",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
             "exclusive": false,
             "urgent": false
           },
@@ -2119,6 +2426,37 @@
           }
         ],
         "kind": "multi"
+      },
+      {
+        "id": "stomach.pattern",
+        "title": "heartburn_pattern_title",
+        "options": [
+          {
+            "id": "occasional",
+            "label": "heartburn_occasional",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "frequent",
+            "label": "heartburn_frequent",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "night",
+            "label": "heartburn_night",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
       },
       {
         "id": "duration",
@@ -2327,30 +2665,30 @@
         "kind": "multi"
       },
       {
-        "id": "allergy.reaction",
-        "title": "what_happened_with_the_medicine",
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
         "options": [
           {
-            "id": "rash",
-            "label": "rash_itching",
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "breathing",
-            "label": "breathing_trouble_swelling_fainting",
+            "id": "nsaid",
+            "label": "medicine_nsaid",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "stomach",
-            "label": "stomach_upset",
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
             "exclusive": false,
             "urgent": false
           },
           {
             "id": "other",
-            "label": "another_reaction",
+            "label": "medicine_other",
             "exclusive": false,
             "urgent": false
           },
@@ -2361,8 +2699,56 @@
             "urgent": false
           }
         ],
-        "kind": "multi",
-        "hint": "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the"
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
       },
       {
         "id": "conditions",
@@ -2388,7 +2774,13 @@
           },
           {
             "id": "kidney",
-            "label": "kidney_liver_disease",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
             "exclusive": false,
             "urgent": false
           },
@@ -2711,30 +3103,30 @@
         "kind": "multi"
       },
       {
-        "id": "allergy.reaction",
-        "title": "what_happened_with_the_medicine",
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
         "options": [
           {
-            "id": "rash",
-            "label": "rash_itching",
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "breathing",
-            "label": "breathing_trouble_swelling_fainting",
+            "id": "nsaid",
+            "label": "medicine_nsaid",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "stomach",
-            "label": "stomach_upset",
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
             "exclusive": false,
             "urgent": false
           },
           {
             "id": "other",
-            "label": "another_reaction",
+            "label": "medicine_other",
             "exclusive": false,
             "urgent": false
           },
@@ -2745,8 +3137,56 @@
             "urgent": false
           }
         ],
-        "kind": "multi",
-        "hint": "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the"
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
       },
       {
         "id": "conditions",
@@ -2772,7 +3212,13 @@
           },
           {
             "id": "kidney",
-            "label": "kidney_liver_disease",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
             "exclusive": false,
             "urgent": false
           },
@@ -3073,30 +3519,30 @@
         "kind": "multi"
       },
       {
-        "id": "allergy.reaction",
-        "title": "what_happened_with_the_medicine",
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
         "options": [
           {
-            "id": "rash",
-            "label": "rash_itching",
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "breathing",
-            "label": "breathing_trouble_swelling_fainting",
+            "id": "nsaid",
+            "label": "medicine_nsaid",
             "exclusive": false,
             "urgent": false
           },
           {
-            "id": "stomach",
-            "label": "stomach_upset",
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
             "exclusive": false,
             "urgent": false
           },
           {
             "id": "other",
-            "label": "another_reaction",
+            "label": "medicine_other",
             "exclusive": false,
             "urgent": false
           },
@@ -3107,8 +3553,56 @@
             "urgent": false
           }
         ],
-        "kind": "multi",
-        "hint": "think_about_a_past_reaction_a_pharmacist_will_need_to_confirm_the"
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
       },
       {
         "id": "conditions",
@@ -3134,7 +3628,13 @@
           },
           {
             "id": "kidney",
-            "label": "kidney_liver_disease",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
             "exclusive": false,
             "urgent": false
           },

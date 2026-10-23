@@ -3,7 +3,7 @@ import { questions, answered } from '../kiosk/src/features/symptoms/assessment.t
 import en from '../kiosk/src/features/symptoms/locales/en.json' with { type: 'json' }
 import ar from '../kiosk/src/features/symptoms/locales/ar.json' with { type: 'json' }
 
-async function fixture(page: Page, status = 200, outcome = 'demo_recommendation') {
+async function fixture(page: Page, status = 200, outcome = 'demo_recommendation', count = 2) {
   const calls: unknown[] = []
   const stock = [['Paracetamol', 'Tablets'], ['Pantoprazole', 'Tablets'], ['Cetirizine', 'Tablets'], ['Dexpanthenol', 'Topical cream'], ['Xylometazoline hydrochloride', 'Nasal drops']].map(([active_ingredient, dosage_form], i) => ({ id: i + 1, active_ingredient, dosage_form, stock_quantity: 12, quantity_limit: 3, requires_prescription: false }))
   const customer = { id: 'demo-customer', account_type: 'CUSTOMER', first_name: 'Kiosk', last_name: 'Tester', phone_number: '+201099998876', email: 'test@example.test', date_of_birth: '24-01-2005' }
@@ -28,7 +28,8 @@ async function fixture(page: Page, status = 200, outcome = 'demo_recommendation'
     }
     else if (path.endsWith('/guidance/')) {
       calls.push(route.request().postDataJSON()); code = status
-      body = { status: outcome, demo_only: true, product: outcome === 'demo_recommendation' ? { id: 1, name_en: 'Demo catalogue item', name_ar: 'منتج كتالوج تجريبي', active_ingredient: 'Demo ingredient', strength: 'Demo strength', pack_description: 'Demo pack', stock_quantity: 4 } : null }
+      const recommendations = outcome === 'demo_recommendation' ? Array.from({ length: count }, (_, index) => ({ product: { id: index + 1, name_en: index === 0 ? 'Demo catalogue item' : `Demo alternative ${index + 1}`, name_ar: index === 0 ? 'منتج كتالوج تجريبي' : `بديل تجريبي ${index + 1}`, active_ingredient: `Demo ingredient ${index + 1}`, strength: 'Demo strength', pack_description: 'Demo pack', stock_quantity: 4 }, reason: index === 0 ? 'pain_option' : 'anti_inflammatory_option' })) : []
+      body = { status: outcome, demo_only: true, product: recommendations[0]?.product ?? null, recommendations }
     }
     await route.fulfill({ status: code, contentType: 'application/json', body: code === 204 ? '' : JSON.stringify(body) })
   })
@@ -63,9 +64,9 @@ async function complete(page: Page, arabic = false, history = false) {
     [t.what_is_bothering_you_most]: t.head, [t.what_does_it_feel_like]: t.aching,
     [t.how_long_has_it_been]: t.started_today, [t.how_much_is_it_bothering_you]: t.mild_can_carry_on,
     [t.who_is_this_for]: t.adult_18_64, [t.targeted_safety_title]: t.none_of_these,
-    [t.anything_we_should_know]: t.none_of_these, [t.what_happened_with_the_medicine]: t.rash_itching, [t.which_conditions_apply]: t.diabetes,
+    [t.anything_we_should_know]: t.none_of_these, [t.allergy_medicine_title]: t.medicine_paracetamol, [t.current_medicines_title]: t.medicine_none_today, [t.pain_context_title]: t.context_exercise, [t.heartburn_pattern_title]: t.heartburn_occasional, [t.which_conditions_apply]: t.diabetes,
   }
-  for (let count = 0; count < 9; count++) {
+  for (let count = 0; count < 11; count++) {
     const dialog = page.getByRole('dialog')
     const heading = await dialog.getByRole('heading', { level: 2 }).innerText()
     if (heading === t.review_your_answers) return
@@ -106,6 +107,8 @@ test('editing main symptom requires new details and a fresh safety checklist', a
   await page.getByRole('button', { name: en.heartburn, exact: true }).click()
   await advance(page, en)
   await page.getByRole('button', { name: en.burning_heartburn, exact: true }).click()
+  await advance(page, en)
+  await page.getByRole('button', { name: en.heartburn_occasional, exact: true }).click()
   await advance(page, en)
   await expect(page.getByRole('button', { name: en.choose_an_answer_to_continue })).toBeDisabled()
   await page.getByRole('button', { name: en.none_of_these, exact: true }).click()
@@ -186,5 +189,27 @@ test('both history followups finish within nine questions', async ({ page }) => 
   page.on('request', request => { if (request.url().endsWith('/guidance/next-question/')) steps.push(request.postDataJSON()) })
   await fixture(page); await open(page); await complete(page, false, true)
   expect(steps).toHaveLength(9)
+  await expect(page.getByRole('button', { name: en.ai_submit })).toBeVisible()
+})
+
+for (const arabic of [false, true]) test(`ranked alternatives display separately with a take-one explanation ${arabic}`, async ({ page }) => {
+  await fixture(page, 200, 'demo_recommendation', 3); await open(page, arabic); await complete(page, arabic)
+  const t = arabic ? ar : en
+  await page.getByRole('button', { name: t.ai_submit }).click()
+  await expect(page.locator('.symptom-result-card')).toHaveCount(3)
+  await expect(page.getByRole('dialog')).toContainText(t.alternatives_only)
+  await expect(page.locator('.symptom-result-card').first()).toContainText(arabic ? 'منتج كتالوج تجريبي' : 'Demo catalogue item')
+  expect(await page.getByRole('dialog').evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true)
+})
+test('taking medicines triggers a followup before review', async ({ page }) => {
+  await fixture(page); await open(page); await complete(page)
+  // History is late in the paginated review; navigate to its page.
+  while (!(await page.getByRole('button', { name: `Edit: ${en.anything_we_should_know}` }).count())) await page.getByRole('button', { name: en.next_page, exact: true }).click()
+  await page.getByRole('button', { name: `Edit: ${en.anything_we_should_know}` }).click()
+  await page.getByRole('button', { name: en.taking_medicines_tried_a_treatment, exact: true }).click()
+  await advance(page, en)
+  await expect(page.getByRole('heading', { name: en.current_medicines_title })).toBeVisible()
+  await page.getByRole('button', { name: en.medicine_nsaid, exact: true }).click()
+  await advance(page, en)
   await expect(page.getByRole('button', { name: en.ai_submit })).toBeVisible()
 })

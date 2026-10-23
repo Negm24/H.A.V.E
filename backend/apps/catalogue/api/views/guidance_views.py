@@ -8,7 +8,7 @@ from apps.accounts.security.state import auth_key, get_redis_client
 from apps.accounts.security.tokens import token_hash
 from apps.catalogue.api.serializers.catalogue_serializers import ProductOutputSerializer
 from apps.catalogue.services.catalogue_services import list_products
-from apps.catalogue.services.guidance_services import screening, candidates, select_with_groq, next_with_groq, validate_answers, GuidanceUnavailable
+from apps.catalogue.services.guidance_services import screening, candidates, eligible_candidates, reason_for, select_with_groq, next_with_groq, validate_answers, GuidanceUnavailable
 from apps.terminals.services.session_services import operate
 from .catalogue_views import TerminalCatalogueView
 
@@ -18,9 +18,15 @@ class GuidanceInputSerializer(serializers.Serializer):
     demo_consent = serializers.BooleanField()
 
 
+class GuidanceRecommendationSerializer(serializers.Serializer):
+    product = ProductOutputSerializer()
+    reason = serializers.ChoiceField(choices=["pain_option", "fever_option", "anti_inflammatory_option", "lower_back_option", "antacid_option", "acid_reducer_option", "allergy_option", "nasal_option", "skin_option"])
+
+
 class GuidanceOutputSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=["demo_recommendation", "no_match", "urgent", "needs_advice"])
     product = ProductOutputSerializer(allow_null=True)
+    recommendations = GuidanceRecommendationSerializer(many=True)
     demo_only = serializers.BooleanField()
 
 
@@ -40,7 +46,7 @@ class GuidanceView(TerminalCatalogueView):
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=400)
         if outcome:
-            return Response({"status": outcome, "product": None, "demo_only": True})
+            return Response({"status": outcome, "product": None, "recommendations": [], "demo_only": True})
         if not settings.DEBUG or not settings.GUIDANCE_DEMO_ENABLED or not settings.GROQ_API_KEY:
             return Response({"detail": "AI demo is not configured."}, status=503)
         terminal = request.auth["terminal"]
@@ -49,7 +55,7 @@ class GuidanceView(TerminalCatalogueView):
         if not get_redis_client().set(key, "1", nx=True, ex=30):
             return Response({"detail": "Please wait before trying again."}, status=429, headers={"Retry-After": "30"})
         available = candidates(list_products(terminal), data.validated_data["answers"]["areas"][0])
-        product = None
+        recommendations = []
         if available:
             try:
                 selected = select_with_groq(data.validated_data["answers"], available,
@@ -58,8 +64,9 @@ class GuidanceView(TerminalCatalogueView):
                 return Response({"detail": "AI service unavailable. No recommendation was made."}, status=503)
             # Recheck identity and authoritative availability after the external request.
             operate(terminal, "read", request.auth["raw_token"])
-            product = next((p for p in candidates(list_products(terminal), data.validated_data["answers"]["areas"][0]) if p["id"] == selected), None)
-        return Response({"status": "demo_recommendation" if product else "no_match", "product": product, "demo_only": True})
+            refreshed = {p["id"]: p for p in eligible_candidates(list_products(terminal), data.validated_data["answers"])}
+            recommendations = [{"product": refreshed[id], "reason": reason_for(refreshed[id], data.validated_data["answers"])} for id in selected if id in refreshed]
+        return Response({"status": "demo_recommendation" if recommendations else "no_match", "product": recommendations[0]["product"] if recommendations else None, "recommendations": recommendations, "demo_only": True})
 
 
 class GuidanceNextOutputSerializer(serializers.Serializer):
