@@ -33,7 +33,7 @@ export function SymptomsModal({ onClose }: { onClose: () => void }) {
       const value = await controller.request((token, signal) => terminalApi.guidance(token, answers, AbortSignal.any([signal, request.signal])))
       if (!request.signal.aborted) setResult(value)
     } catch (cause) {
-      if (!request.signal.aborted) setError(cause instanceof ApiError && cause.status === 429 ? 'ai_limited' : 'ai_unavailable')
+      if (!request.signal.aborted) setError(cause instanceof ApiError && cause.status === 400 ? 'ai_answers_changed' : cause instanceof ApiError && cause.status === 429 ? 'ai_limited' : 'ai_unavailable')
     } finally {
       if (!request.signal.aborted) { pending.current = null; setBusy(false) }
     }
@@ -71,7 +71,7 @@ export function SymptomsModal({ onClose }: { onClose: () => void }) {
         setCurrentId(target.id); setTrail(current => [...current, target.id])
       }
     } catch (cause) {
-      if (!request.signal.aborted) setError(cause instanceof ApiError && cause.status === 409 ? 'guide_stock_changed' : 'ai_next_error')
+      if (!request.signal.aborted) setError(cause instanceof ApiError && cause.status === 400 ? 'ai_answers_changed' : cause instanceof ApiError && cause.status === 409 ? 'guide_stock_changed' : 'ai_next_error')
     } finally {
       if (!request.signal.aborted) { pending.current = null; setBusy(false); setRouting(false) }
     }

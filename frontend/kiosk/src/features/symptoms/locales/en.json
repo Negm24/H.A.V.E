@@ -193,5 +193,6 @@
   "guide_no_supported": "No supported medicines are available for this guide right now.",
   "ai_next_loading": "Choosing your next question…",
   "ai_next_error": "The AI could not choose the next question. Tap Next to retry, or close the guide.",
-  "guide_stock_changed": "The matching stock changed. Close and reopen the guide to refresh the options."
+  "guide_stock_changed": "The matching stock changed. Close and reopen the guide to refresh the options.",
+  "ai_answers_changed": "The questionnaire has been updated. Refresh this page and start the guide again."
 }

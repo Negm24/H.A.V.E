@@ -112,10 +112,10 @@ test('editing main symptom requires new details and a fresh safety checklist', a
   await advance(page, en)
   await expect(page.getByRole('button', { name: en.ai_submit })).toBeVisible()
 })
-for (const status of [429, 503]) test(`AI failure ${status} never shows a fabricated recommendation`, async ({ page }) => {
+for (const status of [400, 429, 503]) test(`AI failure ${status} never shows a fabricated recommendation`, async ({ page }) => {
   await fixture(page, status); await open(page); await complete(page)
   await page.getByRole('button', { name: en.ai_submit }).click()
-  await expect(page.getByRole('dialog').getByRole('alert')).toHaveText(status === 429 ? en.ai_limited : en.ai_unavailable)
+  await expect(page.getByRole('dialog').getByRole('alert')).toHaveText(status === 400 ? en.ai_answers_changed : status === 429 ? en.ai_limited : en.ai_unavailable)
   await expect(page.getByText('Demo catalogue item')).toHaveCount(0)
 })
 test('customer Start over clears identity and answers', async ({ page }) => {

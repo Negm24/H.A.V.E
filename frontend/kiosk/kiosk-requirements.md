@@ -988,3 +988,12 @@ real-database fixture checks were skipped because Docker is not running here. A
 fictional live Groq flow sent seven completed answers, accepted only valid next IDs,
 reached review and returned a catalogue item. This verifies integration, not clinical
 suitability. The local preview continues to use explicitly synthetic sessions/stock.
+
+
+## Stale questionnaire error correction — 2026-10-23
+
+An old tab can retain the previous Stomach/location questionnaire after the
+experimental contract changes. Those answer maps correctly fail server validation
+before model inference. HTTP 400 now displays an instruction to refresh and restart
+the questionnaire, rather than misreporting the failure as an unavailable AI. The
+current heartburn flow was verified against live Groq with fictional answers.
