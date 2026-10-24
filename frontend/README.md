@@ -568,3 +568,26 @@ four typechecks/builds and 100 browser regressions pass (nine opt-in live/public
 cases skipped). Backend: 340 tests pass; OpenAPI validates and no migration drift.
 This includes Arabic/English guest/customer Continue/End at 1024×600 and late
 receipt-activity cleanup. No real or automatic sandbox card submission occurred.
+
+
+## Local AI questionnaire demo — 2026-10-20
+
+The Kiosk help entry now has an optional Groq catalogue-selection experiment for fictional inputs only. See [configuration, privacy limits and Docker checks](CODEX-Increment-2.md#ai-questionnaire-demo--2026-10-20). Existing catalogue/cart/checkout behavior is preserved. A private backend API key is required; no live model evaluation is implied by mocked tests.
+
+
+Experimental questionnaire update — 2026-10-23: The experiment branch sends each completed answer to Groq for a bounded next-question selection (7–9 questions). Entry symptoms and final candidates are filtered against recognised in-stock catalogue ingredients/forms. See the latest dated Increment 2 section for Docker checks, contract regeneration and free-tier quota limitations.
+
+Experimental alternatives update — 2026-10-23: Guidance now supports up to three
+distinct ingredient alternatives, with targeted muscle/joint, heartburn, allergy and
+current-medicine followups (usually 7–8 questions, maximum 11). Alternatives are not a
+take-together plan. See the latest Increment 2 entry for limits and Docker checks.
+
+Catalogue-card update — 2026-10-23: Individual routine cards now require usable
+matching catalogue stock (contract v4), using the same exclusions as final selection.
+Urgent, uncertain and history answers remain available. See Increment 2 for Docker
+checks and scope limits; a suitable medicine is never guaranteed for every answer.
+
+Empty-result explanations — 2026-10-23: The questionnaire now explains why no demo
+medicine was returned using backend reason codes and bilingual messages. Model
+abstention is distinguished from stock and answer exclusions. See Increment 2 for
+API details and the unchanged Docker verification workflow.

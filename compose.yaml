@@ -71,6 +71,9 @@ services:
       - ./backend:/app
       - ./development:/development:ro
     environment: &backend-environment
+      GUIDANCE_DEMO_ENABLED: ${GUIDANCE_DEMO_ENABLED:-false}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
       DJANGO_SETTINGS_MODULE: config.settings.local
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-true}

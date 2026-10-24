@@ -284,3 +284,8 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
 # Compose passes unset values as empty strings; Gmail-style SMTP requires sending as the account.
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="") or EMAIL_HOST_USER or "no-reply@have.local"
+
+# University AI demo only; credentials never enter frontend environment.
+GUIDANCE_DEMO_ENABLED = env.bool("GUIDANCE_DEMO_ENABLED", default=False)
+GROQ_API_KEY = env("GROQ_API_KEY", default="")
+GROQ_MODEL = env("GROQ_MODEL", default="openai/gpt-oss-120b")

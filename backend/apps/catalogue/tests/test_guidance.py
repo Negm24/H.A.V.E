@@ -1,0 +1,198 @@
+import json
+import unittest
+from unittest.mock import patch
+from apps.catalogue.services.guidance_services import (
+    screening, validate_answers, candidates, assess_candidates, eligible_candidates, select_with_groq, next_with_groq, next_question_candidates, GuidanceUnavailable,
+)
+
+
+def answers():
+    return {"areas": ["head"], "urgent": ["none"],
+            "head.feel": ["ache"], "duration": ["today"], "severity": ["mild"],
+            "age": ["adult"], "history": ["none"]}
+
+
+def product(id=1, **overrides):
+    return {"id": id, "requires_prescription": False, "stock_quantity": 4,
+            "quantity_limit": 4, "active_ingredient": "Paracetamol", "strength": "500 mg", "dosage_form": "Tablets", **overrides}
+
+
+class GuidanceTests(unittest.TestCase):
+    def test_no_match_reasons_describe_the_actual_filter(self):
+        cases = [
+            ([], answers(), 'no_stock'),
+            ([product()], {**answers(), 'age': ['child']}, 'age_not_supported'),
+            ([product()], {**answers(), 'history': ['unknown']}, 'history_uncertain'),
+            ([product()], {**answers(), 'history': ['allergy'], 'allergy.medicine': ['other']}, 'allergy_details'),
+            ([product()], {**answers(), 'history': ['medicines'], 'medicines.current': ['unknown']}, 'medicine_details'),
+            ([product()], {**answers(), 'history': ['medicines'], 'medicines.current': ['blood_thinner']}, 'medicine_interaction'),
+            ([product()], {**answers(), 'history': ['condition'], 'conditions': ['kidney']}, 'condition_details'),
+            ([product()], {**answers(), 'history': ['allergy'], 'allergy.medicine': ['paracetamol']}, 'no_eligible_options'),
+        ]
+        for rows, data, expected in cases:
+            with self.subTest(reason=expected):
+                self.assertEqual(assess_candidates(rows, data), ([], expected))
+        back = {**answers(), 'areas': ['back'], 'back.feel': ['ache'], 'back.context': ['lower_back']}
+        del back['head.feel']
+        self.assertEqual(assess_candidates([product()], back), ([], 'symptom_not_covered'))
+        self.assertEqual(assess_candidates([product()], answers()), ([product()], None))
+
+    def test_routine_detail_mappings_have_actual_catalogue_candidates(self):
+        rows = [product(), product(2, active_ingredient='Ibuprofen'),
+                product(3, active_ingredient='Xylometazoline hydrochloride', dosage_form='Nasal drops'),
+                product(4, active_ingredient='Magaldrate', dosage_form='Oral suspension'),
+                product(5, active_ingredient='Cetirizine'),
+                product(6, active_ingredient='Dexpanthenol', dosage_form='Topical cream')]
+        from apps.catalogue.services.guidance_services import QUESTIONNAIRE
+        for area, questions in QUESTIONNAIRE.items():
+            for detail in questions[1]['options']:
+                if detail['id'] == 'unknown':
+                    continue
+                data = {**answers(), 'areas': [area], area + '.feel': [detail['id']]}
+                if area != 'head':
+                    del data['head.feel']
+                if area == 'back':
+                    data['back.context'] = ['exercise']
+                if area == 'stomach':
+                    data['stomach.pattern'] = ['occasional']
+                with self.subTest(area=area, detail=detail['id']):
+                    validate_answers(data)
+                    self.assertTrue(eligible_candidates(rows, data))
+
+    def test_per_card_filters_and_discovery_agree(self):
+        unusable = [product(1, active_ingredient='Paracetamol / Caffeine'),
+                    product(2, name_en='Panadol Baby & Infant'),
+                    product(3, dosage_form='Oral drops'), product(4, strength=None)]
+        self.assertEqual(candidates(unusable, 'head'), [])
+        data = {**answers(), 'areas': ['allergy'], 'allergy.feel': ['hives']}
+        del data['head.feel']
+        rows = [product(5, active_ingredient='Fexofenadine hydrochloride', strength='120 mg'), product(6, active_ingredient='Cetirizine')]
+        self.assertEqual([p['id'] for p in eligible_candidates(rows, data)], [6])
+        data['allergy.feel'] = ['eyes']
+        self.assertEqual(len(eligible_candidates(rows, data)), 2)
+
+    def test_non_emergency_demo_answers_reach_the_model(self):
+        self.assertIsNone(screening(answers()))
+        for key, value in [("history", ["pregnant"]),
+                           ("age", ["child"]), ("duration", ["longer"]),
+                           ("severity", ["severe"]), ("urgent", ["unknown"])]:
+            with self.subTest(key=key, value=value):
+                self.assertIsNone(screening({**answers(), key: value}))
+        self.assertEqual(screening({**answers(), "urgent": ["breathing"]}), "urgent")
+
+    def test_moderate_sore_throat_reaches_model_screening(self):
+        data = {"areas": ["throat"], "urgent": ["none"], "throat.feel": ["sore"],
+                "duration": ["days"], "severity": ["moderate"], "age": ["adult"],
+                "history": ["none"]}
+        self.assertIsNone(screening(data))
+        self.assertEqual(screening({**data, "urgent": ["breathing"]}), "urgent")
+
+    def test_invalid_and_stale_answers_are_rejected(self):
+        for change in [{"areas": ["invented"]}, {"urgent": []}, {"history": None},
+                       {"urgent": ["none", "breathing"]}, {"head.feel": ["ache", "ache"]},
+                       {"age": ["adult", "child"]}, {"history": ["allergy"]},
+                       {"phone": ["private"]}, {"areas": ["chest"]}]:
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                validate_answers({**answers(), **change})
+
+    def test_history_followups_required(self):
+        data = {**answers(), "history": ["allergy", "condition"], "allergy.medicine": ["paracetamol"], "conditions": ["heart"]}
+        self.assertIsNone(screening(data))
+        del data["conditions"]
+        with self.assertRaises(ValueError):
+            screening(data)
+
+    def test_candidate_filter(self):
+        rows = [product(), product(2, requires_prescription=True), product(3, stock_quantity=0),
+                product(4, quantity_limit=0), product(5, active_ingredient=None)]
+        self.assertEqual(candidates(rows), [rows[0]])
+
+    @patch("apps.catalogue.services.guidance_services.build_opener")
+    def test_provider_contract_and_privacy(self, opener):
+        response = opener.return_value.open.return_value.__enter__.return_value
+        response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {"content": '{"product_ids":[1]}'}}]}).encode()
+        self.assertEqual(select_with_groq(answers(), [product()], api_key="test-key", model="test-model"), [1])
+        request = opener.return_value.open.call_args.args[0]
+        payload = json.loads(request.data)
+        self.assertTrue(payload["response_format"]["json_schema"]["strict"])
+        self.assertNotIn("test-key", request.data.decode())
+        sent = json.loads(payload["messages"][1]["content"])
+        self.assertEqual(set(sent), {"answers", "symptom_context", "catalogue"})
+        self.assertNotIn("price", sent["catalogue"][0])
+        for bad in ['{"product_ids":[999]}', '{"product_ids":[true]}', '{"product_ids":[1],"dose":"unsafe"}', '{"product_ids":[1,1,1,1]}', 'not JSON']:
+            response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {"content": bad}}]}).encode()
+            with self.subTest(bad=bad), self.assertRaises(GuidanceUnavailable):
+                select_with_groq(answers(), [product()], api_key="test-key", model="test-model")
+        response.read.return_value = b"x" * 65537
+        with self.assertRaises(GuidanceUnavailable):
+            select_with_groq(answers(), [product()], api_key="test-key", model="test-model")
+        opener.return_value.open.side_effect = TimeoutError()
+        with self.assertRaises(GuidanceUnavailable):
+            select_with_groq(answers(), [product()], api_key="test-key", model="test-model")
+
+    def test_missing_key_does_not_make_request(self):
+        with patch("apps.catalogue.services.guidance_services.build_opener") as opener:
+            with self.assertRaises(GuidanceUnavailable):
+                select_with_groq(answers(), [product()], api_key="", model="test-model")
+            opener.assert_not_called()
+
+    def test_partial_answers_and_question_prerequisites(self):
+        self.assertEqual([q['id'] for q in next_question_candidates({'areas': ['head']})], ['head.feel'])
+        choices = next_question_candidates({'areas': ['head'], 'head.feel': ['ache']})
+        self.assertNotIn('urgent', [q['id'] for q in choices])
+        self.assertEqual(next_question_candidates(answers()), [])
+        changed = {**answers(), 'head.feel': ['fever']}
+        changed['urgent'] = ['stiff']
+        self.assertEqual(screening(changed), 'urgent')
+        changed['head.feel'] = ['ache']
+        with self.assertRaises(ValueError):
+            validate_answers(changed)
+
+    def test_catalogue_paths_use_ingredients_forms_stock_and_rx(self):
+        self.assertEqual(candidates([product()], 'head'), [product()])
+        self.assertEqual(candidates([product()], 'stomach'), [])
+        self.assertEqual(candidates([product(active_ingredient='Sodium chloride', dosage_form='Eye drops')], 'nose'), [])
+        self.assertEqual(candidates([product()], 'unknown'), [])
+
+    @patch('apps.catalogue.services.guidance_services._groq_json')
+    def test_ai_next_question_cannot_repeat_skip_or_invent_questions(self, call):
+        call.return_value = {'question_id': 'head.feel'}
+        self.assertEqual(next_with_groq({'areas': ['head']}, [product()], api_key='test', model='test'), 'head.feel')
+        for invalid in ['areas', 'urgent', 'invented', None]:
+            call.return_value = {'question_id': invalid}
+            with self.subTest(invalid=invalid), self.assertRaises(GuidanceUnavailable):
+                next_with_groq({'areas': ['head']}, [product()], api_key='test', model='test')
+        call.return_value = {'question_id': None}
+        self.assertIsNone(next_with_groq(answers(), [product()], api_key='test', model='test'))
+
+    def test_selection_changing_followups_are_prioritized(self):
+        self.assertEqual([q['id'] for q in next_question_candidates({'areas': ['back'], 'back.feel': ['ache']})], ['back.context'])
+        self.assertEqual([q['id'] for q in next_question_candidates({'areas': ['head'], 'head.feel': ['ache'], 'history': ['medicines']})], ['medicines.current'])
+        with self.assertRaises(ValueError):
+            validate_answers({**answers(), 'history': ['medicines']})
+
+    def test_pain_context_and_history_filter_the_actual_choices(self):
+        rows = [product(), product(2, active_ingredient='Ibuprofen', strength='400 mg'), product(3, active_ingredient='Paracetamol / Caffeine'), product(4, name_en='Cetal Drops', dosage_form='Oral drops')]
+        back = {**answers(), 'areas': ['back'], 'back.feel': ['ache'], 'back.context': ['lower_back']}
+        back.pop('head.feel')
+        self.assertEqual([p['id'] for p in eligible_candidates(rows, back)], [2])
+        back['history'] = ['condition']; back['conditions'] = ['ulcer']
+        self.assertEqual(eligible_candidates(rows, back), [])
+        a = {**answers(), 'history': ['allergy'], 'allergy.medicine': ['paracetamol']}
+        self.assertEqual([p['id'] for p in eligible_candidates(rows, a)], [2])
+        a = {**answers(), 'history': ['medicines'], 'medicines.current': ['nsaid']}
+        self.assertEqual([p['id'] for p in eligible_candidates(rows, a)], [1])
+        a['medicines.current'] = ['other']
+        self.assertEqual(eligible_candidates(rows, a), [])
+        self.assertEqual(eligible_candidates(rows, {**answers(), 'age': ['child']}), [])
+
+    @patch('apps.catalogue.services.guidance_services._groq_json')
+    def test_ranked_alternatives_are_bounded_and_deduplicate_brands(self, call):
+        rows = [product(), product(2), product(3, active_ingredient='Ibuprofen')]
+        call.return_value = {'product_ids': [3, 1, 2]}
+        self.assertEqual(select_with_groq(answers(), rows, api_key='test', model='test'), [3, 1])
+        sent = call.call_args.args[0]
+        content = json.loads(sent['messages'][1]['content'])
+        self.assertEqual(len(content['catalogue']), 2)
+        call.return_value = {'product_ids': []}
+        self.assertEqual(select_with_groq(answers(), rows, api_key='test', model='test'), [])

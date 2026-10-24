@@ -1,0 +1,3777 @@
+{
+  "version": 4,
+  "max_questions": 11,
+  "coverage": {
+    "head": {
+      "label": "head",
+      "ingredients": [
+        "paracetamol",
+        "ibuprofen"
+      ],
+      "forms": [
+        "tablet",
+        "caplet",
+        "capsule",
+        "oral"
+      ]
+    },
+    "throat": {
+      "label": "throat_cough",
+      "ingredients": [
+        "paracetamol",
+        "ibuprofen"
+      ],
+      "forms": [
+        "tablet",
+        "caplet",
+        "capsule",
+        "oral"
+      ]
+    },
+    "back": {
+      "label": "back_joints",
+      "ingredients": [
+        "paracetamol",
+        "ibuprofen"
+      ],
+      "forms": [
+        "tablet",
+        "caplet",
+        "capsule",
+        "oral"
+      ]
+    },
+    "fever": {
+      "label": "fever",
+      "ingredients": [
+        "paracetamol",
+        "ibuprofen"
+      ],
+      "forms": [
+        "tablet",
+        "caplet",
+        "capsule",
+        "oral"
+      ]
+    },
+    "nose": {
+      "label": "blocked_nose",
+      "ingredients": [
+        "xylometazoline",
+        "sodium chloride"
+      ],
+      "forms": [
+        "nasal"
+      ]
+    },
+    "stomach": {
+      "label": "heartburn",
+      "ingredients": [
+        "pantoprazole",
+        "omeprazole",
+        "magaldrate"
+      ],
+      "forms": [
+        "tablet",
+        "capsule",
+        "oral"
+      ]
+    },
+    "allergy": {
+      "label": "allergy_symptoms",
+      "ingredients": [
+        "cetirizine",
+        "loratadine",
+        "fexofenadine"
+      ],
+      "forms": [
+        "tablet",
+        "capsule",
+        "oral"
+      ]
+    },
+    "skin": {
+      "label": "dry_skin",
+      "ingredients": [
+        "dexpanthenol"
+      ],
+      "forms": [
+        "cream"
+      ]
+    }
+  },
+  "paths": {
+    "head": [
+      {
+        "id": "areas",
+        "title": "what_is_bothering_you_most",
+        "options": [
+          {
+            "id": "head",
+            "label": "head",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "throat",
+            "label": "throat_cough",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "back",
+            "label": "back_joints",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "fever",
+            "label": "fever",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nose",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "stomach",
+            "label": "heartburn",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "allergy",
+            "label": "allergy_symptoms",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "skin",
+            "label": "dry_skin",
+            "exclusive": false,
+            "urgent": false
+          }
+        ],
+        "kind": "single",
+        "hint": "catalogue_paths_hint"
+      },
+      {
+        "id": "head.feel",
+        "title": "what_does_it_feel_like",
+        "options": [
+          {
+            "id": "ache",
+            "label": "aching",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "pulse",
+            "label": "throbbing",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "pressure",
+            "label": "pressure",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "fever",
+            "label": "headache_fever",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "duration",
+        "title": "how_long_has_it_been",
+        "options": [
+          {
+            "id": "today",
+            "label": "started_today",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "days",
+            "label": "1_3_days",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "longer",
+            "label": "4_days_or_more",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "severity",
+        "title": "how_much_is_it_bothering_you",
+        "options": [
+          {
+            "id": "mild",
+            "label": "mild_can_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "moderate",
+            "label": "moderate_gets_in_the_way",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "severe",
+            "label": "severe_cannot_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "age",
+        "title": "who_is_this_for",
+        "options": [
+          {
+            "id": "child",
+            "label": "child_under_12",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "teen",
+            "label": "teen_12_17",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "adult",
+            "label": "adult_18_64",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "older",
+            "label": "65_or_older",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "urgent",
+        "title": "targeted_safety_title",
+        "options": [
+          {
+            "id": "breathing",
+            "label": "trouble_breathing_mouth_or_throat_swelling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "collapse",
+            "label": "fainting_new_weakness_or_trouble_speaking",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "sudden",
+            "label": "sudden_extremely_painful_headache",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "stiff",
+            "label": "fever_stiff_neck_light",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "head.feel",
+                "values": [
+                  "fever"
+                ]
+              },
+              {
+                "question": "severity",
+                "values": [
+                  "severe"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "injury",
+            "label": "recent_head_injury",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "severity",
+                "values": [
+                  "severe"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi",
+        "hint": "targeted_safety_hint"
+      },
+      {
+        "id": "history",
+        "title": "anything_we_should_know",
+        "options": [
+          {
+            "id": "allergy",
+            "label": "medicine_allergy_past_reaction",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "condition",
+            "label": "an_ongoing_medical_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "medicines",
+            "label": "taking_medicines_tried_a_treatment",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "pregnant",
+            "label": "pregnant_possibly_pregnant",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "feeding",
+            "label": "breastfeeding",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "conditions",
+        "title": "which_conditions_apply",
+        "options": [
+          {
+            "id": "heart",
+            "label": "heart_blood_pressure",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "asthma",
+            "label": "asthma_lung_disease",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "diabetes",
+            "label": "diabetes",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "kidney",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "ulcer",
+            "label": "ulcer_bleeding_problem",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "another_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      }
+    ],
+    "throat": [
+      {
+        "id": "areas",
+        "title": "what_is_bothering_you_most",
+        "options": [
+          {
+            "id": "head",
+            "label": "head",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "throat",
+            "label": "throat_cough",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "back",
+            "label": "back_joints",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "fever",
+            "label": "fever",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nose",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "stomach",
+            "label": "heartburn",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "allergy",
+            "label": "allergy_symptoms",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "skin",
+            "label": "dry_skin",
+            "exclusive": false,
+            "urgent": false
+          }
+        ],
+        "kind": "single",
+        "hint": "catalogue_paths_hint"
+      },
+      {
+        "id": "throat.feel",
+        "title": "what_does_it_feel_like",
+        "options": [
+          {
+            "id": "sore",
+            "label": "sore_throat",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "swallow",
+            "label": "pain_when_swallowing",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "fever",
+            "label": "sore_throat_fever",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "duration",
+        "title": "how_long_has_it_been",
+        "options": [
+          {
+            "id": "today",
+            "label": "started_today",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "days",
+            "label": "1_3_days",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "longer",
+            "label": "4_days_or_more",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "severity",
+        "title": "how_much_is_it_bothering_you",
+        "options": [
+          {
+            "id": "mild",
+            "label": "mild_can_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "moderate",
+            "label": "moderate_gets_in_the_way",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "severe",
+            "label": "severe_cannot_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "age",
+        "title": "who_is_this_for",
+        "options": [
+          {
+            "id": "child",
+            "label": "child_under_12",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "teen",
+            "label": "teen_12_17",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "adult",
+            "label": "adult_18_64",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "older",
+            "label": "65_or_older",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "urgent",
+        "title": "targeted_safety_title",
+        "options": [
+          {
+            "id": "breathing",
+            "label": "trouble_breathing_mouth_or_throat_swelling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "collapse",
+            "label": "fainting_new_weakness_or_trouble_speaking",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "swallow",
+            "label": "cannot_swallow_drooling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "worsening",
+            "label": "rapid_worsening_throat",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "severity",
+                "values": [
+                  "severe"
+                ]
+              },
+              {
+                "question": "throat.feel",
+                "values": [
+                  "swallow",
+                  "fever"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi",
+        "hint": "targeted_safety_hint"
+      },
+      {
+        "id": "history",
+        "title": "anything_we_should_know",
+        "options": [
+          {
+            "id": "allergy",
+            "label": "medicine_allergy_past_reaction",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "condition",
+            "label": "an_ongoing_medical_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "medicines",
+            "label": "taking_medicines_tried_a_treatment",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "pregnant",
+            "label": "pregnant_possibly_pregnant",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "feeding",
+            "label": "breastfeeding",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "conditions",
+        "title": "which_conditions_apply",
+        "options": [
+          {
+            "id": "heart",
+            "label": "heart_blood_pressure",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "asthma",
+            "label": "asthma_lung_disease",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "diabetes",
+            "label": "diabetes",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "kidney",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "ulcer",
+            "label": "ulcer_bleeding_problem",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "another_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      }
+    ],
+    "back": [
+      {
+        "id": "areas",
+        "title": "what_is_bothering_you_most",
+        "options": [
+          {
+            "id": "head",
+            "label": "head",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "throat",
+            "label": "throat_cough",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "back",
+            "label": "back_joints",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "fever",
+            "label": "fever",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nose",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "stomach",
+            "label": "heartburn",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "allergy",
+            "label": "allergy_symptoms",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "skin",
+            "label": "dry_skin",
+            "exclusive": false,
+            "urgent": false
+          }
+        ],
+        "kind": "single",
+        "hint": "catalogue_paths_hint"
+      },
+      {
+        "id": "back.feel",
+        "title": "what_does_it_feel_like",
+        "options": [
+          {
+            "id": "ache",
+            "label": "muscle_ache",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "movement",
+            "label": "pain_after_movement",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "joint",
+            "label": "joint_stiffness",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "back.context",
+        "title": "pain_context_title",
+        "options": [
+          {
+            "id": "lower_back",
+            "label": "context_lower_back",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "exercise",
+            "label": "context_exercise",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "swollen_joint",
+            "label": "context_swollen_joint",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "hot_joint",
+            "label": "context_hot_joint",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "duration",
+        "title": "how_long_has_it_been",
+        "options": [
+          {
+            "id": "today",
+            "label": "started_today",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "days",
+            "label": "1_3_days",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "longer",
+            "label": "4_days_or_more",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "severity",
+        "title": "how_much_is_it_bothering_you",
+        "options": [
+          {
+            "id": "mild",
+            "label": "mild_can_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "moderate",
+            "label": "moderate_gets_in_the_way",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "severe",
+            "label": "severe_cannot_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "age",
+        "title": "who_is_this_for",
+        "options": [
+          {
+            "id": "child",
+            "label": "child_under_12",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "teen",
+            "label": "teen_12_17",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "adult",
+            "label": "adult_18_64",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "older",
+            "label": "65_or_older",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "urgent",
+        "title": "targeted_safety_title",
+        "options": [
+          {
+            "id": "breathing",
+            "label": "trouble_breathing_mouth_or_throat_swelling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "collapse",
+            "label": "fainting_new_weakness_or_trouble_speaking",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "nerve",
+            "label": "both_legs_numb_numb_around_genitals",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "bladder",
+            "label": "new_bladder_bowel_control_problems",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "accident",
+            "label": "pain_after_a_serious_accident",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "back.feel",
+                "values": [
+                  "movement"
+                ]
+              },
+              {
+                "question": "severity",
+                "values": [
+                  "severe"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi",
+        "hint": "targeted_safety_hint"
+      },
+      {
+        "id": "history",
+        "title": "anything_we_should_know",
+        "options": [
+          {
+            "id": "allergy",
+            "label": "medicine_allergy_past_reaction",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "condition",
+            "label": "an_ongoing_medical_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "medicines",
+            "label": "taking_medicines_tried_a_treatment",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "pregnant",
+            "label": "pregnant_possibly_pregnant",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "feeding",
+            "label": "breastfeeding",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "conditions",
+        "title": "which_conditions_apply",
+        "options": [
+          {
+            "id": "heart",
+            "label": "heart_blood_pressure",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "asthma",
+            "label": "asthma_lung_disease",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "diabetes",
+            "label": "diabetes",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "kidney",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "ulcer",
+            "label": "ulcer_bleeding_problem",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "another_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      }
+    ],
+    "fever": [
+      {
+        "id": "areas",
+        "title": "what_is_bothering_you_most",
+        "options": [
+          {
+            "id": "head",
+            "label": "head",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "throat",
+            "label": "throat_cough",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "back",
+            "label": "back_joints",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "fever",
+            "label": "fever",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nose",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "stomach",
+            "label": "heartburn",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "allergy",
+            "label": "allergy_symptoms",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "skin",
+            "label": "dry_skin",
+            "exclusive": false,
+            "urgent": false
+          }
+        ],
+        "kind": "single",
+        "hint": "catalogue_paths_hint"
+      },
+      {
+        "id": "fever.feel",
+        "title": "what_does_it_feel_like",
+        "options": [
+          {
+            "id": "hot",
+            "label": "feeling_hot",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "aches",
+            "label": "fever_body_aches",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "cold",
+            "label": "fever_cold",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "paracetamol",
+              "ibuprofen"
+            ]
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "duration",
+        "title": "how_long_has_it_been",
+        "options": [
+          {
+            "id": "today",
+            "label": "started_today",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "days",
+            "label": "1_3_days",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "longer",
+            "label": "4_days_or_more",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "severity",
+        "title": "how_much_is_it_bothering_you",
+        "options": [
+          {
+            "id": "mild",
+            "label": "mild_can_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "moderate",
+            "label": "moderate_gets_in_the_way",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "severe",
+            "label": "severe_cannot_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "age",
+        "title": "who_is_this_for",
+        "options": [
+          {
+            "id": "child",
+            "label": "child_under_12",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "teen",
+            "label": "teen_12_17",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "adult",
+            "label": "adult_18_64",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "older",
+            "label": "65_or_older",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "urgent",
+        "title": "targeted_safety_title",
+        "options": [
+          {
+            "id": "breathing",
+            "label": "trouble_breathing_mouth_or_throat_swelling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "collapse",
+            "label": "fainting_new_weakness_or_trouble_speaking",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "stiff",
+            "label": "fever_stiff_neck_light",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "rash",
+            "label": "non_fading_rash",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "baby",
+            "label": "very_young_baby_fever",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "age",
+                "values": [
+                  "child"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi",
+        "hint": "targeted_safety_hint"
+      },
+      {
+        "id": "history",
+        "title": "anything_we_should_know",
+        "options": [
+          {
+            "id": "allergy",
+            "label": "medicine_allergy_past_reaction",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "condition",
+            "label": "an_ongoing_medical_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "medicines",
+            "label": "taking_medicines_tried_a_treatment",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "pregnant",
+            "label": "pregnant_possibly_pregnant",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "feeding",
+            "label": "breastfeeding",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "conditions",
+        "title": "which_conditions_apply",
+        "options": [
+          {
+            "id": "heart",
+            "label": "heart_blood_pressure",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "asthma",
+            "label": "asthma_lung_disease",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "diabetes",
+            "label": "diabetes",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "kidney",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "ulcer",
+            "label": "ulcer_bleeding_problem",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "another_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      }
+    ],
+    "nose": [
+      {
+        "id": "areas",
+        "title": "what_is_bothering_you_most",
+        "options": [
+          {
+            "id": "head",
+            "label": "head",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "throat",
+            "label": "throat_cough",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "back",
+            "label": "back_joints",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "fever",
+            "label": "fever",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nose",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "stomach",
+            "label": "heartburn",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "allergy",
+            "label": "allergy_symptoms",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "skin",
+            "label": "dry_skin",
+            "exclusive": false,
+            "urgent": false
+          }
+        ],
+        "kind": "single",
+        "hint": "catalogue_paths_hint"
+      },
+      {
+        "id": "nose.feel",
+        "title": "what_does_it_feel_like",
+        "options": [
+          {
+            "id": "blocked",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "xylometazoline",
+              "sodium chloride"
+            ]
+          },
+          {
+            "id": "pressure",
+            "label": "blocked_nose_pressure",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "xylometazoline",
+              "sodium chloride"
+            ]
+          },
+          {
+            "id": "runny",
+            "label": "runny_blocked_nose",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "xylometazoline",
+              "sodium chloride"
+            ]
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "duration",
+        "title": "how_long_has_it_been",
+        "options": [
+          {
+            "id": "today",
+            "label": "started_today",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "days",
+            "label": "1_3_days",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "longer",
+            "label": "4_days_or_more",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "severity",
+        "title": "how_much_is_it_bothering_you",
+        "options": [
+          {
+            "id": "mild",
+            "label": "mild_can_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "moderate",
+            "label": "moderate_gets_in_the_way",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "severe",
+            "label": "severe_cannot_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "age",
+        "title": "who_is_this_for",
+        "options": [
+          {
+            "id": "child",
+            "label": "child_under_12",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "teen",
+            "label": "teen_12_17",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "adult",
+            "label": "adult_18_64",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "older",
+            "label": "65_or_older",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "urgent",
+        "title": "targeted_safety_title",
+        "options": [
+          {
+            "id": "breathing",
+            "label": "trouble_breathing_mouth_or_throat_swelling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "collapse",
+            "label": "fainting_new_weakness_or_trouble_speaking",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "eyes",
+            "label": "eye_swelling_vision",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "nose.feel",
+                "values": [
+                  "pressure"
+                ]
+              },
+              {
+                "question": "severity",
+                "values": [
+                  "severe"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi",
+        "hint": "targeted_safety_hint"
+      },
+      {
+        "id": "history",
+        "title": "anything_we_should_know",
+        "options": [
+          {
+            "id": "allergy",
+            "label": "medicine_allergy_past_reaction",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "condition",
+            "label": "an_ongoing_medical_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "medicines",
+            "label": "taking_medicines_tried_a_treatment",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "pregnant",
+            "label": "pregnant_possibly_pregnant",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "feeding",
+            "label": "breastfeeding",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "conditions",
+        "title": "which_conditions_apply",
+        "options": [
+          {
+            "id": "heart",
+            "label": "heart_blood_pressure",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "asthma",
+            "label": "asthma_lung_disease",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "diabetes",
+            "label": "diabetes",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "kidney",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "ulcer",
+            "label": "ulcer_bleeding_problem",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "another_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      }
+    ],
+    "stomach": [
+      {
+        "id": "areas",
+        "title": "what_is_bothering_you_most",
+        "options": [
+          {
+            "id": "head",
+            "label": "head",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "throat",
+            "label": "throat_cough",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "back",
+            "label": "back_joints",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "fever",
+            "label": "fever",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nose",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "stomach",
+            "label": "heartburn",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "allergy",
+            "label": "allergy_symptoms",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "skin",
+            "label": "dry_skin",
+            "exclusive": false,
+            "urgent": false
+          }
+        ],
+        "kind": "single",
+        "hint": "catalogue_paths_hint"
+      },
+      {
+        "id": "stomach.feel",
+        "title": "what_does_it_feel_like",
+        "options": [
+          {
+            "id": "burning",
+            "label": "burning_heartburn",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "pantoprazole",
+              "omeprazole",
+              "magaldrate"
+            ]
+          },
+          {
+            "id": "sour",
+            "label": "sour_taste",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "pantoprazole",
+              "omeprazole",
+              "magaldrate"
+            ]
+          },
+          {
+            "id": "meal",
+            "label": "heartburn_after_meal",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "pantoprazole",
+              "omeprazole",
+              "magaldrate"
+            ]
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "stomach.pattern",
+        "title": "heartburn_pattern_title",
+        "options": [
+          {
+            "id": "occasional",
+            "label": "heartburn_occasional",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "frequent",
+            "label": "heartburn_frequent",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "night",
+            "label": "heartburn_night",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "duration",
+        "title": "how_long_has_it_been",
+        "options": [
+          {
+            "id": "today",
+            "label": "started_today",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "days",
+            "label": "1_3_days",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "longer",
+            "label": "4_days_or_more",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "severity",
+        "title": "how_much_is_it_bothering_you",
+        "options": [
+          {
+            "id": "mild",
+            "label": "mild_can_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "moderate",
+            "label": "moderate_gets_in_the_way",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "severe",
+            "label": "severe_cannot_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "age",
+        "title": "who_is_this_for",
+        "options": [
+          {
+            "id": "child",
+            "label": "child_under_12",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "teen",
+            "label": "teen_12_17",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "adult",
+            "label": "adult_18_64",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "older",
+            "label": "65_or_older",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "urgent",
+        "title": "targeted_safety_title",
+        "options": [
+          {
+            "id": "breathing",
+            "label": "trouble_breathing_mouth_or_throat_swelling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "collapse",
+            "label": "fainting_new_weakness_or_trouble_speaking",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "blood",
+            "label": "blood_in_vomit_bloody_or_black_stool",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "chest",
+            "label": "chest_pain_spreading_to_arm_jaw_or_back",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "severe",
+            "label": "sudden_severe_pain_or_painful_to_touch",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "severity",
+                "values": [
+                  "severe"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi",
+        "hint": "targeted_safety_hint"
+      },
+      {
+        "id": "history",
+        "title": "anything_we_should_know",
+        "options": [
+          {
+            "id": "allergy",
+            "label": "medicine_allergy_past_reaction",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "condition",
+            "label": "an_ongoing_medical_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "medicines",
+            "label": "taking_medicines_tried_a_treatment",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "pregnant",
+            "label": "pregnant_possibly_pregnant",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "feeding",
+            "label": "breastfeeding",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "conditions",
+        "title": "which_conditions_apply",
+        "options": [
+          {
+            "id": "heart",
+            "label": "heart_blood_pressure",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "asthma",
+            "label": "asthma_lung_disease",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "diabetes",
+            "label": "diabetes",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "kidney",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "ulcer",
+            "label": "ulcer_bleeding_problem",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "another_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      }
+    ],
+    "allergy": [
+      {
+        "id": "areas",
+        "title": "what_is_bothering_you_most",
+        "options": [
+          {
+            "id": "head",
+            "label": "head",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "throat",
+            "label": "throat_cough",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "back",
+            "label": "back_joints",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "fever",
+            "label": "fever",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nose",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "stomach",
+            "label": "heartburn",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "allergy",
+            "label": "allergy_symptoms",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "skin",
+            "label": "dry_skin",
+            "exclusive": false,
+            "urgent": false
+          }
+        ],
+        "kind": "single",
+        "hint": "catalogue_paths_hint"
+      },
+      {
+        "id": "allergy.feel",
+        "title": "what_does_it_feel_like",
+        "options": [
+          {
+            "id": "sneeze",
+            "label": "sneezing_itchy_nose",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "cetirizine",
+              "loratadine",
+              "fexofenadine"
+            ]
+          },
+          {
+            "id": "eyes",
+            "label": "itchy_watery_eyes",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "cetirizine",
+              "loratadine",
+              "fexofenadine"
+            ]
+          },
+          {
+            "id": "hives",
+            "label": "raised_itchy_rash",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "cetirizine",
+              "loratadine"
+            ]
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "duration",
+        "title": "how_long_has_it_been",
+        "options": [
+          {
+            "id": "today",
+            "label": "started_today",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "days",
+            "label": "1_3_days",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "longer",
+            "label": "4_days_or_more",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "severity",
+        "title": "how_much_is_it_bothering_you",
+        "options": [
+          {
+            "id": "mild",
+            "label": "mild_can_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "moderate",
+            "label": "moderate_gets_in_the_way",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "severe",
+            "label": "severe_cannot_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "age",
+        "title": "who_is_this_for",
+        "options": [
+          {
+            "id": "child",
+            "label": "child_under_12",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "teen",
+            "label": "teen_12_17",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "adult",
+            "label": "adult_18_64",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "older",
+            "label": "65_or_older",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "urgent",
+        "title": "targeted_safety_title",
+        "options": [
+          {
+            "id": "breathing",
+            "label": "trouble_breathing_mouth_or_throat_swelling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "collapse",
+            "label": "fainting_new_weakness_or_trouble_speaking",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "rash",
+            "label": "blistering_peeling_rash",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "allergy.feel",
+                "values": [
+                  "hives"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "vision",
+            "label": "sudden_loss_of_vision_severe_eye_pain",
+            "exclusive": false,
+            "urgent": true,
+            "when": [
+              {
+                "question": "allergy.feel",
+                "values": [
+                  "eyes"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi",
+        "hint": "targeted_safety_hint"
+      },
+      {
+        "id": "history",
+        "title": "anything_we_should_know",
+        "options": [
+          {
+            "id": "allergy",
+            "label": "medicine_allergy_past_reaction",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "condition",
+            "label": "an_ongoing_medical_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "medicines",
+            "label": "taking_medicines_tried_a_treatment",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "pregnant",
+            "label": "pregnant_possibly_pregnant",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "feeding",
+            "label": "breastfeeding",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "conditions",
+        "title": "which_conditions_apply",
+        "options": [
+          {
+            "id": "heart",
+            "label": "heart_blood_pressure",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "asthma",
+            "label": "asthma_lung_disease",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "diabetes",
+            "label": "diabetes",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "kidney",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "ulcer",
+            "label": "ulcer_bleeding_problem",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "another_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      }
+    ],
+    "skin": [
+      {
+        "id": "areas",
+        "title": "what_is_bothering_you_most",
+        "options": [
+          {
+            "id": "head",
+            "label": "head",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "throat",
+            "label": "throat_cough",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "back",
+            "label": "back_joints",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "fever",
+            "label": "fever",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nose",
+            "label": "blocked_nose",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "stomach",
+            "label": "heartburn",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "allergy",
+            "label": "allergy_symptoms",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "skin",
+            "label": "dry_skin",
+            "exclusive": false,
+            "urgent": false
+          }
+        ],
+        "kind": "single",
+        "hint": "catalogue_paths_hint"
+      },
+      {
+        "id": "skin.feel",
+        "title": "what_does_it_feel_like",
+        "options": [
+          {
+            "id": "dry",
+            "label": "dry_flaky",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "dexpanthenol"
+            ]
+          },
+          {
+            "id": "rough",
+            "label": "rough_dry_skin",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "dexpanthenol"
+            ]
+          },
+          {
+            "id": "irritated",
+            "label": "mild_dry_irritation",
+            "exclusive": false,
+            "urgent": false,
+            "ingredients": [
+              "dexpanthenol"
+            ]
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "duration",
+        "title": "how_long_has_it_been",
+        "options": [
+          {
+            "id": "today",
+            "label": "started_today",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "days",
+            "label": "1_3_days",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "longer",
+            "label": "4_days_or_more",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "severity",
+        "title": "how_much_is_it_bothering_you",
+        "options": [
+          {
+            "id": "mild",
+            "label": "mild_can_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "moderate",
+            "label": "moderate_gets_in_the_way",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "severe",
+            "label": "severe_cannot_carry_on",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "age",
+        "title": "who_is_this_for",
+        "options": [
+          {
+            "id": "child",
+            "label": "child_under_12",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "teen",
+            "label": "teen_12_17",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "adult",
+            "label": "adult_18_64",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "older",
+            "label": "65_or_older",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "single"
+      },
+      {
+        "id": "urgent",
+        "title": "targeted_safety_title",
+        "options": [
+          {
+            "id": "breathing",
+            "label": "trouble_breathing_mouth_or_throat_swelling",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "collapse",
+            "label": "fainting_new_weakness_or_trouble_speaking",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "infection",
+            "label": "rapid_painful_skin",
+            "exclusive": false,
+            "urgent": true
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi",
+        "hint": "targeted_safety_hint"
+      },
+      {
+        "id": "history",
+        "title": "anything_we_should_know",
+        "options": [
+          {
+            "id": "allergy",
+            "label": "medicine_allergy_past_reaction",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "condition",
+            "label": "an_ongoing_medical_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "medicines",
+            "label": "taking_medicines_tried_a_treatment",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "pregnant",
+            "label": "pregnant_possibly_pregnant",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "feeding",
+            "label": "breastfeeding",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "none_of_these",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "allergy.medicine",
+        "title": "allergy_medicine_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "antibiotic",
+            "label": "medicine_antibiotic",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "medicines.current",
+        "title": "current_medicines_title",
+        "options": [
+          {
+            "id": "paracetamol",
+            "label": "medicine_paracetamol",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "nsaid",
+            "label": "medicine_nsaid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "blood_thinner",
+            "label": "medicine_blood_thinner",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "steroid",
+            "label": "medicine_steroid",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "medicine_other",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "none",
+            "label": "medicine_none_today",
+            "exclusive": true,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      },
+      {
+        "id": "conditions",
+        "title": "which_conditions_apply",
+        "options": [
+          {
+            "id": "heart",
+            "label": "heart_blood_pressure",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "asthma",
+            "label": "asthma_lung_disease",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "diabetes",
+            "label": "diabetes",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "kidney",
+            "label": "kidney_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "liver",
+            "label": "liver_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "ulcer",
+            "label": "ulcer_bleeding_problem",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "other",
+            "label": "another_condition",
+            "exclusive": false,
+            "urgent": false
+          },
+          {
+            "id": "unknown",
+            "label": "i_m_not_sure",
+            "exclusive": true,
+            "urgent": false
+          }
+        ],
+        "kind": "multi"
+      }
+    ]
+  }
+}

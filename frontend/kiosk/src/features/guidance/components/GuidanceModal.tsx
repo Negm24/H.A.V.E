@@ -1,1 +1,2 @@
-export { GuidanceModal } from '@have/shared/ui/catalogue'
+import { SymptomsModal } from '../../symptoms/components/SymptomsModal'
+export function GuidanceModal({ close }: { close: () => void }) { return <SymptomsModal onClose={close} /> }
