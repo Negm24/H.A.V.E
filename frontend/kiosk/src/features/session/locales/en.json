@@ -1,4 +1,8 @@
 {
+  "maintenanceTitle": "This kiosk is under maintenance",
+  "maintenanceBody": "Shopping, sign-in and collection are temporarily paused. Please use another available kiosk or check again shortly.",
+  "maintenanceOrders": "Your orders and baskets are kept. Collection deadlines continue to apply; check your order in H.A.V.E Hub.",
+  "maintenanceRefresh": "Check availability",
   "attractTitle": "Your health, within reach.", "attractNote": "Sign in here with your phone and PIN, or use H.A.V.E Hub.",
   "start": "Touch to start", "chooseLanguage": "Choose your language", "starting": "Starting your session…",
   "guestHome": "Welcome", "welcome": "What would you like to do?", "guest": "Guest session",

@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     "apps.carts.apps.CartsConfig",
     "apps.orders.apps.OrdersConfig",
     "apps.payments.apps.PaymentsConfig",
+    "apps.operations.apps.OperationsConfig",
+    "apps.observability.apps.ObservabilityConfig",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -66,6 +68,12 @@ CSRF_COOKIE_SAMESITE = "Strict"
 OWNER_SESSION_IDLE_SECONDS = 600
 OWNER_SESSION_MAX_SECONDS = 7200
 SESSION_COOKIE_AGE = OWNER_SESSION_IDLE_SECONDS
+OWNER_ALLOWED_AUTHORITIES = ["localhost:5176", "127.0.0.1:5176", "localhost:8000", "127.0.0.1:8000", "backend:8000", "testserver"]
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
+HOST_AGENT_TOKEN = env("HOST_AGENT_TOKEN", default="")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -109,6 +117,7 @@ SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "StatusEnum": ["waiting_for_scan", "waiting_for_confirmation", "approved", "rejected", "completed"],
         "DoctorLoginStatusEnum": ["WAITING_FOR_APPROVAL", "REJECTED", "MFA_REQUIRED", "MFA_ENROLLMENT_REQUIRED"],
+        "TransactionStatusEnum": ["PENDING", "SUCCEEDED", "FAILED", "UNKNOWN"],
     },
 }
 
@@ -119,11 +128,13 @@ PASSWORD_HASHERS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "config.owner_boundary.OwnerBoundaryMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "apps.accounts.middlewares.owner_session_middleware.OwnerSessionTimeoutMiddleware",
+    "apps.observability.middleware.TelemetryMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 

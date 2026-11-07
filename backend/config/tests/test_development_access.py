@@ -36,6 +36,15 @@ class DevelopmentAccessTests(SimpleTestCase):
             with self.subTest(changes=list(changes)), self.assertRaises(ValueError):
                 self.read(self.valid | changes)
 
+    def test_admin_uses_an_exact_private_https_origin(self):
+        origin = "https://laptop.example.ts.net:9443"
+        self.assertEqual(self.read(self.valid | {"ownerPrivateOrigin": origin})["ownerPrivateOrigin"], origin)
+        for invalid in (origin + "/", origin + "/api", "http://laptop.example.ts.net:9443",
+                        "https://laptop.example.ts.net:8443", "https://laptop.example.ts.net",
+                        "https://user:secret@laptop.example.ts.net:9443"):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                self.read(self.valid | {"ownerPrivateOrigin": invalid})
+
     def test_rejects_broad_hosts_paths_credentials_and_arbitrary_ports(self):
         for value in ("http://laptop.example.ts.net", "https://*.ts.net", "https://laptop.example.ts.net/",
                       "https://laptop.example.ts.net/path", "https://laptop.example.ts.net?x=1",

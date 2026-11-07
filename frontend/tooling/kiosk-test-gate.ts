@@ -5,8 +5,8 @@ import type { Plugin } from 'vite'
 import { publicOrigin, readDevelopmentAccess } from './development-access.ts'
 
 const COOKIE = '__Host-have_kiosk_test'
-const LIFETIME = 4 * 60 * 60 * 1000
 const UNLOCK = '/_test-access/unlock'
+const LOCK = '/_test-access/lock'
 type Request = Pick<IncomingMessage, 'headers' | 'url' | 'method'>
 
 function escape(value: string) {
@@ -37,15 +37,16 @@ ${message ? `<p role="alert">${escape(message)}</p>` : ''}<form method="post" ac
 export function createKioskTestGate({ host, password, now = Date.now }: { host?: string; password: string; now?: () => number }) {
   // Fresh process key invalidates old gate cookies on restart/password changes.
   const key = randomBytes(32)
+  const sessions = new Set<string>()
   const expectedPassword = createHash('sha256').update(password).digest()
   let windowStarted = now(), attempts = 0
   const signature = (payload: string) => createHmac('sha256', key).update(`${host}|${payload}`).digest('hex')
   const local = (req: Request) => req.headers.host === 'localhost:5173' || req.headers.host === '127.0.0.1:5173'
   function hasSession(req: Request) {
     const value = req.headers.cookie?.split(';').map(part => part.trim()).find(part => part.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1) || ''
-    const match = /^(\d{13})\.([a-f0-9]{48})\.([a-f0-9]{64})$/.exec(value)
-    if (!match || Number(match[1]) <= now()) return false
-    return timingSafeEqual(Buffer.from(match[3]!, 'hex'), Buffer.from(signature(`${match[1]}.${match[2]}`), 'hex'))
+    const match = /^([a-f0-9]{48})\.([a-f0-9]{64})$/.exec(value)
+    if (!match || !sessions.has(match[1]!)) return false
+    return timingSafeEqual(Buffer.from(match[2]!, 'hex'), Buffer.from(signature(match[1]!), 'hex'))
   }
   function authorized(req: Request) {
     return local(req) || Boolean(host && req.headers.host === host && password.length >= 16 && hasSession(req))
@@ -54,6 +55,16 @@ export function createKioskTestGate({ host, password, now = Date.now }: { host?:
     if (local(req)) return next()
     if (!host || req.headers.host !== host) { res.writeHead(403); res.end('Untrusted Kiosk host.'); return }
     if (password.length < 16 || password.length > 256) { res.writeHead(503); res.end('Private Kiosk access is not configured.'); return }
+    if (req.url === LOCK && authorized(req)) {
+      if (req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Content-Security-Policy': "default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'" })
+        res.end(`<html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lock test Kiosk</title><h1>Lock test Kiosk access?</h1><p>This locks access in this browser, including its other Kiosk tabs.</p><form method="post" action="${LOCK}"><button>Lock access</button></form></html>`); return
+      }
+      if (req.method !== 'POST' || req.headers.origin !== `https://${host}`) { res.writeHead(403); res.end('Use the lock confirmation.'); return }
+      const token = req.headers.cookie?.split(';').map(part => part.trim()).find(part => part.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1).split('.')[0]
+      if (token) sessions.delete(token)
+      res.writeHead(303, { Location: '/', 'Cache-Control': 'no-store', 'Set-Cookie': `${COOKIE}=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax` }); res.end(); return
+    }
     if (req.url === UNLOCK && req.method === 'POST') {
       if (req.headers.origin !== `https://${host}` || req.headers['content-type']?.split(';')[0] !== 'application/x-www-form-urlencoded') {
         res.writeHead(403); res.end('Use the Kiosk unlock form.'); return
@@ -74,10 +85,13 @@ export function createKioskTestGate({ host, password, now = Date.now }: { host?:
       const returnPath = safeReturnPath(form.get('return_to') || '/')
       const supplied = createHash('sha256').update(form.get('password') || '').digest()
       if (!timingSafeEqual(supplied, expectedPassword)) { gatePage(res, 401, returnPath, 'Incorrect test access password.'); return }
-      const payload = `${now() + LIFETIME}.${randomBytes(24).toString('hex')}`
+      const payload = randomBytes(24).toString('hex')
+      // Bounded process-lifetime sessions, with no elapsed-time expiry.
+      if (sessions.size >= 1024) sessions.delete(sessions.values().next().value!)
+      sessions.add(payload)
       res.writeHead(303, {
         Location: returnPath, 'Cache-Control': 'no-store',
-        'Set-Cookie': `${COOKIE}=${payload}.${signature(payload)}; Path=/; Max-Age=${LIFETIME / 1000}; Secure; HttpOnly; SameSite=Lax`,
+        'Set-Cookie': `${COOKIE}=${payload}.${signature(payload)}; Path=/; Secure; HttpOnly; SameSite=Lax`,
       })
       res.end(); return
     }

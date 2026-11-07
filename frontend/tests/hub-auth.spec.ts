@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 import { createRequire } from 'node:module'
+import { generateFixtureQr } from './qr-fixture'
 
 const origin = 'http://localhost:5174'
 const customer = { id: 'HAV-C876-000000000024', account_type: 'CUSTOMER', first_name: 'Hub', last_name: 'Tester', phone_number: '+201099998876', email: 'hub-tester@example.test', date_of_birth: '24-01-2005', phone_verified_at: '2026-10-10T00:00:00Z' }
@@ -7,7 +8,7 @@ const challengeId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
 const payload = `${challengeId}.test-secret`
 type Call = { path: string; method: string; body: Record<string, unknown> | null; bearer: string | undefined }
 
-async function mockHub(context: BrowserContext, options: { shortCode?: boolean; limited?: boolean; offlineLogout?: boolean; shortAccess?: boolean; qrStatus?: string } = {}) {
+async function mockHub(context: BrowserContext, options: { shortCode?: boolean; limited?: boolean; offlineLogout?: boolean; shortAccess?: boolean; qrStatus?: string; qrScanFails?: boolean; qrApprovalFails?: boolean; qrApprovalResponseLost?: boolean } = {}) {
   const calls: Call[] = []; let signedIn = false, signupStage = 0, sequence = 0, confirming = false
   await context.route('**/api/v1/**', async route => {
     const request = route.request(), path = new URL(request.url()).pathname, body = request.postData() ? request.postDataJSON() : null
@@ -35,7 +36,12 @@ async function mockHub(context: BrowserContext, options: { shortCode?: boolean; 
       if (body?.new_pin === '1111') { status = 400; response = { new_pin: ['Choose a less predictable PIN.'] } }
       else response = { detail: 'Reset complete' }
     } else if (path.includes('/qr-login/')) {
+      if (path.endsWith('/scan/') && options.qrScanFails) {
+        await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ detail: 'QR expired' }) }); return
+      }
+      if (path.endsWith('/confirm/') && options.qrApprovalFails) { await route.abort('failed'); return }
       if (path.endsWith('/confirm/')) confirming = body?.approve === true
+      if (path.endsWith('/confirm/') && options.qrApprovalResponseLost) { await route.abort('failed'); return }
       response = { challenge_id: challengeId, status: path.endsWith('/confirm/') && !body?.approve ? 'rejected' : confirming ? options.qrStatus || 'completed' : 'waiting_for_confirmation', expires_in: 90, terminal: { serial_number: 'HAVE-TEST-001', display_name: 'Test Terminal', address_en: 'Cairo test address', address_ar: 'عنوان اختبار القاهرة' } }
       if (path.endsWith('/confirm/') && body?.approve) (response as { status: string }).status = 'approved'
     }
@@ -206,21 +212,37 @@ test('two tabs serialize rotating refreshes and remote logout clears identity', 
   await page.getByRole('button', { name: 'Sign out', exact: true }).click()
   await expect(second.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
 })
-test('a real decoded camera QR requires approval and reaches completed; camera tracks stop', async ({ context, page }) => {
+test('a real decoded camera QR automatically signs in without confirmation; camera tracks stop', async ({ context, page }) => {
   const calls = await mockHub(context); await login(page)
   await page.getByRole('link', { name: /Sign in to kiosk/ }).click(); await fakeCamera(page)
   await page.getByRole('button', { name: 'Start camera' }).click()
   await expect(page.getByText('Test Terminal', { exact: true })).toBeVisible()
-  expect(calls.filter(call => call.path.endsWith('/confirm/'))).toHaveLength(0)
+  await expect(page.getByRole('button', { name: 'Approve login' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Reject', exact: true })).toHaveCount(0)
   expect(await page.evaluate(() => (window as unknown as { stoppedTracks: number }).stoppedTracks)).toBeGreaterThan(0)
-  await page.getByRole('button', { name: 'Approve login' }).click()
   await expect(page.getByRole('status')).toContainText('now signed in', { timeout: 8000 })
   expect(calls.filter(call => call.path.endsWith('/confirm/'))).toHaveLength(1)
 })
-test('QR rejection does not approve the kiosk', async ({ context, page }) => {
-  const calls = await mockHub(context); await login(page); await page.getByRole('link', { name: /Sign in to kiosk/ }).click(); await fakeCamera(page); await page.getByRole('button', { name: 'Start camera' }).click()
-  await page.getByRole('button', { name: 'Reject', exact: true }).click(); await expect(page.getByRole('status')).toContainText('rejected')
-  expect(calls.find(call => call.path.endsWith('/confirm/'))?.body).toEqual({ approve: false })
+test('an invalid or expired scan never submits automatic approval', async ({ context, page }) => {
+  const calls = await mockHub(context, { qrScanFails: true }); await login(page); await page.getByRole('link', { name: /Sign in to kiosk/ }).click(); await fakeCamera(page); await page.getByRole('button', { name: 'Start camera' }).click()
+  await expect(page.getByRole('alert')).toContainText('Check the entered details')
+  expect(calls.filter(call => call.path.endsWith('/confirm/'))).toHaveLength(0)
+})
+
+test('an uncertain automatic approval polls status without replay or false success', async ({ context, page }) => {
+  const calls = await mockHub(context, { qrApprovalFails: true }); await login(page); await page.getByRole('link', { name: /Sign in to kiosk/ }).click(); await fakeCamera(page); await page.getByRole('button', { name: 'Start camera' }).click()
+  await expect(page.getByRole('alert')).toContainText('sign-in could not be confirmed')
+  await expect.poll(() => calls.filter(call => call.path === `/api/v1/auth/customers/hub/qr-login/${challengeId}/`).length, { timeout: 8000 }).toBeGreaterThan(1)
+  expect(calls.filter(call => call.path.endsWith('/confirm/'))).toHaveLength(1)
+  await expect(page.getByRole('status')).not.toContainText('now signed in')
+  await expect(page.getByRole('button', { name: 'Scan another QR' })).toBeEnabled()
+})
+
+test('a lost automatic approval response reconciles completion without approving twice', async ({ context, page }) => {
+  const calls = await mockHub(context, { qrApprovalResponseLost: true }); await login(page); await page.getByRole('link', { name: /Sign in to kiosk/ }).click(); await fakeCamera(page); await page.getByRole('button', { name: 'Start camera' }).click()
+  await expect(page.getByRole('status')).toContainText('now signed in', { timeout: 8000 })
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  expect(calls.filter(call => call.path.endsWith('/confirm/'))).toHaveLength(1)
 })
 test('camera permission failure is explained', async ({ context, page }) => {
   await mockHub(context); await login(page); await page.getByRole('link', { name: /Sign in to kiosk/ }).click()
@@ -248,7 +270,7 @@ test.describe('real backend Hub smoke tests', () => {
     const ended = await page.request.post(origin + '/api/v1/auth/customers/hub/refresh/', { headers: { 'X-CSRFToken': (await (await page.request.get(origin + '/api/v1/auth/csrf/')).json()).csrf_token } })
     expect(ended.status()).toBe(401)
   })
-  test('real Hub scanner and approval signs the actual kiosk in', async ({ context, page }) => {
+  test('real Hub scanner automatically signs the actual kiosk in', async ({ context, page }) => {
     await login(page); await expect(page.getByRole('heading', { name: 'Hello, Kiosk' })).toBeVisible()
     const kiosk = await context.newPage()
     try {
@@ -257,13 +279,10 @@ test.describe('real backend Hub smoke tests', () => {
       await kiosk.getByRole('button', { name: /Continue in English/ }).click()
       await kiosk.getByRole('button', { name: /Sign in with PIN/ }).click()
       await kiosk.getByRole('button', { name: 'Or sign in with H.A.V.E Hub QR code', exact: true }).click()
-      const created = kiosk.waitForResponse(response => response.url().endsWith('/terminal/qr-login/') && response.request().method() === 'POST')
-      await kiosk.getByRole('button', { name: 'Generate QR', exact: true }).click()
-      const qr = await (await created).json()
+      const qr = await generateFixtureQr(kiosk)
       await page.getByRole('link', { name: /Sign in to kiosk/ }).click(); await fakeCamera(page, qr.qr_payload)
       await page.getByRole('button', { name: 'Start camera' }).click()
-      await expect(page.getByRole('button', { name: 'Approve login' })).toBeVisible()
-      await page.getByRole('button', { name: 'Approve login' }).click()
+      await expect(page.getByRole('button', { name: 'Approve login' })).toHaveCount(0)
       await expect(kiosk.getByRole('heading', { name: 'Hello Kiosk' })).toBeVisible({ timeout: 10000 })
       await expect(page.getByRole('status')).toContainText('now signed in', { timeout: 10000 })
       await kiosk.getByRole('button', { name: 'Start over', exact: true }).click()

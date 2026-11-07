@@ -28,6 +28,16 @@ describe('HTTP transport', () => {
     expect(headers.get('Authorization')).toBe('Bearer test-token')
     expect(headers.has('X-Terminal-Key')).toBe(false)
   })
+  it('sends multipart uploads unchanged and lets the browser set the boundary', async () => {
+    const mock = vi.fn().mockResolvedValue(new Response('{}'))
+    vi.stubGlobal('fetch', mock)
+    const body = new FormData()
+    body.append('revision', '2')
+    body.append('image', new Blob(['image'], { type: 'image/png' }), 'product.png')
+    await request('/api/v1/owner/products/1/image/', { method: 'POST', body })
+    expect(mock.mock.calls[0][1].body).toBe(body)
+    expect(mock.mock.calls[0][1].headers.has('Content-Type')).toBe(false)
+  })
   it('preserves a 429 delay and does not retry a mutation', async () => {
     const mock = vi.fn().mockResolvedValue(new Response('{"detail":"Wait before trying again."}',
       { status: 429, headers: { 'Retry-After': '60' } }))
@@ -59,5 +69,18 @@ describe('HTTP transport', () => {
     vi.stubGlobal('fetch', mock)
     await expect(request('https://example.test/api/')).rejects.toThrow('absolute /api/')
     expect(mock).not.toHaveBeenCalled()
+  })
+  it('marks only scheduled GETs without leaking the flag to a concurrent explicit read or mutation', async () => {
+    const finish: Array<() => void> = []
+    const mock = vi.fn().mockImplementation(() => new Promise<Response>(resolve => { finish.push(() => resolve(new Response('{}'))) }))
+    vi.stubGlobal('fetch', mock)
+    const background = request('/api/v1/hub/orders/', { background: true, bearerToken: 'private-token' })
+    const explicit = request('/api/v1/hub/orders/', { bearerToken: 'private-token' })
+    const mutation = request('/api/v1/hub/orders/checkout/', { method: 'POST', background: true, body: {} })
+    expect(mock.mock.calls[0][1].headers.get('X-Have-Background')).toBe('1')
+    expect(mock.mock.calls[1][1].headers.has('X-Have-Background')).toBe(false)
+    expect(mock.mock.calls[2][1].headers.has('X-Have-Background')).toBe(false)
+    for (const complete of finish) complete()
+    await Promise.all([background, explicit, mutation])
   })
 })

@@ -18,7 +18,7 @@ def verify_signup_step(*, purpose, challenge_key, latest_key, challenge_id, code
     """Returns (email_step_response, None) after the phone code, (None, payload) after the email code."""
     try:
         _source_limit(source, "verify", 60, 300)
-        email_code = generate_verification_code()
+        email_code = generate_verification_code(exclude=code)
         result = verify_signup_code(
             challenge_key=challenge_key, latest_key=latest_key, challenge_id=str(challenge_id),
             code=code, next_code=email_code, max_attempts=max_attempts, seconds=seconds,

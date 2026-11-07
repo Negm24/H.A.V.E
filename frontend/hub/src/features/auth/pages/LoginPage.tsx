@@ -3,12 +3,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from '@have/shared/i18n'
 import { Alert, Button } from '@have/shared/ui/controls'
+import { recordFeature, useScreenReady } from '@have/shared/telemetry/react'
 import { Field, FormSection } from '@have/shared/ui/forms'
 import { loginSchema, type LoginData } from '../schemas'
 import { useOperation } from '../hooks/useOperation'
 import { useSession } from '../../../app/providers'
 
 export function LoginPage() {
+  useScreenReady(true)
   const { t } = useTranslation('hub'), { session } = useSession(), operation = useOperation()
   const navigate = useNavigate(), location = useLocation()
   const { register, handleSubmit, formState: { errors } } = useForm<LoginData>({ resolver: zodResolver(loginSchema), defaultValues: { phone_number: '', pin: '', remember_me: false } })
@@ -16,6 +18,7 @@ export function LoginPage() {
     {location.state?.message && <p className="hub-success" role="status">{t(location.state.message)}</p>}
     {operation.error && <Alert>{operation.error}</Alert>}
     <form className="hub-form" onSubmit={handleSubmit(data => operation.run(() => session.login(data), () => {
+      recordFeature('login_success')
       const requested = location.state?.from
       navigate(typeof requested === 'string' && /^\/(orders|browse|checkout)(\/|\?|$)/.test(requested) ? requested : '/dashboard', { replace: true })
     }))}>

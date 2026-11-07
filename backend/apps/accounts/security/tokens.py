@@ -23,8 +23,15 @@ def identifier_hash(kind, value):
     return salted_hmac(f"have.doctor-rejection.{kind}", value, algorithm="sha256").hexdigest()
 
 
-def generate_verification_code():
-    return f"{secrets.randbelow(1_000_000):06d}"
+def generate_verification_code(*, exclude=None):
+    if exclude is None:
+        return f"{secrets.randbelow(1_000_000):06d}"
+    # Uniformly choose one of the other six-digit codes, so replaying the
+    # phone code cannot also consume the subsequent email verification stage.
+    value = secrets.randbelow(999_999)
+    if value >= int(exclude):
+        value += 1
+    return f"{value:06d}"
 
 
 # Each personal app has its own audience and signing key, so a Hub token can

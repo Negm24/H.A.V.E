@@ -1,5 +1,26 @@
 # H.A.V.E frontend
 
+## Readiness assessment and automatic QR login — 2026-11-06
+
+Current results, requirement coverage, remaining work and manual acceptance:
+[readiness report](../docs/verification/2026-11-06-readiness.md).
+Hub now automatically approves a valid scanned Terminal QR with no confirmation
+tap. Invalid scans do not approve; uncertain approvals use status reads, never
+mutation replay. Both apps explain the new flow in English and Arabic. Backend
+endpoints and device/session/expiry rules are unchanged. This supersedes the
+historical phone steps that ask the customer to press Approve login.
+
+The frontend image does not bundle a browser. Before Docker browser checks on a
+freshly created kiosk container, install its test runtime:
+
+```powershell
+docker compose exec -T kiosk pnpm exec playwright install --with-deps chromium
+docker compose exec -T -e E2E_DOCKER=true kiosk pnpm test:e2e
+```
+
+The browser install is container-local and must be repeated after recreation.
+It is test tooling, not an application dependency or production deployment step.
+
 
 ## Egypt-market sample stock — 2026-10-16
 
@@ -390,9 +411,14 @@ docker compose --profile frontend up -d --no-deps --force-recreate order-worker 
   HTTPS marker. Secure cookies and exact CSRF checks remain enforced.
 - Public development sets DEBUG=False; mock SMS still works through its separate
   explicit opt-in. Swagger is not enabled in public mode.
-- Kiosk's four-hour signed Secure/HttpOnly/Lax password cookie protects documents,
+- Kiosk's process-lifetime signed Secure/HttpOnly/Lax session cookie protects documents,
   modules, API requests and HMR upgrades. Restarting Kiosk invalidates it; unlock
-  again. Localhost remains available without this gate.
+  again. There is no elapsed-time expiry; browser cookie clearing/closing may also
+  require unlocking. Visit `/_test-access/lock` on the protected Kiosk origin to
+  explicitly lock this browser (all its Kiosk tabs). Localhost remains available
+  without this development gate. This is web-service lifecycle protection, not a
+  physical-machine boot agent. Browser device reporting runs while hidden and on
+  network reconnection; OS sleep/browser freezing can still interrupt reports.
 - Cookies are not isolated by port. Kiosk's device proxy forwards only appropriate
   order-result cookies, never Hub refresh, owner or gate cookies.
 - Device keys remain server-side; only allowed Terminal paths/methods receive
@@ -568,3 +594,69 @@ four typechecks/builds and 100 browser regressions pass (nine opt-in live/public
 cases skipped). Backend: 340 tests pass; OpenAPI validates and no migration drift.
 This includes Arabic/English guest/customer Continue/End at 1024×600 and late
 receipt-activity cleanup. No real or automatic sandbox card submission occurred.
+
+Profile indicator correction — 2026-10-19: My Profile shows collection-only counts
+beside Ready to collect; unpaid checkouts appear separately in an amber bottom-end
+warning. RTL mirrors placement. History's combined number-only count is unchanged.
+Kiosk rules live in features/dashboard/styles/collection.css; Hub warning rules
+in features/account/styles/order-attention.css. No API/configuration changes.
+Test mixed, ready-only, unpaid-only and empty summaries in the shopping-recovery
+browser suites; normal source edits hot-reload without rebuilding dependencies.
+
+Hub portrait refinement — 2026-10-19: My Profile displays just a warning symbol
+instead of its normal icon when payments await completion. Landscape retains the
+full bottom-end warning/count and normal profile icon. CSS orientation queries
+handle rotation; translated accessible descriptions keep the hidden count readable
+to screen readers. Kiosk and collection counts are unchanged.
+## Expanded Admin workspace — 2026-11-07
+
+Admin is now an English-only private Owner application at localhost:5176 and private
+Tailscale HTTPS :9443. See [Increment5](CODEX-Increment-5.md) for the nine sections,
+session/CSRF/privacy rules, native host agent, monitoring and acceptance criteria.
+The existing Hub/Kiosk theme, bilingual catalogue data and public 443/8443 mappings
+remain. Four builds are still independent. Owner APIs use cookie+CSRF through
+`@have/shared/api/owner`; anonymous monitoring uses `@have/shared/telemetry/react`.
+Never import another app or expose device/provider/host-agent credentials.
+
+Before live Admin checks, explicitly prepare fictional records using
+`backend/tools/admin_acceptance_fixture.py` and ignored private fixture settings.
+The opt-in `tests/admin-live.spec.ts` flags are `E2E_ADMIN_LIVE`,
+`E2E_ADMIN_PRIVATE` and `E2E_ADMIN_CONTROLS`; only the last enables scoped Advisor/
+worker restarts. Standard tests leave those disabled. Live artifacts/credentials
+are ignored; trace/screenshot recording is disabled for authenticated real tests.
+Cleanup deactivates only dedicated fictional records; it does not reset shared data.
+
+Fixed Inventory workspace — 2026-11-07: choose a machine and drag/select an
+external medicine into one of its24 slots. A quantity dialog loads eligible batches
+by earliest expiry. Remove packs to external inventory before changing a slot's
+product. Reserved packs remain protected. The cabinet uses actual slot capacities
+and has front and angled views, with shared product/image editing.
+Overview fleet shows cabinet-illustration cards with independent connection,
+last-seen, session and availability labels and machine-specific Inventory links.
+Catalogue tab changes clear both visible and submitted search filters.
+Overview expiry totals show current machine stock in four windows, with a selected
+window expanding its per-Kiosk breakdown and machine-specific Inventory links.
+Inventory marks expired shelves red and near-expiry (0–30 Cairo days) yellow.
+Expired stock blocks the entire shelf for customers. Removal requires physical
+confirmation; returned expired batches remain excluded from saleable external
+loading. Owner inspection stays available and reservation guards remain intact.
+External medicines use a book-like paged catalogue matching the cabinet panel's
+height, with automatically fitted pages, full-catalogue search and reduced-motion
+support. The phone picker fits its pages within the viewport.
+
+The older live acceptance fixture helpers now require an isolated test database.
+Do not prepare fixture products in the working project database. Inventory browser
+acceptance uses isolated fixtures and existing medicine-style catalogue entries.
+
+Business Overview refinement: revenue bars reveal detail on hover, focus or tap.
+Analytics uses direct chart labels and touchable busy-time cells, a channel pie,
+and Kiosk addresses. Older sale categories use a labelled current-catalogue
+fallback. The Admin browser tests cover desktop hover and phone tap behavior.
+
+Overview System health uses green Running/red Exited badges, unit-labelled
+vertical CPU/RAM resource columns, and API interval details on hover/focus/tap.
+API timing comes from backend request-processing histograms stored in PostgreSQL.
+
+History observations are inspected directly on the timeline with hover, tap or
+arrow keys. The Overview period selector also refreshes collection outcomes
+using that period, rather than leaving the fleet query at its default month.

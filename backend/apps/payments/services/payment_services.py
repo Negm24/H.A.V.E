@@ -18,6 +18,8 @@ from apps.payments.security.return_authorization import (
     require_checkout_session, require_terminal_session, terminal_session_active,
 )
 from apps.terminals.models import Terminal
+from apps.terminals.services.maintenance import require_customer_access
+from apps.observability.metrics import record_outcome
 from . import kashier_services as provider
 
 
@@ -31,10 +33,11 @@ def start_checkout(order, *, simulator_id=""):
         order = Order.objects.select_for_update().get(pk=order.pk)
         if order.status != "PENDING" or order.paid_at or order.expires_at <= timezone.now():
             raise AuthError("This checkout has ended. Review Order History before starting another purchase.", 409)
+        terminal = Terminal.objects.select_for_update().get(pk=order.terminal_id)
+        require_customer_access(terminal)
         if order.channel == "TERMINAL":
             # Keep Order -> Terminal -> Payment, matching fulfilment's lock
             # ordering. Session start/end take Terminal -> Payment only.
-            terminal = Terminal.objects.select_for_update().get(pk=order.terminal_id)
             require_checkout_session(order, terminal)
         payment, created = PaymentTransaction.objects.get_or_create(order=order, operation="CAPTURE",
             defaults={"amount": order.customer_payable_amount, "idempotency_key": f"capture:{order.pk}"})
@@ -74,6 +77,7 @@ def start_checkout(order, *, simulator_id=""):
             payment.lease_until = None
             payment.save()
             if exc.definitive:
+                transaction.on_commit(lambda: record_outcome("payment.failed"))
                 locked.payment_uncertain = False
                 locked.save(update_fields=["payment_uncertain"])
                 cancel_order(order.pk, "PAYMENT_FAILED", definitive_unpaid=True)
@@ -133,11 +137,15 @@ def reconcile(payment_id, *, force=False):
                 current.completed_at = timezone.now()
                 current.save()
                 mark_paid(order.pk, current.amount)
+                transaction.on_commit(lambda: record_outcome("payment.succeeded"))
             elif result["state"] == "FAILED":
+                was_failed = current.status == "FAILED"
                 current.status = "FAILED"
                 current.completed_at = timezone.now()
                 current.save()
                 cancel_order(order.pk, "CHECKOUT_EXPIRED" if order.expires_at <= timezone.now() else "PAYMENT_FAILED", definitive_unpaid=True)
+                if not was_failed:
+                    transaction.on_commit(lambda: record_outcome("payment.failed"))
             else:
                 current.status = "UNKNOWN"
                 if order.expires_at <= timezone.now():
@@ -207,6 +215,8 @@ def resume_checkout(order, *, user_id, app, terminal=None, session_id=None, simu
                 raise AuthError("This checkout does not belong to this customer.", 403)
         elif app != "TERMINAL" or user_id is not None or str(session_id) != str(locked.terminal_session_id):
             raise AuthError("Guest checkout belongs to its original Terminal session.", 403)
+        current_terminal = Terminal.objects.select_for_update().get(pk=locked.terminal_id)
+        require_customer_access(current_terminal)
         if app == "TERMINAL":
             if terminal is None or terminal.pk != locked.terminal_id:
                 raise AuthError("Continue this checkout at its selected Terminal.", 403)
@@ -255,6 +265,7 @@ def resume_checkout(order, *, user_id, app, terminal=None, session_id=None, simu
     with transaction.atomic():
         locked = Order.objects.select_for_update().get(pk=locked.pk)
         current_terminal = Terminal.objects.select_for_update().get(pk=locked.terminal_id)
+        require_customer_access(current_terminal)
         if app == "TERMINAL":
             require_terminal_session(current_terminal, session_id, user_id)
         capture = PaymentTransaction.objects.select_for_update().get(pk=capture.pk)
@@ -353,6 +364,7 @@ def process_refund(payment_id):
             if state == "SUCCEEDED":
                 order.total_refunded = payment.amount
                 order.save(update_fields=["total_refunded"])
+                transaction.on_commit(lambda: record_outcome("refund.succeeded"))
     except provider.ProviderUnavailable:
         PaymentTransaction.objects.filter(pk=payment.pk, attempts=payment.attempts).exclude(status__in=["SUCCEEDED", "FAILED"]).update(status="UNKNOWN", lease_until=None,
             last_error="Refund outcome unknown; reconciliation required. Do not resubmit.")

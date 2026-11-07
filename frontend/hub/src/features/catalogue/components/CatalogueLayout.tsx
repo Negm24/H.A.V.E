@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { useScreenReady } from '@have/shared/telemetry/react'
 import { useTranslation } from '@have/shared/i18n'
 import { Alert, Button } from '@have/shared/ui/controls'
 import { GuidanceModal } from '@have/shared/ui/catalogue'
@@ -8,7 +9,9 @@ import '../styles/catalogue.css'
 
 export function CatalogueLayout({ title, back = '/browse/categories', children }: { title: string; back?: string; children: ReactNode }) {
   const { t } = useTranslation('catalogue'), { t: hub, i18n } = useTranslation('hubCatalogue')
-  const { observedAt, catalogueError, cartError, mutationError, refresh, terminal } = useHubCatalogue()
+  const { observedAt, catalogueError, cartError, mutationError, refresh, terminal, loading } = useHubCatalogue()
+  const location = useLocation()
+  useScreenReady(!loading && !catalogueError, location.pathname.includes('/search') ? 'search' : 'browse')
   const [help, showHelp] = useState(false)
   return <section className="hub-catalogue">
     <Link className="hub-catalogue-back" to={back}>← {hub(back === '/dashboard' ? 'home' : 'back')}</Link>

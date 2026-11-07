@@ -19,7 +19,7 @@ export function CartButton({ count, revision, className = '', ...props }: Compon
     return () => glow?.cancel()
   }, [revision, count])
   const label = props['aria-label'] ?? t('cartCount', { count })
-  return <Button {...props} id="cart-button" ref={button} className={`have-cart-button ${className}`} aria-label={label} title={label}>
+  return <Button {...props} data-telemetry="cart" id="cart-button" ref={button} className={`have-cart-button ${className}`} aria-label={label} title={label}>
     <svg className="have-cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
       <path d="M3 3h2l2.1 11.3a2 2 0 0 0 2 1.7h8.7a2 2 0 0 0 2-1.6L21 7H6" />
       <path d="M10 10h6M13 7v6" />

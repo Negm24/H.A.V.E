@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createAppI18n } from '@have/shared/i18n'
 import { configureTerminalSimulator } from '@have/shared/api/terminal'
+import { initializeTelemetry } from '@have/shared/telemetry/react'
 import '@have/shared/styles'
 import App from './app/App'
 import sessionEn from './features/session/locales/en.json'
@@ -18,6 +19,7 @@ import catalogueAr from '@have/shared/i18n/catalogue/ar.json'
 const selectors = new URLSearchParams(window.location.search).getAll('terminal')
 const simulatorId = selectors.length ? (selectors.length === 1 && /^[a-f0-9]{32}$/.test(selectors[0]!) ? selectors[0] : 'invalid') : undefined
 configureTerminalSimulator(simulatorId)
+initializeTelemetry('kiosk')
 const i18n = await createAppI18n('kiosk')
 i18n.addResourceBundle('en', 'catalogue', catalogueEn)
 i18n.addResourceBundle('ar', 'catalogue', catalogueAr)

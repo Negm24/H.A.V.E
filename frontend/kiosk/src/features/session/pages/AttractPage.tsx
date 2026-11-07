@@ -1,8 +1,10 @@
 import { useTranslation } from '@have/shared/i18n'
 import { Button } from '@have/shared/ui/controls'
+import { useScreenReady } from '@have/shared/telemetry/react'
 import { useSession } from '../hooks/use-session'
 
 export function AttractPage() {
+  useScreenReady(true)
   const { t } = useTranslation('session')
   const { controller } = useSession()
   return <main className="terminal-attract">

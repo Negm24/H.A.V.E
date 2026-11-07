@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { test, expect } from '@playwright/test'
 
 // Explicit opt-in: real guest sessions only; no checkout or card submission.
@@ -29,9 +29,12 @@ test('stable HTTPS Hub and both password-protected Kiosks reach the real backend
     const forbidden = await context.request.post(access.hubPublicOrigin + '/api/v1/payments/kashier/webhook/', { data: {} })
     expect(forbidden.status()).toBeGreaterThanOrEqual(400)
     expect(forbidden.status()).toBeLessThan(500)
-    const env = readFileSync(new URL('../.env', import.meta.url), 'utf8')
+    const envPath = new URL('../.env', import.meta.url)
+    const env = existsSync(envPath) ? readFileSync(envPath, 'utf8') : ''
+    const mappingPath = new URL('../../development/simulators.local.json', import.meta.url)
+    const simulators = existsSync(mappingPath) ? JSON.parse(readFileSync(mappingPath, 'utf8')) : {}
     for (const number of ['001', '002']) {
-      const selector = env.match(new RegExp('^TERMINAL_HAVE_TEST_' + number + '_SIMULATOR_ID=(.+)$', 'm'))?.[1]?.trim()
+      const selector = env.match(new RegExp('^TERMINAL_HAVE_TEST_' + number + '_SIMULATOR_ID=(.+)$', 'm'))?.[1]?.trim() || simulators['HAVE-TEST-' + number]
       expect(selector).toMatch(/^[a-f0-9]{32}$/)
       const kiosk = await context.newPage()
       await kiosk.goto(access.kioskPublicOrigin + '/?terminal=' + selector)

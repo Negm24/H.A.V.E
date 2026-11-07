@@ -19,6 +19,13 @@ class Terminal(models.Model):
     is_disabled = models.BooleanField(default=False)
     device_credential_hash = models.CharField(max_length=64, validators=[RegexValidator(r"^[0-9a-f]{64}$")])
     created_at = models.DateTimeField(auto_now_add=True)
+    revision = models.PositiveIntegerField(default=1)
+    layout_confirmed = models.BooleanField(default=False)
+    layout_revision = models.PositiveIntegerField(default=1)
+    maintenance_enabled = models.BooleanField(default=False)
+    maintenance_reason = models.CharField(max_length=1000, blank=True)
+    maintenance_at = models.DateTimeField(null=True, blank=True)
+    maintenance_by = models.ForeignKey("accounts.Owner", null=True, blank=True, on_delete=models.PROTECT)
 
     class Meta:
         db_table = "terminals"

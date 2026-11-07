@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from '@have/shared/i18n'
 import { terminalPurchaseApi, type PurchaseOrder } from '@have/shared/api/purchase'
+import { useScreenReady } from '@have/shared/telemetry/react'
 import { Alert, Button } from '@have/shared/ui/controls'
 import { KioskFrame } from '../../../layouts/KioskFrame'
 import { useSession } from '../../session/hooks/use-session'
@@ -15,10 +16,11 @@ export function OrderHistoryPage() {
   const { t } = useTranslation('orders'), navigate = useNavigate(), { controller, state } = useSession()
   const { refresh: refreshSummary } = useCollectionSummary()
   const [orders, setOrders] = useState<PurchaseOrder[] | null>(null), { run, busy, error } = useOrderOperation(state.customer?.id)
-  const load = useCallback(async () => { const result = await run(() => controller.request((token, signal) => terminalPurchaseApi.list(token, signal))); if (result) setOrders(result) }, [controller, run])
+  useScreenReady(orders !== null && !error, 'order_history')
+  const load = useCallback(async (background = false) => { const result = await run(() => controller.request((token, signal) => terminalPurchaseApi.list(token, signal, background))); if (result) setOrders(result) }, [controller, run])
   useEffect(() => {
     void load()
-    const visible = () => { if (!document.hidden) void load() }
+    const visible = () => { if (!document.hidden) void load(true) }
     const timer = setInterval(visible, 15_000)
     document.addEventListener('visibilitychange', visible); window.addEventListener('focus', visible)
     return () => { clearInterval(timer); document.removeEventListener('visibilitychange', visible); window.removeEventListener('focus', visible) }

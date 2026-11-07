@@ -15,7 +15,7 @@ export interface paths {
          * Get a CSRF token
          * @description Keep the response cookie and send csrf_token as X-CSRFToken on POST requests. This is not a login token.
          */
-        get: operations["auth_csrf_retrieve"];
+        get: operations["api_v1_auth_csrf_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -37,7 +37,7 @@ export interface paths {
          * Request customer pin reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_customers_hub_pin_reset_request_create"];
+        post: operations["api_v1_auth_customers_hub_pin_reset_request_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -54,7 +54,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Scan the QR displayed by a Terminal (does not approve login) */
-        post: operations["auth_customers_hub_qr_login_scan_create"];
+        post: operations["api_v1_auth_customers_hub_qr_login_scan_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -74,7 +74,7 @@ export interface paths {
          * Start customer signup or resend a code
          * @description Hub only. No account is created until the phone and email are verified. Dates use DD-MM-YYYY. Local mock SMS appears only in the server terminal. Resubmit the full form after resend_after seconds to replace an earlier code. This anonymous flow neither uses nor creates login cookies.
          */
-        post: operations["auth_customers_signup_create"];
+        post: operations["api_v1_auth_customers_signup_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -91,7 +91,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Generate a QR to display on this guest Terminal */
-        post: operations["auth_customers_terminal_qr_login_create"];
+        post: operations["api_v1_auth_customers_terminal_qr_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -111,7 +111,7 @@ export interface paths {
          * Request doctor password reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_doctors_password_reset_request_create"];
+        post: operations["api_v1_auth_doctors_password_reset_request_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -131,7 +131,7 @@ export interface paths {
          * Start a doctor application or resend its code
          * @description No account is created until the SMS code is verified. The local mock SMS appears only in the server terminal. Resubmit the full form after resend_after seconds to replace an earlier code. Verification creates a PENDING application; the owner approves it in the dashboard before the doctor can use Advisor.
          */
-        post: operations["auth_doctors_signup_create"];
+        post: operations["api_v1_auth_doctors_signup_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -149,7 +149,7 @@ export interface paths {
          * List doctor applications (pending by default)
          * @description Uses the owner session cookie from owner login; no bearer token.
          */
-        get: operations["auth_owners_doctors_list"];
+        get: operations["api_v1_auth_owners_doctors_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -171,7 +171,23 @@ export interface paths {
          * Request owner password reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_owners_password_reset_request_create"];
+        post: operations["api_v1_auth_owners_password_reset_request_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/doctors/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_doctors_list"];
+        put?: never;
+        post: operations["api_v1_owner_doctors_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -188,7 +204,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Start guest session; replace any previous session on this device */
-        post: operations["terminals_sessions_create"];
+        post: operations["api_v1_terminals_sessions_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -208,7 +224,7 @@ export interface paths {
          * Verify customer pin reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_customers_hub_pin_reset_verify_create"];
+        post: operations["api_v1_auth_customers_hub_pin_reset_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -223,7 +239,7 @@ export interface paths {
             cookie?: never;
         };
         /** Check your scanned QR request without renewing its expiry */
-        get: operations["auth_customers_hub_qr_login_retrieve"];
+        get: operations["api_v1_auth_customers_hub_qr_login_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -245,7 +261,7 @@ export interface paths {
          * Verify the SMS code, then the email code, to create the customer account
          * @description Call twice with the same challenge ID and phone. First send the SMS code: 202 means an email code was sent. Then send the emailed code: 201 creates the customer, without signing them in. Each code expires after 5 minutes and allows 5 incorrect guesses. Replays are rejected.
          */
-        post: operations["auth_customers_signup_verify_create"];
+        post: operations["api_v1_auth_customers_signup_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -260,7 +276,7 @@ export interface paths {
             cookie?: never;
         };
         /** Poll QR approval without renewing Terminal activity */
-        get: operations["auth_customers_terminal_qr_login_retrieve"];
+        get: operations["api_v1_auth_customers_terminal_qr_login_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -282,7 +298,7 @@ export interface paths {
          * Verify doctor password reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_doctors_password_reset_verify_create"];
+        post: operations["api_v1_auth_doctors_password_reset_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -302,7 +318,7 @@ export interface paths {
          * Verify the SMS code, then the email code, to submit the doctor application
          * @description Call twice with the same challenge ID and phone. First send the SMS code: 202 means an email code was sent. Then send the emailed code: 201 creates a PENDING doctor (or reopens a previously rejected application under the limit) and notifies the owner. It does not sign the doctor in. Duplicates and a rejection limit (403) are reported only after both codes are correct.
          */
-        post: operations["auth_doctors_signup_verify_create"];
+        post: operations["api_v1_auth_doctors_signup_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -317,7 +333,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get one doctor application with times previously rejected */
-        get: operations["auth_owners_doctors_retrieve"];
+        get: operations["api_v1_auth_owners_doctors_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -339,7 +355,7 @@ export interface paths {
          * Verify owner password reset
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_owners_password_reset_verify_create"];
+        post: operations["api_v1_auth_owners_password_reset_verify_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -354,7 +370,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["hub_cart_items_update"];
+        put: operations["api_v1_hub_cart_items_update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -385,7 +401,279 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["hub_orders_retrieve"];
+        get: operations["api_v1_hub_orders_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/accounts/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_accounts_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/actions/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_actions_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/activity/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_activity_list"];
+        put?: never;
+        post: operations["api_v1_owner_activity_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/activity/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_activity_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_activity_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/batches/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_batches_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_batches_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/categories/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_categories_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_categories_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/customers/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_customers_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_customers_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/doctors/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_doctors_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_doctors_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/cabinets/{serial}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_inventory_cabinets_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_inventory_cabinets_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/kiosks/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_kiosks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_kiosks_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/orders/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_orders_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_orders_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/products/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_products_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_products_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/session/activity/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_session_activity_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/slots/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_slots_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_slots_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/stock/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_stock_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_stock_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/technical/incidents/{incident_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["owner_technical_incident_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_owner_technical_incidents_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/owner/technical/service-actions/{job_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_service_actions_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -402,7 +690,7 @@ export interface paths {
             cookie?: never;
         };
         /** @description Navigation only. Ignores browser success/redirect parameters; provider reconciliation is server-side. */
-        get: operations["payments_return_retrieve"];
+        get: operations["api_v1_payments_return_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -419,7 +707,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["terminals_cart_items_update"];
+        put: operations["api_v1_terminals_cart_items_update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -434,7 +722,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["terminals_catalogue_products_retrieve"];
+        get: operations["api_v1_terminals_catalogue_products_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -450,7 +738,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["terminals_orders_retrieve"];
+        get: operations["api_v1_terminals_orders_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -469,7 +757,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** @description Explicit receipt-screen interaction only. Polling does not renew this private result scope. */
-        post: operations["terminals_orders_result_activity_create"];
+        post: operations["api_v1_terminals_orders_result_activity_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -486,7 +774,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Record explicit user activity (never background polling) */
-        post: operations["terminals_sessions_activity_create"];
+        post: operations["api_v1_terminals_sessions_activity_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -503,7 +791,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Customer Hub login (phone + PIN) */
-        post: operations["auth_customers_hub_login_create"];
+        post: operations["api_v1_auth_customers_hub_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -520,7 +808,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Sign in within a Terminal session; replace the session token */
-        post: operations["auth_customers_terminal_login_create"];
+        post: operations["api_v1_auth_customers_terminal_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -540,7 +828,7 @@ export interface paths {
          * Advisor sign-in step 1: phone + password
          * @description Never issues tokens. PENDING or REJECTED applications return their status; REJECTED includes can_reapply (sign up again from the login page). Approved doctors receive an mfa_token for step 2; on first sign-in the response also contains the authenticator secret and otpauth_uri to enroll.
          */
-        post: operations["auth_doctors_login_create"];
+        post: operations["api_v1_auth_doctors_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -560,7 +848,7 @@ export interface paths {
          * Sign in as an owner
          * @description Use an existing privately provisioned owner's phone and password. Sets an HttpOnly session cookie; no JWT or Remember Me. Expires after 10 minutes idle or 2 hours total. Swagger supplies CSRF automatically. Reload docs after login to pick up the rotated CSRF token. Wrong credentials, lockout and unavailable Redis all deny login.
          */
-        post: operations["auth_owners_login_create"];
+        post: operations["api_v1_auth_owners_login_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -580,7 +868,7 @@ export interface paths {
          * Complete customer pin reset (sign in again afterward)
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_customers_hub_pin_reset_complete_create"];
+        post: operations["api_v1_auth_customers_hub_pin_reset_complete_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -597,7 +885,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Explicitly approve or reject login to the displayed Terminal */
-        post: operations["auth_customers_hub_qr_login_confirm_create"];
+        post: operations["api_v1_auth_customers_hub_qr_login_confirm_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -614,7 +902,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Consume approved QR login and replace the guest token */
-        post: operations["auth_customers_terminal_qr_login_complete_create"];
+        post: operations["api_v1_auth_customers_terminal_qr_login_complete_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -634,7 +922,7 @@ export interface paths {
          * Advisor sign-in step 2: authenticator code
          * @description Completes enrollment if required, then returns an access token and sets the HttpOnly Advisor refresh cookie. Five wrong codes end the attempt.
          */
-        post: operations["auth_doctors_login_mfa_create"];
+        post: operations["api_v1_auth_doctors_login_mfa_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -654,7 +942,7 @@ export interface paths {
          * Complete doctor password reset (sign in again afterward)
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_doctors_password_reset_complete_create"];
+        post: operations["api_v1_auth_doctors_password_reset_complete_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -674,7 +962,7 @@ export interface paths {
          * Approve or reject a pending doctor application
          * @description Approve activates the account (not a login). Reject stores the optional reason, emails it to the doctor (who also sees it at Advisor sign-in), erases the application's personal data and keeps keyed hashes and a rejection counter (FR-82e). Needs the X-CSRFToken header.
          */
-        post: operations["auth_owners_doctors_decision_create"];
+        post: operations["api_v1_auth_owners_doctors_decision_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -694,7 +982,23 @@ export interface paths {
          * Complete owner password reset (sign in again afterward)
          * @description Anonymous login-page operations; role and operation are fixed by the view.
          */
-        post: operations["auth_owners_password_reset_complete_create"];
+        post: operations["api_v1_auth_owners_password_reset_complete_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/doctors/{id}/decision/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_doctors_decision_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -710,7 +1014,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["terminals_orders_result_end_create"];
+        post: operations["api_v1_terminals_orders_result_end_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -727,7 +1031,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** End the guest session (start over / sign out) */
-        post: operations["terminals_sessions_end_create"];
+        post: operations["api_v1_terminals_sessions_end_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -742,7 +1046,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current Hub customer */
-        get: operations["auth_customers_hub_me_retrieve"];
+        get: operations["api_v1_auth_customers_hub_me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -759,7 +1063,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current Terminal customer; does NOT renew activity */
-        get: operations["auth_customers_terminal_me_retrieve"];
+        get: operations["api_v1_auth_customers_terminal_me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -776,7 +1080,7 @@ export interface paths {
             cookie?: never;
         };
         /** Current Advisor doctor */
-        get: operations["auth_doctors_me_retrieve"];
+        get: operations["api_v1_auth_doctors_me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -794,9 +1098,9 @@ export interface paths {
         };
         /**
          * Check the signed-in owner
-         * @description Uses the session cookie set at login. Run manually; polling counts as activity.
+         * @description Uses the session cookie set at login. Reads and polling never renew idle or absolute expiry.
          */
-        get: operations["auth_owners_me_retrieve"];
+        get: operations["api_v1_auth_owners_me_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -815,7 +1119,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Rotate Hub refresh cookie and issue new access token */
-        post: operations["auth_customers_hub_refresh_create"];
+        post: operations["api_v1_auth_customers_hub_refresh_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -832,7 +1136,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Rotate Advisor refresh cookie and issue new access token */
-        post: operations["auth_doctors_refresh_create"];
+        post: operations["api_v1_auth_doctors_refresh_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -849,7 +1153,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Sign out of Hub (revoke this refresh session) */
-        post: operations["auth_customers_hub_logout_create"];
+        post: operations["api_v1_auth_customers_hub_logout_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -866,7 +1170,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Sign out of Advisor (revoke this refresh session) */
-        post: operations["auth_doctors_logout_create"];
+        post: operations["api_v1_auth_doctors_logout_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -883,7 +1187,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Sign out the current owner session */
-        post: operations["auth_owners_logout_create"];
+        post: operations["api_v1_auth_owners_logout_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -899,7 +1203,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["auth_owners_orders_cancel_create"];
+        post: operations["api_v1_auth_owners_orders_cancel_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -915,7 +1219,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["auth_owners_orders_reconcile_create"];
+        post: operations["api_v1_auth_owners_orders_reconcile_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -929,10 +1233,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["hub_cart_retrieve"];
+        get: operations["api_v1_hub_cart_retrieve"];
         put?: never;
         post?: never;
-        delete: operations["hub_cart_destroy"];
+        delete: operations["api_v1_hub_cart_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -945,7 +1249,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["hub_cart_version_retrieve"];
+        get: operations["api_v1_hub_cart_version_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -993,7 +1297,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["hub_orders_list"];
+        get: operations["api_v1_hub_orders_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1011,7 +1315,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["hub_orders_checkout_create"];
+        post: operations["api_v1_hub_orders_checkout_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1025,7 +1329,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["hub_orders_summary_retrieve"];
+        get: operations["api_v1_hub_orders_summary_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1041,7 +1345,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["hub_orders_terminals_list"];
+        get: operations["api_v1_hub_orders_terminals_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1059,7 +1363,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["hub_orders_cancel_create"];
+        post: operations["api_v1_hub_orders_cancel_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1075,7 +1379,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["hub_orders_reorder_create"];
+        post: operations["api_v1_hub_orders_reorder_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1091,7 +1395,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["hub_orders_resume_create"];
+        post: operations["api_v1_hub_orders_resume_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1105,7 +1409,775 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["hub_payments_cards_retrieve"];
+        get: operations["api_v1_hub_payments_cards_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/accounts/{id}/action/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_accounts_action_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/activity/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_activity_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/batches/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_batches_list"];
+        put?: never;
+        post: operations["api_v1_owner_batches_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/batches/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_batches_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/categories/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_categories_list"];
+        put?: never;
+        post: operations["api_v1_owner_categories_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/categories/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_categories_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/categories/{id}/image/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_categories_image_create"];
+        delete: operations["api_v1_owner_categories_image_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/customers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_customers_list"];
+        put?: never;
+        post: operations["api_v1_owner_customers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/customers/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_customers_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/doctors/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_doctors_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/external/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_inventory_external_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/external/adjust/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_inventory_external_adjust_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/external/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_inventory_external_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/load/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_inventory_load_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/load/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_inventory_load_preview_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["owner_inventory_products_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/products/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["owner_inventory_products_search"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/returns/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_inventory_returns_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/inventory/transfers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_inventory_transfers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/kiosks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_kiosks_list"];
+        put?: never;
+        post: operations["api_v1_owner_kiosks_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/kiosks/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_kiosks_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/kiosks/{id}/maintenance/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_kiosks_maintenance_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/kiosks/{id}/maintenance/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_kiosks_maintenance_preview_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/orders/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_orders_list"];
+        put?: never;
+        post: operations["api_v1_owner_orders_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/orders/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_orders_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/orders/{id}/actions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_orders_actions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/overview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_overview_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/overview/business/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_overview_business_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/overview/fleet/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_overview_fleet_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_products_list"];
+        put?: never;
+        post: operations["api_v1_owner_products_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/products/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_products_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/products/{id}/image/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_products_image_create"];
+        delete: operations["api_v1_owner_products_image_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/session/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_session_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/slots/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_slots_list"];
+        put?: never;
+        post: operations["api_v1_owner_slots_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/slots/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_slots_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/stock/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_stock_list"];
+        put?: never;
+        post: operations["api_v1_owner_stock_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/stock/adjust/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_stock_adjust_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/stock/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_stock_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/history/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_history_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/incidents/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_incidents_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/metrics/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_metrics_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/resources/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_resources_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/services/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_services_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/services/{service}/actions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_owner_technical_services_actions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/services/{service}/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_services_preview_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/summary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_summary_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/system/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_system_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owner/technical/usage/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_owner_technical_usage_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1123,7 +2195,39 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["payments_kashier_webhook_create"];
+        post: operations["api_v1_payments_kashier_webhook_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/telemetry/events/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_telemetry_events_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terminals/availability/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_terminals_availability_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1137,10 +2241,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["terminals_cart_retrieve"];
+        get: operations["api_v1_terminals_cart_retrieve"];
         put?: never;
         post?: never;
-        delete: operations["terminals_cart_destroy"];
+        delete: operations["api_v1_terminals_cart_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1153,7 +2257,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["terminals_cart_version_retrieve"];
+        get: operations["api_v1_terminals_cart_version_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1169,7 +2273,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["terminals_catalogue_categories_list"];
+        get: operations["api_v1_terminals_catalogue_categories_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1185,9 +2289,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["terminals_catalogue_products_list"];
+        get: operations["api_v1_terminals_catalogue_products_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/terminals/heartbeat/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_terminals_heartbeat_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1201,7 +2321,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["terminals_orders_list"];
+        get: operations["api_v1_terminals_orders_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1219,7 +2339,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["terminals_orders_checkout_create"];
+        post: operations["api_v1_terminals_orders_checkout_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1233,7 +2353,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["terminals_orders_summary_retrieve"];
+        get: operations["api_v1_terminals_orders_summary_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1251,7 +2371,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["terminals_orders_cancel_create"];
+        post: operations["api_v1_terminals_orders_cancel_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1267,7 +2387,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["terminals_orders_collect_create"];
+        post: operations["api_v1_terminals_orders_collect_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1283,7 +2403,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["terminals_orders_reorder_create"];
+        post: operations["api_v1_terminals_orders_reorder_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1298,7 +2418,7 @@ export interface paths {
             cookie?: never;
         };
         /** @description Device credentials plus the checkout's HttpOnly result cookie only. Does not restore customer login. */
-        get: operations["terminals_orders_result_retrieve"];
+        get: operations["api_v1_terminals_orders_result_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1317,7 +2437,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** @description Explicit one-use receipt-cookie/device handoff to the same live session; never revives an expired/replaced session. */
-        post: operations["terminals_orders_result_continue_create"];
+        post: operations["api_v1_terminals_orders_result_continue_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1333,7 +2453,55 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["terminals_orders_resume_create"];
+        post: operations["api_v1_terminals_orders_resume_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/host-agent/claim/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["internal_host_agent_claim_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/host-agent/heartbeat/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["internal_host_agent_heartbeat_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/host-agent/jobs/{job_id}/result/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["internal_host_agent_jobs_result_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1344,17 +2512,113 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountAction: {
+            action: components["schemas"]["AccountActionActionEnum"];
+            reason: string;
+            /** Format: uuid */
+            action_id: string;
+        };
+        /**
+         * @description * `block` - block
+         *     * `unblock` - unblock
+         *     * `sign-out` - sign-out
+         * @enum {string}
+         */
+        AccountActionActionEnum: "block" | "unblock" | "sign-out";
         AdvisorSession: {
             access_token: string;
             token_type: string;
             expires_in: number;
             doctor: components["schemas"]["DoctorIdentity"];
         };
+        AnonymousTelemetryBatch: {
+            app: components["schemas"]["AppEnum"];
+            events: {
+                [key: string]: unknown;
+            }[];
+        };
+        /**
+         * @description * `admin` - admin
+         *     * `advisor` - advisor
+         *     * `hub` - hub
+         *     * `kiosk` - kiosk
+         * @enum {string}
+         */
+        AppEnum: "admin" | "advisor" | "hub" | "kiosk";
+        AvailabilityOutput: {
+            maintenance: boolean;
+            is_disabled: boolean;
+            available: boolean;
+            /** Format: date-time */
+            last_seen_at: string | null;
+            unavailable_reason: string | null;
+            /** Format: date-time */
+            observed_at?: string;
+        };
         /**
          * @description * `TERMINAL` - TERMINAL
          * @enum {string}
          */
         AvailabilityScopeEnum: "TERMINAL";
+        BatchAllocation: {
+            batch_id: number;
+            quantity: number;
+            revision: number;
+        };
+        BusinessOutput: {
+            /** Format: date-time */
+            observed_at: string;
+            period: string;
+            timezone: string;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            bucket_unit: string;
+            currency: string;
+            /** Format: decimal */
+            gross_received: string;
+            /** Format: decimal */
+            confirmed_refunds: string;
+            /** Format: decimal */
+            net_received: string;
+            revenue: components["schemas"]["RevenueBucketOutput"][];
+            payments: components["schemas"]["PaymentOutcomeOutput"][];
+            refunds: components["schemas"]["PaymentOutcomeOutput"][];
+            analytics: {
+                [key: string]: unknown;
+            };
+            time_basis: {
+                [key: string]: unknown;
+            };
+            coverage: {
+                [key: string]: unknown;
+            };
+        };
+        CabinetOutput: {
+            serial_number: string;
+            revision: number;
+            confirmed: boolean;
+            slots: components["schemas"]["CabinetSlotOutput"][];
+        };
+        CabinetSlotOutput: {
+            id: number;
+            slot_code: string;
+            product_id: number | null;
+            position: string;
+            strength: string | null;
+            product_name: string;
+            image_url: string | null;
+            capacity: number;
+            revision: number;
+            row: number | null;
+            column: number | null;
+            quantity: number;
+            reserved_quantity: number;
+            batches: {
+                [key: string]: unknown;
+            }[];
+        };
         CartLineOutput: {
             product_id: number;
             product: components["schemas"]["ProductOutput"] | null;
@@ -1399,6 +2663,12 @@ export interface components {
             /** Format: uri */
             image_url: string | null;
         };
+        /**
+         * @description * `HUB` - HUB
+         *     * `TERMINAL` - TERMINAL
+         * @enum {string}
+         */
+        ChannelEnum: "HUB" | "TERMINAL";
         CheckoutErrorOutput: {
             detail: string;
             code?: components["schemas"]["CodeEnum"];
@@ -1506,6 +2776,17 @@ export interface components {
             qr_payload: string;
             generate_again_in: number;
         };
+        /**
+         * @description * `created` - created
+         *     * `capture_confirmed` - capture_confirmed
+         *     * `refund_confirmed` - refund_confirmed
+         *     * `capture_initiated` - capture_initiated
+         *     * `refund_initiated` - refund_initiated
+         *     * `collection_completed` - collection_completed
+         *     * `collection_expired` - collection_expired
+         * @enum {string}
+         */
+        DateBasisEnum: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
         /**
          * @description * `approve` - approve
          *     * `reject` - reject
@@ -1625,6 +2906,79 @@ export interface components {
         Error: {
             detail: string;
         };
+        ExternalBalanceOutput: {
+            id: number;
+            batch_id: number;
+            product_id: number;
+            product_name: string;
+            batch_number: string;
+            /** Format: date */
+            expiry_date: string;
+            quantity: number;
+            revision: number;
+        };
+        ExternalInput: {
+            batch_id: number;
+            quantity: number;
+            revision: number;
+            reason: string;
+            /** Format: uuid */
+            action_id: string;
+        };
+        ExternalPageOutput: {
+            items: components["schemas"]["ExternalBalanceOutput"][];
+            total: number;
+            page: number;
+            page_size: number;
+        };
+        /**
+         * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+         *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+         *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+         *     * `REFUND_FAILED` - REFUND_FAILED
+         * @enum {string}
+         */
+        FinancialAttentionEnum: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+        FleetOutput: {
+            /** Format: date-time */
+            observed_at: string;
+            period: string;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            machines: {
+                [key: string]: unknown;
+            }[];
+            waiting_collections: {
+                [key: string]: unknown;
+            };
+            expiring_stock: {
+                [key: string]: unknown;
+            }[];
+            collection_outcomes: {
+                [key: string]: unknown;
+            };
+        };
+        HeartbeatInput: {
+            app_version?: string;
+        };
+        HostActionResult: {
+            status: string;
+            result_code: string;
+        };
+        HostAgentClaimInput: {
+            /** @default true */
+            claim_new: boolean;
+        };
+        HostHeartbeat: {
+            host: {
+                [key: string]: unknown;
+            };
+            containers: {
+                [key: string]: unknown;
+            }[];
+        };
         HubCategoriesOutput: {
             availability_scope: components["schemas"]["AvailabilityScopeEnum"];
             /** Format: date-time */
@@ -1655,12 +3009,68 @@ export interface components {
             expires_in: number;
             customer: components["schemas"]["CustomerIdentity"];
         };
+        ImageUpload: {
+            revision: number;
+            /**
+             * Format: uri
+             * @description PNG, JPEG or WebP; at most 5 MiB and 4096 pixels per dimension. Re-encoded as metadata-free WebP.
+             */
+            image: string;
+        };
+        /**
+         * @description * `ACKNOWLEDGED` - ACKNOWLEDGED
+         * @enum {string}
+         */
+        IncidentAcknowledgmentStatusEnum: "ACKNOWLEDGED";
         /**
          * @description * `en` - en
          *     * `ar` - ar
          * @enum {string}
          */
         LanguageEnum: "en" | "ar";
+        LoadInput: {
+            slot_id: number;
+            product_id: number;
+            quantity: number;
+            slot_revision: number;
+            batches: components["schemas"]["BatchAllocation"][];
+            /** Format: uuid */
+            action_id: string;
+        };
+        LoadPreviewInput: {
+            slot_id: number;
+            product_id: number;
+            quantity: number;
+        };
+        Maintenance: {
+            enabled: boolean;
+            reason: string;
+            revision: number;
+            /** @default false */
+            acknowledge_paid_orders: boolean;
+        };
+        MaintenancePreviewOutput: {
+            serial_number: string;
+            enabled: boolean;
+            eligible: boolean;
+            blocking_reason: string | null;
+            revision: number;
+            paid_waiting_orders: components["schemas"]["PaidCollectionOutput"][];
+            warning: string;
+        };
+        MovementActionOutput: {
+            /** Format: uuid */
+            id: string;
+            status: components["schemas"]["MovementActionOutputStatusEnum"];
+            result: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description * `SUCCEEDED` - SUCCEEDED
+         * @enum {string}
+         */
+        MovementActionOutputStatusEnum: "SUCCEEDED";
         /**
          * @description * `email` - email
          * @enum {string}
@@ -1674,6 +3084,18 @@ export interface components {
          * @enum {string}
          */
         OccupancyEnum: "FREE" | "IN_USE" | "OWN_SESSION" | "UNKNOWN";
+        OrderAction: {
+            action: components["schemas"]["OrderActionActionEnum"];
+            /** Format: uuid */
+            action_id: string;
+        };
+        /**
+         * @description * `cancel` - cancel
+         *     * `reconcile` - reconcile
+         *     * `retry-receipt` - retry-receipt
+         * @enum {string}
+         */
+        OrderActionActionEnum: "cancel" | "reconcile" | "retry-receipt";
         OrderItemOutput: {
             id: number;
             product_id: number;
@@ -1742,6 +3164,41 @@ export interface components {
             awaiting_payment_count?: number;
             attention_count?: number;
         };
+        OverviewOutput: {
+            pending_doctors: number;
+            review_payments: number;
+            pending_receipts: number;
+            low_stock: number;
+            unavailable_kiosks: number;
+            /** Format: date-time */
+            observed_at: string;
+        };
+        OwnerActionOutput: {
+            /** Format: uuid */
+            id: string;
+            status: components["schemas"]["OwnerActionOutputStatusEnum"];
+            action: string;
+            target_type: string;
+            target_id: string;
+            reason: string;
+            result: {
+                [key: string]: unknown;
+            };
+            error: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * @description * `QUEUED` - QUEUED
+         *     * `RUNNING` - RUNNING
+         *     * `SUCCEEDED` - SUCCEEDED
+         *     * `FAILED` - FAILED
+         *     * `UNKNOWN` - UNKNOWN
+         * @enum {string}
+         */
+        OwnerActionOutputStatusEnum: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
         OwnerIdentity: {
             readonly id: string;
             readonly account_type: string;
@@ -1752,10 +3209,51 @@ export interface components {
             phone_number: string;
             password: string;
         };
+        OwnerPageOutput: {
+            items: {
+                [key: string]: unknown;
+            }[];
+            total: number;
+            page: number;
+            page_size: number;
+        };
         OwnerPasswordResetCompleteInput: {
             reset_token: string;
             new_password: string;
             confirm_password: string;
+        };
+        OwnerSessionOutput: {
+            owner: components["schemas"]["OwnerIdentity"];
+            /** Format: date-time */
+            server_time: string;
+            /** Format: date-time */
+            idle_expires_at: string;
+            /** Format: date-time */
+            absolute_expires_at: string;
+        };
+        PaidCollectionOutput: {
+            /** Format: uuid */
+            id: string;
+            order_number: string;
+            /** Format: date-time */
+            collection_deadline: string;
+            /** Format: decimal */
+            total_paid: string;
+        };
+        PatchedIncidentAcknowledgment: {
+            status?: components["schemas"]["IncidentAcknowledgmentStatusEnum"];
+        };
+        PatchedLayoutInput: {
+            revision?: number;
+            positions?: components["schemas"]["Position"][];
+        };
+        PaymentOutcomeOutput: {
+            status: components["schemas"]["TransactionStatusEnum"];
+            count: number;
+            /** Format: decimal */
+            amount: string;
+            /** Format: double */
+            percentage: number;
         };
         PaymentSessionContinuationOutput: {
             /** Format: uuid */
@@ -1776,6 +3274,20 @@ export interface components {
          * @enum {string}
          */
         PaymentStateEnum: "AWAITING_PAYMENT" | "CHECKING_PAYMENT" | "PAID" | "FAILED" | "EXPIRED";
+        /**
+         * @description * `today` - today
+         *     * `week` - week
+         *     * `month` - month
+         *     * `year` - year
+         *     * `all` - all
+         * @enum {string}
+         */
+        PeriodEnum: "today" | "week" | "month" | "year" | "all";
+        Position: {
+            slot_id: number;
+            row: number;
+            column: number;
+        };
         ProductOutput: {
             id: number;
             sku: string;
@@ -1855,6 +3367,24 @@ export interface components {
         ResumeCheckoutInput: {
             return_simulator_id?: string;
         };
+        ReturnInput: {
+            /** @default false */
+            expired_removal_confirmed: boolean;
+            slot_id: number;
+            slot_revision: number;
+            batches: components["schemas"]["BatchAllocation"][];
+            /** Format: uuid */
+            action_id: string;
+        };
+        RevenueBucketOutput: {
+            label: string;
+            /** Format: decimal */
+            amount: string;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+        };
         SavedCardOutput: {
             brand: string;
             last_four: string;
@@ -1864,6 +3394,31 @@ export interface components {
         SavedCardsOutput: {
             cards: components["schemas"]["SavedCardOutput"][];
             setup_message: string;
+        };
+        Search: {
+            query?: string;
+            /** @default 1 */
+            page: number;
+            /** @default 25 */
+            page_size: number;
+            status?: string;
+            terminal_serial?: string;
+            product_id?: number;
+            category_id?: number;
+            category?: string;
+            channel?: components["schemas"]["ChannelEnum"];
+            is_active?: boolean;
+            is_disabled?: boolean;
+            financial_attention?: components["schemas"]["FinancialAttentionEnum"];
+            period?: components["schemas"]["PeriodEnum"];
+            date_basis?: components["schemas"]["DateBasisEnum"];
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            transaction_status?: components["schemas"]["TransactionStatusEnum"];
+            receipt_pending?: boolean;
+            low_stock?: boolean;
         };
         /** @description Returned after the SMS code: submit the emailed code to the same verify endpoint. */
         SignupEmailStep: {
@@ -1882,6 +3437,33 @@ export interface components {
          * @enum {string}
          */
         StatusEnum: "waiting_for_scan" | "waiting_for_confirmation" | "approved" | "rejected" | "completed";
+        StockAdjustment: {
+            slot_id: number;
+            batch_id: number;
+            quantity: number;
+            revision: number;
+            reason: string;
+        };
+        TechnicalAction: {
+            action: components["schemas"]["TechnicalActionActionEnum"];
+            /** Format: uuid */
+            action_id: string;
+            preview_revision: string;
+        };
+        /**
+         * @description * `start` - start
+         *     * `stop` - stop
+         *     * `restart` - restart
+         * @enum {string}
+         */
+        TechnicalActionActionEnum: "start" | "stop" | "restart";
+        TechnicalResponse: {
+            /** Format: date-time */
+            observed_at?: string;
+            items?: {
+                [key: string]: unknown;
+            }[];
+        };
         TerminalSession: {
             /** Format: uuid */
             session_id: string;
@@ -1889,6 +3471,24 @@ export interface components {
             session_token?: string;
             token_type?: string;
             customer?: components["schemas"]["CustomerIdentity"];
+        };
+        /**
+         * @description * `PENDING` - PENDING
+         *     * `SUCCEEDED` - SUCCEEDED
+         *     * `FAILED` - FAILED
+         *     * `UNKNOWN` - UNKNOWN
+         * @enum {string}
+         */
+        TransactionStatusEnum: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+        TransferInput: {
+            slot_id: number;
+            batch_id: number;
+            quantity: number;
+            slot_revision: number;
+            external_revision: number;
+            reason: string;
+            /** Format: uuid */
+            action_id: string;
         };
         WebhookInput: {
             event: string;
@@ -1903,7 +3503,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    auth_csrf_retrieve: {
+    api_v1_auth_csrf_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -1922,7 +3522,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_pin_reset_request_create: {
+    api_v1_auth_customers_hub_pin_reset_request_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -1986,7 +3586,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_qr_login_scan_create: {
+    api_v1_auth_customers_hub_qr_login_scan_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2050,7 +3650,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_signup_create: {
+    api_v1_auth_customers_signup_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2098,7 +3698,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_terminal_qr_login_create: {
+    api_v1_auth_customers_terminal_qr_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2156,7 +3756,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_password_reset_request_create: {
+    api_v1_auth_doctors_password_reset_request_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2220,7 +3820,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_signup_create: {
+    api_v1_auth_doctors_signup_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2268,7 +3868,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_doctors_list: {
+    api_v1_auth_owners_doctors_list: {
         parameters: {
             query?: {
                 /** @description Which applications to list. Oldest first. */
@@ -2306,7 +3906,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_password_reset_request_create: {
+    api_v1_auth_owners_password_reset_request_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2370,7 +3970,111 @@ export interface operations {
             };
         };
     };
-    terminals_sessions_create: {
+    api_v1_owner_doctors_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_doctors_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_terminals_sessions_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2428,7 +4132,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_pin_reset_verify_create: {
+    api_v1_auth_customers_hub_pin_reset_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2492,7 +4196,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_qr_login_retrieve: {
+    api_v1_auth_customers_hub_qr_login_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -2552,7 +4256,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_signup_verify_create: {
+    api_v1_auth_customers_signup_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2616,7 +4320,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_terminal_qr_login_retrieve: {
+    api_v1_auth_customers_terminal_qr_login_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -2676,7 +4380,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_password_reset_verify_create: {
+    api_v1_auth_doctors_password_reset_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2740,7 +4444,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_signup_verify_create: {
+    api_v1_auth_doctors_signup_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2812,7 +4516,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_doctors_retrieve: {
+    api_v1_auth_owners_doctors_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -2849,7 +4553,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_password_reset_verify_create: {
+    api_v1_auth_owners_password_reset_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2913,7 +4617,7 @@ export interface operations {
             };
         };
     };
-    hub_cart_items_update: {
+    api_v1_hub_cart_items_update: {
         parameters: {
             query: {
                 /** @description Selects this customer's separate cart for the collection Terminal. */
@@ -3052,7 +4756,7 @@ export interface operations {
             };
         };
     };
-    hub_orders_retrieve: {
+    api_v1_hub_orders_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -3112,7 +4816,871 @@ export interface operations {
             };
         };
     };
-    payments_return_retrieve: {
+    api_v1_owner_accounts_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_actions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerActionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_activity_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_activity_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_activity_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_activity_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_batches_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_batches_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_categories_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_categories_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_customers_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_customers_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_doctors_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_doctors_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_cabinets_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                serial: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CabinetOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_cabinets_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                serial: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedLayoutInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedLayoutInput"];
+                "multipart/form-data": components["schemas"]["PatchedLayoutInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CabinetOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_kiosks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_kiosks_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_orders_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_orders_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_products_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_products_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_session_activity_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerSessionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_slots_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_slots_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_stock_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_stock_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    owner_technical_incident_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_incidents_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedIncidentAcknowledgment"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedIncidentAcknowledgment"];
+                "multipart/form-data": components["schemas"]["PatchedIncidentAcknowledgment"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_service_actions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_payments_return_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -3171,7 +5739,7 @@ export interface operations {
             };
         };
     };
-    terminals_cart_items_update: {
+    api_v1_terminals_cart_items_update: {
         parameters: {
             query?: never;
             header?: never;
@@ -3244,7 +5812,7 @@ export interface operations {
             };
         };
     };
-    terminals_catalogue_products_retrieve: {
+    api_v1_terminals_catalogue_products_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -3304,7 +5872,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_retrieve: {
+    api_v1_terminals_orders_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -3364,7 +5932,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_result_activity_create: {
+    api_v1_terminals_orders_result_activity_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3423,7 +5991,7 @@ export interface operations {
             };
         };
     };
-    terminals_sessions_activity_create: {
+    api_v1_terminals_sessions_activity_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3481,7 +6049,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_login_create: {
+    api_v1_auth_customers_hub_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3545,7 +6113,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_terminal_login_create: {
+    api_v1_auth_customers_terminal_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3609,7 +6177,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_login_create: {
+    api_v1_auth_doctors_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3673,7 +6241,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_login_create: {
+    api_v1_auth_owners_login_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3721,7 +6289,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_pin_reset_complete_create: {
+    api_v1_auth_customers_hub_pin_reset_complete_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3785,7 +6353,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_qr_login_confirm_create: {
+    api_v1_auth_customers_hub_qr_login_confirm_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3851,7 +6419,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_terminal_qr_login_complete_create: {
+    api_v1_auth_customers_terminal_qr_login_complete_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3911,7 +6479,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_login_mfa_create: {
+    api_v1_auth_doctors_login_mfa_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3975,7 +6543,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_password_reset_complete_create: {
+    api_v1_auth_doctors_password_reset_complete_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4039,7 +6607,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_doctors_decision_create: {
+    api_v1_auth_owners_doctors_decision_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4097,7 +6665,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_password_reset_complete_create: {
+    api_v1_auth_owners_password_reset_complete_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4161,7 +6729,36 @@ export interface operations {
             };
         };
     };
-    terminals_orders_result_end_create: {
+    api_v1_owner_doctors_decision_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DoctorDecision"];
+                "application/x-www-form-urlencoded": components["schemas"]["DoctorDecision"];
+                "multipart/form-data": components["schemas"]["DoctorDecision"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_terminals_orders_result_end_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4220,7 +6817,7 @@ export interface operations {
             };
         };
     };
-    terminals_sessions_end_create: {
+    api_v1_terminals_sessions_end_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4277,7 +6874,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_me_retrieve: {
+    api_v1_auth_customers_hub_me_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4335,7 +6932,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_terminal_me_retrieve: {
+    api_v1_auth_customers_terminal_me_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4393,7 +6990,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_me_retrieve: {
+    api_v1_auth_doctors_me_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4451,7 +7048,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_me_retrieve: {
+    api_v1_auth_owners_me_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -4478,7 +7075,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_refresh_create: {
+    api_v1_auth_customers_hub_refresh_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4536,7 +7133,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_refresh_create: {
+    api_v1_auth_doctors_refresh_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4594,7 +7191,7 @@ export interface operations {
             };
         };
     };
-    auth_customers_hub_logout_create: {
+    api_v1_auth_customers_hub_logout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4651,7 +7248,7 @@ export interface operations {
             };
         };
     };
-    auth_doctors_logout_create: {
+    api_v1_auth_doctors_logout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4708,7 +7305,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_logout_create: {
+    api_v1_auth_owners_logout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4734,7 +7331,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_orders_cancel_create: {
+    api_v1_auth_owners_orders_cancel_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4794,7 +7391,7 @@ export interface operations {
             };
         };
     };
-    auth_owners_orders_reconcile_create: {
+    api_v1_auth_owners_orders_reconcile_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4860,7 +7457,7 @@ export interface operations {
             };
         };
     };
-    hub_cart_retrieve: {
+    api_v1_hub_cart_retrieve: {
         parameters: {
             query: {
                 /** @description Selects this customer's separate cart for the collection Terminal. */
@@ -4921,7 +7518,7 @@ export interface operations {
             };
         };
     };
-    hub_cart_destroy: {
+    api_v1_hub_cart_destroy: {
         parameters: {
             query: {
                 /** @description Selects this customer's separate cart for the collection Terminal. */
@@ -4989,7 +7586,7 @@ export interface operations {
             };
         };
     };
-    hub_cart_version_retrieve: {
+    api_v1_hub_cart_version_retrieve: {
         parameters: {
             query: {
                 /** @description Selects this customer's separate cart for the collection Terminal. */
@@ -5172,7 +7769,7 @@ export interface operations {
             };
         };
     };
-    hub_orders_list: {
+    api_v1_hub_orders_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -5230,7 +7827,7 @@ export interface operations {
             };
         };
     };
-    hub_orders_checkout_create: {
+    api_v1_hub_orders_checkout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5302,7 +7899,7 @@ export interface operations {
             };
         };
     };
-    hub_orders_summary_retrieve: {
+    api_v1_hub_orders_summary_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -5360,7 +7957,7 @@ export interface operations {
             };
         };
     };
-    hub_orders_terminals_list: {
+    api_v1_hub_orders_terminals_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -5418,7 +8015,7 @@ export interface operations {
             };
         };
     };
-    hub_orders_cancel_create: {
+    api_v1_hub_orders_cancel_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5478,7 +8075,7 @@ export interface operations {
             };
         };
     };
-    hub_orders_reorder_create: {
+    api_v1_hub_orders_reorder_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5544,7 +8141,7 @@ export interface operations {
             };
         };
     };
-    hub_orders_resume_create: {
+    api_v1_hub_orders_resume_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5610,7 +8207,7 @@ export interface operations {
             };
         };
     };
-    hub_payments_cards_retrieve: {
+    api_v1_hub_payments_cards_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -5668,7 +8265,1825 @@ export interface operations {
             };
         };
     };
-    payments_kashier_webhook_create: {
+    api_v1_owner_accounts_action_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountAction"];
+                "application/x-www-form-urlencoded": components["schemas"]["AccountAction"];
+                "multipart/form-data": components["schemas"]["AccountAction"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerActionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_activity_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_batches_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_batches_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_batches_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_categories_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_categories_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_categories_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_categories_image_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImageUpload"];
+                "multipart/form-data": components["schemas"]["ImageUpload"];
+                "application/x-www-form-urlencoded": components["schemas"]["ImageUpload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_categories_image_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_v1_owner_customers_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_customers_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_customers_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_doctors_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_external_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_external_adjust_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExternalInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["ExternalInput"];
+                "multipart/form-data": components["schemas"]["ExternalInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovementActionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_external_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_load_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoadInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["LoadInput"];
+                "multipart/form-data": components["schemas"]["LoadInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovementActionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_load_preview_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoadPreviewInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["LoadPreviewInput"];
+                "multipart/form-data": components["schemas"]["LoadPreviewInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    owner_inventory_products_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    owner_inventory_products_search: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_returns_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReturnInput"];
+                "multipart/form-data": components["schemas"]["ReturnInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovementActionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_inventory_transfers_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["TransferInput"];
+                "multipart/form-data": components["schemas"]["TransferInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovementActionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_kiosks_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_kiosks_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_kiosks_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_kiosks_maintenance_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Maintenance"];
+                "application/x-www-form-urlencoded": components["schemas"]["Maintenance"];
+                "multipart/form-data": components["schemas"]["Maintenance"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_kiosks_maintenance_preview_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaintenancePreviewOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_orders_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_orders_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_orders_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_orders_actions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderAction"];
+                "application/x-www-form-urlencoded": components["schemas"]["OrderAction"];
+                "multipart/form-data": components["schemas"]["OrderAction"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerActionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_overview_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverviewOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_overview_business_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_overview_fleet_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FleetOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_products_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_products_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_products_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_products_image_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImageUpload"];
+                "multipart/form-data": components["schemas"]["ImageUpload"];
+                "application/x-www-form-urlencoded": components["schemas"]["ImageUpload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_products_image_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_v1_owner_session_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerSessionOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_slots_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_slots_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_slots_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_stock_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                category_id?: number;
+                /**
+                 * @description * `HUB` - HUB
+                 *     * `TERMINAL` - TERMINAL
+                 */
+                channel?: "HUB" | "TERMINAL";
+                /**
+                 * @description * `created` - created
+                 *     * `capture_confirmed` - capture_confirmed
+                 *     * `refund_confirmed` - refund_confirmed
+                 *     * `capture_initiated` - capture_initiated
+                 *     * `refund_initiated` - refund_initiated
+                 *     * `collection_completed` - collection_completed
+                 *     * `collection_expired` - collection_expired
+                 */
+                date_basis?: "created" | "capture_confirmed" | "refund_confirmed" | "capture_initiated" | "refund_initiated" | "collection_completed" | "collection_expired";
+                end?: string;
+                /**
+                 * @description * `NEEDS_ATTENTION` - NEEDS_ATTENTION
+                 *     * `PAYMENT_UNCERTAIN` - PAYMENT_UNCERTAIN
+                 *     * `REFUND_UNCERTAIN` - REFUND_UNCERTAIN
+                 *     * `REFUND_FAILED` - REFUND_FAILED
+                 */
+                financial_attention?: "NEEDS_ATTENTION" | "PAYMENT_UNCERTAIN" | "REFUND_UNCERTAIN" | "REFUND_FAILED";
+                is_active?: boolean;
+                is_disabled?: boolean;
+                low_stock?: boolean;
+                page?: number;
+                page_size?: number;
+                /**
+                 * @description * `today` - today
+                 *     * `week` - week
+                 *     * `month` - month
+                 *     * `year` - year
+                 *     * `all` - all
+                 */
+                period?: "today" | "week" | "month" | "year" | "all";
+                product_id?: number;
+                query?: string;
+                receipt_pending?: boolean;
+                start?: string;
+                status?: string;
+                terminal_serial?: string;
+                /**
+                 * @description * `PENDING` - PENDING
+                 *     * `SUCCEEDED` - SUCCEEDED
+                 *     * `FAILED` - FAILED
+                 *     * `UNKNOWN` - UNKNOWN
+                 */
+                transaction_status?: "PENDING" | "SUCCEEDED" | "FAILED" | "UNKNOWN";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_stock_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_stock_adjust_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockAdjustment"];
+                "application/x-www-form-urlencoded": components["schemas"]["StockAdjustment"];
+                "multipart/form-data": components["schemas"]["StockAdjustment"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    api_v1_owner_stock_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["Search"];
+                "application/x-www-form-urlencoded": components["schemas"]["Search"];
+                "multipart/form-data": components["schemas"]["Search"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerPageOutput"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_history_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_incidents_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_metrics_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_resources_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_services_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_services_actions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TechnicalAction"];
+                "application/x-www-form-urlencoded": components["schemas"]["TechnicalAction"];
+                "multipart/form-data": components["schemas"]["TechnicalAction"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_services_preview_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_summary_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_system_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_owner_technical_usage_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_payments_kashier_webhook_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5731,7 +10146,51 @@ export interface operations {
             };
         };
     };
-    terminals_cart_retrieve: {
+    api_v1_telemetry_events_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnonymousTelemetryBatch"];
+                "application/x-www-form-urlencoded": components["schemas"]["AnonymousTelemetryBatch"];
+                "multipart/form-data": components["schemas"]["AnonymousTelemetryBatch"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    api_v1_terminals_availability_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityOutput"];
+                };
+            };
+        };
+    };
+    api_v1_terminals_cart_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -5789,7 +10248,7 @@ export interface operations {
             };
         };
     };
-    terminals_cart_destroy: {
+    api_v1_terminals_cart_destroy: {
         parameters: {
             query?: never;
             header?: never;
@@ -5854,7 +10313,7 @@ export interface operations {
             };
         };
     };
-    terminals_cart_version_retrieve: {
+    api_v1_terminals_cart_version_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -5912,7 +10371,7 @@ export interface operations {
             };
         };
     };
-    terminals_catalogue_categories_list: {
+    api_v1_terminals_catalogue_categories_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -5970,7 +10429,7 @@ export interface operations {
             };
         };
     };
-    terminals_catalogue_products_list: {
+    api_v1_terminals_catalogue_products_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -6028,7 +10487,32 @@ export interface operations {
             };
         };
     };
-    terminals_orders_list: {
+    api_v1_terminals_heartbeat_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["HeartbeatInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["HeartbeatInput"];
+                "multipart/form-data": components["schemas"]["HeartbeatInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailabilityOutput"];
+                };
+            };
+        };
+    };
+    api_v1_terminals_orders_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -6086,7 +10570,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_checkout_create: {
+    api_v1_terminals_orders_checkout_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -6158,7 +10642,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_summary_retrieve: {
+    api_v1_terminals_orders_summary_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -6216,7 +10700,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_cancel_create: {
+    api_v1_terminals_orders_cancel_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -6276,7 +10760,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_collect_create: {
+    api_v1_terminals_orders_collect_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -6336,7 +10820,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_reorder_create: {
+    api_v1_terminals_orders_reorder_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -6402,7 +10886,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_result_retrieve: {
+    api_v1_terminals_orders_result_retrieve: {
         parameters: {
             query?: never;
             header?: never;
@@ -6462,7 +10946,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_result_continue_create: {
+    api_v1_terminals_orders_result_continue_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -6522,7 +11006,7 @@ export interface operations {
             };
         };
     };
-    terminals_orders_resume_create: {
+    api_v1_terminals_orders_resume_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -6584,6 +11068,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    internal_host_agent_claim_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["HostAgentClaimInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["HostAgentClaimInput"];
+                "multipart/form-data": components["schemas"]["HostAgentClaimInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    internal_host_agent_heartbeat_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HostHeartbeat"];
+                "application/x-www-form-urlencoded": components["schemas"]["HostHeartbeat"];
+                "multipart/form-data": components["schemas"]["HostHeartbeat"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
+                };
+            };
+        };
+    };
+    internal_host_agent_jobs_result_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HostActionResult"];
+                "application/x-www-form-urlencoded": components["schemas"]["HostActionResult"];
+                "multipart/form-data": components["schemas"]["HostActionResult"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TechnicalResponse"];
                 };
             };
         };

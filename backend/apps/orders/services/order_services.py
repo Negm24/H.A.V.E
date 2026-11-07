@@ -1,3 +1,4 @@
+from apps.terminals.services.expiry import expiry_today
 """Durable purchases and stock allocation; no provider/network calls under locks.
 
 All lifecycle transitions lock Order -> Terminal -> slots -> stock. New orders
@@ -27,6 +28,17 @@ from apps.terminals.models import Terminal, TerminalSlot, TerminalStock
 
 def _money(value):
     return format(value, ".2f")
+
+
+def _outcome_after_commit(name):
+    def record():
+        # Monitoring must never make an already committed purchase fail.
+        try:
+            from apps.observability.metrics import record_outcome
+            record_outcome(name)
+        except Exception:
+            pass
+    transaction.on_commit(record)
 
 
 def _items(items):
@@ -102,8 +114,13 @@ def reserve_order(*, terminal, items, cart_version, email, channel, idempotency_
         with transaction.atomic():
             previous = _existing_order(str(idempotency_key), fingerprint)
             if previous:
+                current_terminal = Terminal.objects.select_for_update().get(pk=previous.terminal_id)
+                from apps.terminals.services.maintenance import require_customer_access
+                require_customer_access(current_terminal)
                 return previous
             current_terminal = Terminal.objects.select_for_update().get(pk=terminal.pk)
+            from apps.terminals.services.maintenance import require_customer_access
+            require_customer_access(current_terminal)
             if current_terminal.is_disabled:
                 raise AuthError("This Terminal is disabled. Choose another Terminal.", 409)
             # A concurrent retry may have committed while we waited for Terminal.
@@ -145,14 +162,15 @@ def reserve_order(*, terminal, items, cart_version, email, channel, idempotency_
                 .values("order_product__terminal_stock_id").annotate(total=Sum("quantity"))
                 .values_list("order_product__terminal_stock_id", "total"))
             allocations = []
-            today = timezone.localdate()
+            today = expiry_today()
+            expired_slots = {row.terminal_slot_id for row in stock if row.quantity_on_hand > 0 and batches[row.batch_id].expiry_date < today}
             for product_id, requested in sorted(items.items()):
                 remaining = requested
                 candidates = sorted((row for row in stock if slots[row.terminal_slot_id].product_id == product_id),
                     key=lambda row: (batches[row.batch_id].expiry_date, row.pk))
                 for row in candidates:
                     slot, batch = slots[row.terminal_slot_id], batches[row.batch_id]
-                    if (not slot.is_enabled or slot_totals[slot.pk] > slot.capacity
+                    if (not slot.is_enabled or slot.pk in expired_slots or slot_totals[slot.pk] > slot.capacity
                             or batch.product_id != product_id or batch.expiry_date < today):
                         continue
                     quantity = min(remaining, max(0, row.quantity_on_hand - reserved.get(row.pk, 0)))
@@ -175,6 +193,7 @@ def reserve_order(*, terminal, items, cart_version, email, channel, idempotency_
             for product, row, quantity in allocations:
                 line = OrderProduct.objects.create(order=order, product=product, terminal_stock=row,
                     product_name_en_snapshot=product.name_en, product_name_ar_snapshot=product.name_ar,
+                    category_name_snapshot=product.category.name_en,
                     pack_description_snapshot=product.pack_description, unit_price=product.price,
                     quantity_requested=quantity, line_total=product.price * quantity)
                 StockReservation.objects.create(order_product=line, quantity=quantity, expires_at=order.expires_at)
@@ -249,6 +268,9 @@ def _cancel_locked(order, reason, *, expired=False):
     order.cancellation_reason = reason
     order.cancelled_at = timezone.now()
     order.save(update_fields=["status", "cancellation_reason", "cancelled_at"])
+    _outcome_after_commit("order.cancelled")
+    if reason == "COLLECTION_EXPIRED":
+        _outcome_after_commit("order.collection_expired")
     StockReservation.objects.filter(order_product__order=order, status=StockReservation.Status.ACTIVE).update(
         status=StockReservation.Status.EXPIRED if expired else StockReservation.Status.RELEASED)
     # quantity_on_hand was never decremented by reservation: do not increment it.
@@ -284,6 +306,9 @@ def fulfil_order(order_id, *, terminal=None):
         else:
             lines = list(order.items.select_related("product").order_by("pk"))
             slots, stocks = _locked_inventory(order.terminal, {line.product_id for line in lines})
+            from apps.terminals.services.maintenance import require_customer_access
+            require_customer_access(order.terminal)
+            expired_slots = {row.terminal_slot_id for row in stocks if row.quantity_on_hand > 0 and row.batch.expiry_date < expiry_today()}
             stocks = {row.pk: row for row in stocks}
             active = {reservation.order_product_id: reservation for reservation in
                 StockReservation.objects.select_for_update().filter(order_product__order=order,
@@ -301,10 +326,11 @@ def fulfil_order(order_id, *, terminal=None):
                         or row.quantity_on_hand < line.quantity_requested
                         or row.quantity_on_hand < reserved.get(row.pk, 0)
                         or not slots[row.terminal_slot_id].is_enabled
+                        or row.terminal_slot_id in expired_slots
                         or slot_totals[row.terminal_slot_id] > slots[row.terminal_slot_id].capacity
                         or slots[row.terminal_slot_id].product_id != line.product_id
                         or row.batch.product_id != line.product_id
-                        or row.batch.expiry_date < timezone.localdate()):
+                        or row.batch.expiry_date < expiry_today()):
                     problem = "Reserved stock cannot be safely fulfilled; this order requires review."
                     break
             if problem:
@@ -316,7 +342,8 @@ def fulfil_order(order_id, *, terminal=None):
                 order.save(update_fields=["status"])
                 for line in lines:
                     TerminalStock.objects.filter(pk=line.terminal_stock_id).update(
-                        quantity_on_hand=F("quantity_on_hand") - line.quantity_requested, updated_at=now)
+                        quantity_on_hand=F("quantity_on_hand") - line.quantity_requested, updated_at=now,
+                        revision=F("revision") + 1)
                     line.quantity_dispensed = line.quantity_requested
                     line.dispense_status = OrderProduct.DispenseStatus.SUCCEEDED
                     line.dispense_command_id = uuid4()
@@ -326,6 +353,9 @@ def fulfil_order(order_id, *, terminal=None):
                 order.status = Order.Status.COMPLETED
                 order.completed_at = now
                 order.save(update_fields=["status", "completed_at"])
+                _outcome_after_commit("order.completed")
+                if order.collection_required:
+                    _outcome_after_commit("order.collected")
                 _receipt(order)
     # Persist deadline/review decisions even though the HTTP operation is rejected.
     if expired:
@@ -384,7 +414,8 @@ def order_data(order):
         "collection_required": order.collection_required, "payment_state": payment_state,
         "cart_preserved": order.cart_preserved,
         "can_resume": bool(payment_state == "AWAITING_PAYMENT" and payment and payment.checkout_url
-            and payment.status not in ("SUCCEEDED", "FAILED")),
+            and payment.status not in ("SUCCEEDED", "FAILED") and not order.terminal.maintenance_enabled
+            and not order.terminal.is_disabled),
         "terminal": {"serial_number": order.terminal_id, "display_name": order.terminal.display_name,
             "address_en": order.terminal.address_en, "address_ar": order.terminal.address_ar},
         "currency": order.currency, "subtotal": _money(order.subtotal),

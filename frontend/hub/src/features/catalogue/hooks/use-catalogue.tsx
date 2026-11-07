@@ -33,27 +33,27 @@ export function HubCatalogueProvider({ children }: { children: ReactNode }) {
     if (expected !== generation.current || active.current?.signal.aborted) return
     current.current = { ...current.current, ...values }; setState(current.current)
   }
-  const readCart = (expected: number, signal: AbortSignal): Promise<void> => {
+  const readCart = (expected: number, signal: AbortSignal, background = false): Promise<void> => {
     if (cartRead.current) return cartRead.current
     const revision = cartRevision.current
-    const request = session.authorized(token => hubCartApi.get(token, signal, terminal?.serial_number), true)
+    const request = session.authorized(token => hubCartApi.get(token, signal, terminal?.serial_number, background), true)
       .then(cart => { if (revision === cartRevision.current) update(expected, { cart, cartError: false }) })
       .catch(() => { if (revision === cartRevision.current) update(expected, { cartError: true }) })
       .finally(() => { if (cartRead.current === request) cartRead.current = null })
     cartRead.current = request
     return request
   }
-  const refresh = (): Promise<void> => {
+  const refresh = (background = false): Promise<void> => {
     if (!active.current || active.current.signal.aborted || status !== 'authenticated' || !terminal) return Promise.resolve()
     if (flight.current) return flight.current
     const expected = generation.current, signal = active.current.signal
     const request = Promise.all([
       Promise.all([
-        session.authorized(token => hubCatalogueApi.categories(token, signal, terminal.serial_number), true),
-        session.authorized(token => hubCatalogueApi.products(token, signal, terminal.serial_number), true),
+        session.authorized(token => hubCatalogueApi.categories(token, signal, terminal.serial_number, background), true),
+        session.authorized(token => hubCatalogueApi.products(token, signal, terminal.serial_number, background), true),
       ]).then(([categories, products]) => update(expected, { categories: categories.items, products: products.items, observedAt: products.observed_at, catalogueError: false, loading: false }))
         .catch(() => update(expected, { catalogueError: true, loading: false })),
-      readCart(expected, signal),
+      readCart(expected, signal, background),
     ]).then(() => {}).finally(() => { if (flight.current === request) flight.current = null })
     flight.current = request
     return request
@@ -65,11 +65,11 @@ export function HubCatalogueProvider({ children }: { children: ReactNode }) {
     current.current = initial; setState(initial); showCart(false)
     if (status !== 'authenticated' || !customer || !terminal) return () => controller.abort()
     let timer: ReturnType<typeof setTimeout>, versionTimer: ReturnType<typeof setTimeout>, cycle = 0, versionFlight = false
-    const poll = async () => {
+    const poll = async (background = true) => {
       const ticket = ++cycle
       clearTimeout(timer)
       if (document.visibilityState !== 'visible') return
-      await refresh()
+      await refresh(background)
       if (ticket === cycle && !controller.signal.aborted && generation.current === expected) timer = setTimeout(() => void poll(), 15_000)
     }
     const checkVersion = async () => {
@@ -81,7 +81,7 @@ export function HubCatalogueProvider({ children }: { children: ReactNode }) {
         if (!current.current.busy && !cartRead.current) {
           const revision = cartRevision.current
           const result = await session.authorized(token => hubCartApi.version(token, terminal.serial_number, controller.signal), true)
-          if (!controller.signal.aborted && revision === cartRevision.current && (result.version !== current.current.cart?.version || current.current.cartError)) await readCart(expected, controller.signal)
+          if (!controller.signal.aborted && revision === cartRevision.current && (result.version !== current.current.cart?.version || current.current.cartError)) await readCart(expected, controller.signal, true)
         }
       } catch { if (!controller.signal.aborted) update(expected, { cartError: true }) }
       finally { versionFlight = false; if (!controller.signal.aborted && document.visibilityState === 'visible') versionTimer = setTimeout(() => void checkVersion(), 2_000) }
@@ -90,7 +90,7 @@ export function HubCatalogueProvider({ children }: { children: ReactNode }) {
       cycle++; clearTimeout(timer); clearTimeout(versionTimer)
       if (document.visibilityState === 'visible') { void poll(); void checkVersion() }
     }
-    void poll(); versionTimer = setTimeout(() => void checkVersion(), 2_000)
+    void poll(false); versionTimer = setTimeout(() => void checkVersion(), 2_000)
     document.addEventListener('visibilitychange', visible); window.addEventListener('focus', visible)
     return () => { controller.abort(); cycle++; clearTimeout(timer); clearTimeout(versionTimer); document.removeEventListener('visibilitychange', visible); window.removeEventListener('focus', visible); generation.current++ }
   }, [status, customer?.id, session, terminal?.serial_number])

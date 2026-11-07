@@ -880,7 +880,7 @@ The central backend owns all authentication and authorization. Different actors 
 - No doctor endpoints and no automatic authorization of a Terminal payment merely because Hub is signed in.
 - Saved payment references are scoped to the customer account and usable only through an explicitly approved checkout.
 - Login-page PIN recovery uses a six-digit SMS code followed by a short-lived, single-use reset token. Customer PINs remain four digits. Successful recovery revokes old sessions and requires a new sign-in; it never creates a login.
-- For QR login, Terminal displays a guest-session-bound QR, the signed-in Hub customer scans and confirms the Terminal identity, and Terminal completes token rotation. Redis atomically enforces one-use approval, short expiry, device/session binding, and the existing Terminal deadlines. Polling does not count as activity.
+- For QR login, Terminal displays a guest-session-bound QR. Scanning from signed-in Hub automatically submits the existing approval request once, with no separate confirmation tap, then Terminal completes token rotation. Redis atomically enforces one-use approval, short expiry, device/session binding, and the existing Terminal deadlines. Polling does not count as activity. An uncertain approval is reconciled by status reads, never an automatic mutation replay.
 
 ### 11.3 Advisor doctor
 
@@ -1262,3 +1262,40 @@ Supersedes historical separate-cart rules: Hub and signed-in Kiosk reuse the exi
 Orders persist collection_required separately from original channel, plus a newer-cart-preserved flag. Payments persist the latest authorised return app/session binding; additive Orders 0005 and Payments 0002 preserve historical records and five order statuses. Customer+machine checkout creation is serialized under the Terminal row lock. Provider calls remain outside transactions; resumed checkouts reuse the provider session and fixed deadline. Remote customer payment requires collection. A neutral return route on the existing Hub origin avoids placing Kiosk's development port in new provider redirect URLs, without introducing a bridge, public origin, secret or network service.
 
 Terminal discovery projects disabled/usage state and each customer's basket count without occupant identity or activity renewal. A Redis outage leaves usage/cart counts unknown rather than falsely free/empty. Tailscale/Funnel DNS work is explicitly excluded.
+
+## Expanded Owner operations and monitoring — 2026-11-07
+
+Admin is a responsive English React application on 5176 and private Tailscale Serve
+HTTPS :9443. Native Django Owner sessions/CSRF retain ten-minute idle and fixed
+two-hour maximum deadlines. Polls are read-only; throttled human activity has its
+own endpoint. Public Hub/Kiosk/Advisor proxies reject Owner/internal routes and
+strip Owner session cookies, since port separation does not isolate cookies.
+
+The `operations` Django app owns paginated support views, safe account revocation,
+versioned catalogue/inventory writes, validated Pillow image uploads, guarded
+individual Kiosk maintenance, append-only privileged activity and durable support
+action jobs. It calls existing order/payment/refund/receipt services. Referenced
+business records are deactivated and immutable order snapshots remain. Shared
+Terminal row locks serialize sessions, financial work, stock changes and maintenance;
+Kiosk service-action claims prevent entry races through the same gate.
+
+The `observability` app accepts allowlisted anonymous metric/event batches and
+authenticated outbound host-agent reports. A bounded disposable background collector
+keeps analytics writes off customer response paths. PostgreSQL minute histograms
+retain seven days; Redis resource samples retain a bounded fifteen-minute window.
+Resolved incidents retain thirty days; unresolved incidents and prototype activity
+remain. Unknown/stale/missing data is explicit and physical peripherals are unknown
+unless reported. Standard document Web Vitals differ from screen-data-ready time.
+
+An outbound-only Node 24 process on Windows measures real host CPU/RAM, reads
+labelled Docker stats and journals fixed Start/Stop/Restart jobs for Hub, Kiosk,
+Advisor and order-worker. No Docker socket reaches Django or browser. The fixed
+AutoPharm project/service allowlist protects backend/db/Redis/Admin. Queued commands
+expire, unresolved commands serialize per service, and uncertain Restart is never
+replayed. A cooperative worker heartbeat/progress/quiesce protocol stops only
+between durable financial/delivery operations. Docker Desktop retains core recovery.
+
+See [Admin contract](docs/admin-implementation-contract.md),
+[app guide](frontend/CODEX-Increment-5.md) and
+[host agent](infrastructure/host-agent/README.md). Full Advisor UI/prescriptions are
+the next independent milestone, not implied by Admin doctor support.

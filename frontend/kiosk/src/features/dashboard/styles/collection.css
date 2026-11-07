@@ -5,5 +5,8 @@
 .collection-count--history { margin-inline-start:10px; }
 .home-card.home-card--collection .collection-count { color:var(--color-surface); font-weight:700; }
 .home-card.home-card--collection .collection-location,.home-card.home-card--collection .collection-location>span { font-size:15px; }
+.home-card--payment .payment-warning { display:flex; align-items:center; gap:6px; align-self:flex-end; margin-block-start:auto; padding:4px 8px; border-radius:8px; background:var(--color-warning-soft); }
+.home-card.home-card--payment span.payment-warning,.home-card.home-card--payment .payment-warning>span { color:var(--color-text-primary); font-size:15px; font-weight:600; line-height:1.3; }
+.home-card.home-card--payment .payment-warning>span { color:var(--color-warning); }
 @keyframes collection-attention { 50% { box-shadow:0 0 0 6px color-mix(in srgb,var(--color-primary) 24%,transparent); } }
 @media(prefers-reduced-motion:reduce) { .home-card.home-card--collection { animation:none; } }

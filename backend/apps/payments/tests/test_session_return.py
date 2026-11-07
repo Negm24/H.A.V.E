@@ -95,6 +95,18 @@ class PaymentReturnSessionTests(SessionFixtures, TestCase):
         self.terminal.save(update_fields=["is_disabled"])
         self.assertEqual(self.terminal_call("post", f"orders/{order.pk}/result/continue/", token=False).status_code, 401)
 
+    def test_maintenance_blocks_session_return_but_preserves_paid_result(self):
+        order = self.opened(); self.paid(order)
+        deadline = order.expires_at
+        type(self.terminal).objects.filter(pk=self.terminal.pk).update(maintenance_enabled=True)
+        response = self.terminal_call("get", f"orders/{order.pk}/result/", token=False)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["can_continue_session"])
+        self.assertEqual(self.terminal_call("post", f"orders/{order.pk}/result/continue/", token=False).status_code, 409)
+        order.refresh_from_db()
+        self.assertEqual(order.status, "COMPLETED")
+        self.assertEqual(order.expires_at, deadline)
+
     def test_expired_auth_and_changed_credentials_cannot_be_restored(self):
         order = self.opened(); self.paid(order)
         before = self.state()

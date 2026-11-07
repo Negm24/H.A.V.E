@@ -24,18 +24,18 @@ function useCatalogueState() {
   const acceptCart = useCallback((basket: TerminalCart) => { cartRef.current = basket; setCart(basket) }, [])
   const writing = useRef<number | null>(null)
   const positions = useRef(new Map<string, number>())
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (background = false) => {
     const current = generation.current
     if (reading.current === current || writing.current === current || document.hidden || !['guest', 'customer'].includes(controller.getSnapshot().phase)) return
     reading.current = current
     const beforeWrite = cartWrites.current
     try {
-      const [cats, items] = await controller.request((token, signal) => Promise.all([terminalApi.categories(token, signal), terminalApi.products(token, signal)]))
+      const [cats, items] = await controller.request((token, signal) => Promise.all([terminalApi.categories(token, signal, background), terminalApi.products(token, signal, background)]))
       if (current !== generation.current) return
       if (!Array.isArray(cats) || !Array.isArray(items)) throw new Error('Invalid catalogue response')
       setCategories(cats); setProducts(items); setReady(true)
       try {
-        const basket = await controller.request((token, signal) => terminalApi.cart(token, signal))
+        const basket = await controller.request((token, signal) => terminalApi.cart(token, signal, background))
         if (current !== generation.current || beforeWrite !== cartWrites.current) return
         acceptCart(basket); availability(true); setError(''); setUncertain(false)
       } catch (error) {
@@ -53,7 +53,7 @@ function useCatalogueState() {
       const revision = await controller.request((token, signal) => terminalCartApi.version(token, signal))
       if (current !== generation.current || beforeWrite !== cartWrites.current) return
       if (!availableRef.current || revision.version !== cartRef.current.version) {
-        const basket = await controller.request((token, signal) => terminalApi.cart(token, signal))
+        const basket = await controller.request((token, signal) => terminalApi.cart(token, signal, true))
         if (current !== generation.current || beforeWrite !== cartWrites.current) return
         acceptCart(basket)
       }
@@ -75,9 +75,9 @@ function useCatalogueState() {
       return
     }
     void refresh()
-    const interval = setInterval(() => void refresh(), 15_000)
+    const interval = setInterval(() => void refresh(true), 15_000)
     const versions = setInterval(() => void checkCartVersion(), 2_000)
-    const visible = () => { if (!document.hidden) void refresh() }
+    const visible = () => { if (!document.hidden) void refresh(true) }
     document.addEventListener('visibilitychange', visible)
     window.addEventListener('focus', visible)
     return () => { generation.current++; clearInterval(interval); clearInterval(versions); document.removeEventListener('visibilitychange', visible); window.removeEventListener('focus', visible) }

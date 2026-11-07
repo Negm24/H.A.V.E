@@ -16,6 +16,7 @@ from django.utils import timezone
 from apps.accounts.models import Doctor, RefreshToken, User
 from apps.accounts.security.tokens import identifier_hash
 from apps.accounts.services.shared_services.notifications import send_doctor_rejection_email
+from apps.operations.audit import record_activity
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,7 @@ def approve_doctor(*, doctor_id, owner):
         _, doctor = _lock_pending(doctor_id, owner)
         _record_decision(doctor, owner, Doctor.ApprovalStatus.APPROVED)
         doctor.save(update_fields=["approval_status", "reviewed_by_owner", "reviewed_at"])
+        record_activity(actor=owner, action="DOCTOR_APPROVED", target_type="doctor", target_id=doctor.pk)
     _log(doctor, owner, "APPROVED")
     return doctor
 
@@ -79,6 +81,7 @@ def reject_doctor(*, doctor_id, owner, reason=""):
         user.save(update_fields=["first_name", "last_name", "phone_number", "email",
                                  "phone_verified_at", "email_verified_at"])
         RefreshToken.objects.filter(user=user, revoked_at__isnull=True).update(revoked_at=timezone.now())
+        record_activity(actor=owner, action="DOCTOR_REJECTED", target_type="doctor", target_id=doctor.pk)
 
         transaction.on_commit(lambda: send_doctor_rejection_email(
             email=email, first_name=first_name, reason=reason,

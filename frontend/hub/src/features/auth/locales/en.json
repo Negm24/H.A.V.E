@@ -54,7 +54,7 @@
   "refreshProfile": "Refresh profile",
   "terminalLogin": "Sign in to kiosk",
   "terminalLoginDescription": "Scan a Terminal QR to sign in securely.",
-  "scanDescription": "Generate a QR from the Terminal sign-in screen, then scan it here. Review the Terminal before approving.",
+  "scanDescription": "Scan the QR on the kiosk you are using to sign in automatically. Scanning gives that kiosk access to your account.",
   "scanner": "QR camera scanner",
   "startCamera": "Start camera",
   "restartCamera": "Restart camera",
@@ -70,11 +70,12 @@
   "cameraDenied": "Camera access was denied. Allow camera permission in your browser settings and try again.",
   "cameraUnavailable": "No usable camera was found. Close other camera apps and try again.",
   "qrProblem": "Unable to read or check this QR. It may be invalid, expired or unavailable. Try again.",
+  "qrApprovalFailed": "Kiosk sign-in could not be confirmed. We are checking its status. If it does not sign in, generate a new QR on the kiosk and scan again.",
   "restoreFailed": "Could not restore your session. Check your connection and sign in again.",
   "logoutFailed": "You are signed out on this screen, but server-side sign-out was not confirmed. Reconnect and sign in, then sign out to confirm it.",
   "qrStatus": {
     "waiting_for_scan": "Waiting for scan",
-    "waiting_for_confirmation": "Review this Terminal",
+    "waiting_for_confirmation": "Checking kiosk sign-in…",
     "approved": "Approved. Waiting for the Terminal to finish signing in…",
     "rejected": "Login rejected.",
     "completed": "The Terminal is now signed in."

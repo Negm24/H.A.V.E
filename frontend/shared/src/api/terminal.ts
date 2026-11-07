@@ -8,6 +8,13 @@ export type QrChallenge = components['schemas']['CustomerTerminalQrCreateOutput'
 export type CatalogueCategory = components['schemas']['CategoryOutput']
 export type CatalogueProduct = components['schemas']['ProductOutput']
 export type TerminalCart = components['schemas']['CartOutput']
+export interface TerminalAvailability {
+  maintenance: boolean
+  is_disabled: boolean
+  available: boolean
+  last_seen_at: string | null
+  unavailable_reason: string | null
+}
 const sessions = '/api/v1/terminals/sessions/'
 const customers = '/api/v1/auth/customers/terminal/'
 
@@ -19,10 +26,12 @@ export function terminalRequest<T>(path: string, options: RequestOptions = {}) {
 }
 
 export const terminalApi = {
-  categories: (token: string, signal?: AbortSignal) => terminalRequest<CatalogueCategory[]>('/api/v1/terminals/catalogue/categories/', { bearerToken: token, signal }),
-  products: (token: string, signal?: AbortSignal) => terminalRequest<CatalogueProduct[]>('/api/v1/terminals/catalogue/products/', { bearerToken: token, signal }),
-  product: (token: string, id: number, signal?: AbortSignal) => terminalRequest<CatalogueProduct>(`/api/v1/terminals/catalogue/products/${id}/`, { bearerToken: token, signal }),
-  cart: (token: string, signal?: AbortSignal) => terminalRequest<TerminalCart>('/api/v1/terminals/cart/', { bearerToken: token, signal }),
+  availability: (signal?: AbortSignal) => terminalRequest<TerminalAvailability>('/api/v1/terminals/availability/', { signal }),
+  heartbeat: (signal?: AbortSignal) => terminalRequest<TerminalAvailability>('/api/v1/terminals/heartbeat/', { method: 'POST', body: {}, signal }),
+  categories: (token: string, signal?: AbortSignal, background = false) => terminalRequest<CatalogueCategory[]>('/api/v1/terminals/catalogue/categories/', { bearerToken: token, signal, background }),
+  products: (token: string, signal?: AbortSignal, background = false) => terminalRequest<CatalogueProduct[]>('/api/v1/terminals/catalogue/products/', { bearerToken: token, signal, background }),
+  product: (token: string, id: number, signal?: AbortSignal, background = false) => terminalRequest<CatalogueProduct>(`/api/v1/terminals/catalogue/products/${id}/`, { bearerToken: token, signal, background }),
+  cart: (token: string, signal?: AbortSignal, background = false) => terminalRequest<TerminalCart>('/api/v1/terminals/cart/', { bearerToken: token, signal, background }),
   setQuantity: (token: string, id: number, quantity: number, expected_version: string, signal?: AbortSignal) => terminalRequest<TerminalCart>(`/api/v1/terminals/cart/items/${id}/`, { method: 'PUT', body: { quantity, expected_version }, bearerToken: token, signal }),
   clearCart: (token: string, expected_version: string, signal?: AbortSignal) => terminalRequest<TerminalCart>('/api/v1/terminals/cart/', { method: 'DELETE', body: { expected_version }, bearerToken: token, signal }),
   start: (signal?: AbortSignal) => terminalRequest<TerminalSession>(sessions, { method: 'POST', signal }),

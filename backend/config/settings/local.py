@@ -33,7 +33,14 @@ if _access:
     PAYMENTS_PUBLIC_BASE_URL = _access["hubPublicOrigin"]
     KIOSK_PUBLIC_BASE_URL = DEVELOPMENT_KIOSK_PUBLIC_ORIGIN = _access["kioskPublicOrigin"]
     DEVELOPMENT_PUBLIC_ORIGINS = [PAYMENTS_PUBLIC_BASE_URL, KIOSK_PUBLIC_BASE_URL]
+    if _access.get("ownerPrivateOrigin"):
+        DEVELOPMENT_PUBLIC_ORIGINS.append(_access["ownerPrivateOrigin"])
+        OWNER_ALLOWED_AUTHORITIES.append(urlsplit(_access["ownerPrivateOrigin"]).netloc)
     ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, "backend", *[urlsplit(origin).hostname for origin in DEVELOPMENT_PUBLIC_ORIGINS]]))
     CSRF_TRUSTED_ORIGINS = DEVELOPMENT_PUBLIC_ORIGINS
     MIDDLEWARE = ["config.development_middleware.DevelopmentHttpsMiddleware", *MIDDLEWARE]
 del _access
+
+TELEMETRY_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176",
+                             "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175", "http://127.0.0.1:5176",
+                             *DEVELOPMENT_PUBLIC_ORIGINS]

@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.template.loader import render_to_string
 
 from apps.orders.models import Receipt
+from apps.observability.metrics import record_outcome
 
 
 def deliver_receipt(receipt_id):
@@ -33,6 +34,8 @@ def deliver_receipt(receipt_id):
         # SMTP exceptions may contain private configuration or recipient data.
         Receipt.objects.filter(pk=receipt_id).update(last_email_error="Receipt email delivery failed; retry scheduled.")
         return False
-    Receipt.objects.filter(pk=receipt_id, email_sent_at__isnull=True).update(
+    changed = Receipt.objects.filter(pk=receipt_id, email_sent_at__isnull=True).update(
         email_sent_at=timezone.now(), last_email_error="", next_email_at=None)
+    if changed:
+        transaction.on_commit(lambda: record_outcome("receipt.delivered"))
     return True

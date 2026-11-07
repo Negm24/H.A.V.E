@@ -6,6 +6,7 @@ export interface DevelopmentAccess {
   hubPublicOrigin: string
   kioskPublicOrigin: string
   kioskAccessPassword: string
+  ownerPrivateOrigin?: string
 }
 export const accessFile = fileURLToPath(new URL('../../development/access.local.json', import.meta.url))
 
@@ -17,7 +18,7 @@ export function readDevelopmentAccess(path = accessFile): DevelopmentAccess | un
     throw new Error('Cannot read development/access.local.json. Check its JSON syntax and permissions.')
   }
   const fields = ['hubPublicOrigin', 'kioskPublicOrigin', 'kioskAccessPassword'] as const
-  if (!raw || typeof raw !== 'object' || Object.keys(raw).length !== fields.length || fields.some(key => typeof (raw as Record<string, unknown>)[key] !== 'string')) {
+  if (!raw || typeof raw !== 'object' || Object.keys(raw).some(key => ![...fields, 'ownerPrivateOrigin'].includes(key)) || fields.some(key => typeof (raw as Record<string, unknown>)[key] !== 'string')) {
     throw new Error('development/access.local.json requires exactly hubPublicOrigin, kioskPublicOrigin and kioskAccessPassword strings.')
   }
   const data = raw as DevelopmentAccess
@@ -33,13 +34,23 @@ export function readDevelopmentAccess(path = accessFile): DevelopmentAccess | un
   }
   if (data.hubPublicOrigin === data.kioskPublicOrigin) throw new Error('Hub and Kiosk must use different public origins.')
   if (data.kioskAccessPassword.length < 16 || data.kioskAccessPassword.length > 256) throw new Error('kioskAccessPassword must contain 16 to 256 characters.')
+  if (data.ownerPrivateOrigin !== undefined) {
+    let valid = false
+    try {
+      const owner = new URL(data.ownerPrivateOrigin)
+      valid = owner.protocol === 'https:' && owner.port === '9443' && owner.origin === data.ownerPrivateOrigin
+        && !owner.username && !owner.password && !owner.search && !owner.hash
+        && /^[a-z0-9]+(?:[.-][a-z0-9]+)+$/.test(owner.hostname) && !/^[0-9.]+$/.test(owner.hostname)
+    } catch { /* Fail closed, without echoing settings. */ }
+    if (!valid) throw new Error('ownerPrivateOrigin must be an exact HTTPS origin on private port 9443.')
+  }
   return data
 }
 
 export function publicOrigin(port: number): string | undefined {
-  if (port !== 5173 && port !== 5174) return undefined
+  if (port !== 5173 && port !== 5174 && port !== 5176) return undefined
   const access = readDevelopmentAccess()
-  return port === 5173 ? access?.kioskPublicOrigin : access?.hubPublicOrigin
+  return port === 5173 ? access?.kioskPublicOrigin : port === 5176 ? access?.ownerPrivateOrigin : access?.hubPublicOrigin
 }
 
 export function publicHost(port: number): string | undefined {

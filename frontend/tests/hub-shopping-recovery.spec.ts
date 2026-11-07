@@ -21,8 +21,8 @@ async function fixture(context: BrowserContext, options: { paid?: boolean; expir
     else if (path.endsWith('/hub/login/')) { authenticated = true; response = login() }
     else if (path.endsWith('/hub/logout/')) { authenticated = false; status = 204; response = undefined }
     else if (path.endsWith('/hub/me/')) response = customer
-    else if (path === '/api/v1/hub/orders/summary/') response = { awaiting_collection_count: options.paid ? 2 : 0, at_terminal_count: 0, elsewhere_count: options.paid ? 2 : 0, collection_terminals: options.paid ? [{ serial_number: terminal.serial_number, display_name: terminal.display_name, count: 2 }] : [], awaiting_payment_count: options.unpaidCue ? 2 : 0, attention_count: options.paid || options.unpaidCue ? 2 : 0 }
-    else if (path === '/api/v1/hub/orders/terminals/') response = [terminal, { ...terminal, serial_number: 'HAVE-TEST-002', display_name: 'Unavailable Mark II', is_disabled: true, occupancy: 'UNKNOWN' }, { ...terminal, serial_number: 'HAVE-TEST-003', display_name: 'My session kiosk', occupancy: 'OWN_SESSION' }, { ...terminal, serial_number: 'HAVE-TEST-004', display_name: 'Unknown status kiosk', occupancy: 'UNKNOWN', cart_available: false, cart_total_quantity: null }]
+    else if (path === '/api/v1/hub/orders/summary/') response = { awaiting_collection_count: options.paid ? options.unpaidCue ? 1 : 2 : 0, at_terminal_count: 0, elsewhere_count: options.paid ? options.unpaidCue ? 1 : 2 : 0, collection_terminals: options.paid ? [{ serial_number: terminal.serial_number, display_name: terminal.display_name, count: options.unpaidCue ? 1 : 2 }] : [], awaiting_payment_count: options.unpaidCue ? options.paid ? 1 : 2 : 0, attention_count: options.paid || options.unpaidCue ? 2 : 0 }
+    else if (path === '/api/v1/hub/orders/terminals/') response = [terminal, { ...terminal, serial_number: 'HAVE-TEST-002', display_name: 'Unavailable Mark II', is_disabled: true, occupancy: 'UNKNOWN' }, { ...terminal, serial_number: 'HAVE-TEST-003', display_name: 'My session kiosk', occupancy: 'OWN_SESSION' }, { ...terminal, serial_number: 'HAVE-TEST-004', display_name: 'Unknown status kiosk', occupancy: 'UNKNOWN', cart_available: false, cart_total_quantity: null }, { ...terminal, serial_number: 'HAVE-TEST-005', display_name: 'Maintenance kiosk', maintenance_enabled: true, occupancy: 'FREE' }]
     else if (path === '/api/v1/hub/catalogue/categories/') response = { items: [{ id: 1, name_en: 'Pain & fever', name_ar: 'الألم والحمى', product_count: 1, image_url: null }], availability_scope: 'TERMINAL', terminal_serial: terminal.serial_number, observed_at: new Date().toISOString() }
     else if (path === '/api/v1/hub/catalogue/products/') response = { items: [product], availability_scope: 'TERMINAL', terminal_serial: terminal.serial_number, observed_at: new Date().toISOString() }
     else if (path === '/api/v1/hub/cart/version/') response = { version: `v${version}` }
@@ -60,17 +60,62 @@ test('paid collection attracts attention on My Profile and only a number appears
 test('awaiting payment draws profile attention with a number-only history badge', async ({ context, page }) => {
   await page.setViewportSize({ width: 375, height: 850 }); await fixture(context, { unpaidCue: true }); await login(page)
   const profile = page.getByRole('link', { name: /My profile/ })
-  await expect(profile).toHaveClass(/hub-service--collection/); await expect(profile.locator('.hub-order-count')).toHaveText('2')
-  await expect(profile).toContainText('Awaiting payment'); await expect(profile).not.toContainText('Ready to collect')
+  await expect(profile).not.toHaveClass(/hub-service--collection/); await expect(profile.locator('.hub-order-count')).toHaveCount(0)
+  await expect(profile.locator('.hub-payment-warning')).toContainText('Awaiting payment'); await expect(profile).not.toContainText('Ready to collect')
+  await expect(profile.locator('.hub-payment-warning')).toBeHidden()
+  await expect(profile.locator('.hub-profile-payment-icon')).toBeVisible()
+  await expect(profile).toHaveAccessibleDescription('Awaiting payment · 2')
   await profile.click()
   const history = page.getByRole('link', { name: /Order history/ })
   await expect(history.locator('.hub-order-count')).toHaveText('2'); await expect(history).not.toContainText('Awaiting payment')
+})
+
+for (const width of [375, 768, 1440]) for (const arabic of [false, true]) test(`separate ready/payment attention fits ${width}px ${arabic ? 'Arabic' : 'English'}`, async ({ context, page }) => {
+  await page.setViewportSize({ width, height: 900 }); await fixture(context, { paid: true, unpaidCue: true }); await login(page)
+  if (arabic) await page.getByRole('button', { name: 'العربية', exact: true }).click()
+  const card = page.locator('.hub-service--collection'), warning = card.locator('.hub-payment-warning')
+  await expect(card.locator('.hub-order-count')).toHaveText('1'); await expect(warning).toContainText('1')
+  await expect(card.locator('.hub-collection-cue')).not.toContainText(arabic ? 'الدفع' : 'payment')
+  if (width < 900) {
+    await expect(warning).toBeHidden(); await expect(card.locator('.hub-profile-payment-icon')).toBeVisible()
+  } else {
+    await expect(warning).toBeVisible(); await expect(card.locator('.hub-profile-payment-icon')).toBeHidden()
+    const outer = (await card.boundingBox())!, inner = (await warning.boundingBox())!
+    expect(outer.y + outer.height - inner.y - inner.height).toBeLessThanOrEqual(29)
+    expect(arabic ? inner.x - outer.x : outer.x + outer.width - inner.x - inner.width).toBeLessThanOrEqual(29)
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: `test-results/hub-separated-attention-${width}-${arabic ? 'ar' : 'en'}.png` })
+  await card.click(); await expect(page.locator('.hub-order-history .hub-order-count')).toHaveText('2')
+})
+
+test('zero ready and unpaid orders show no profile attention badges', async ({ context, page }) => {
+  await fixture(context); await login(page)
+  await expect(page.locator('.hub-collection-cue,.hub-payment-warning')).toHaveCount(0)
+  await expect(page.locator('.hub-profile-symbol')).toBeVisible()
+})
+
+for (const arabic of [false, true]) test(`rotating Hub switches warning icon and full payment wording ${arabic ? 'Arabic' : 'English'}`, async ({ context, page }) => {
+  const { calls } = await fixture(context, { paid: true, unpaidCue: true })
+  await page.setViewportSize({ width: 390, height: 844 }); await login(page)
+  if (arabic) await page.getByRole('button', { name: 'العربية', exact: true }).click()
+  const profile = page.locator('.hub-service--payment'), icon = profile.locator('.hub-profile-payment-icon'), warning = profile.locator('.hub-payment-warning')
+  await expect(icon).toBeVisible(); await expect(warning).toBeHidden(); await expect(profile.locator('.hub-profile-symbol')).toBeHidden()
+  await expect(profile).toHaveAccessibleDescription(/1/)
+  await page.setViewportSize({ width: 844, height: 390 })
+  await expect(icon).toBeHidden(); await expect(warning).toBeVisible(); await expect(profile.locator('.hub-profile-symbol')).toBeVisible()
+  await expect(profile.locator('.hub-order-count')).toHaveText('1')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.setViewportSize({ width: 390, height: 844 }); await expect(icon).toBeVisible(); await expect(warning).toBeHidden()
+  expect(calls.filter(call => ['POST','PUT','DELETE'].includes(call.method) && !call.path.includes('/auth/'))).toHaveLength(0)
 })
 
 test('Terminal picker disables unavailable machines and confirms another person’s active session', async ({ context, page }) => {
   const { calls } = await fixture(context); await login(page); await page.getByRole('link', { name: /Browse medicines/ }).click()
   const disabled = page.getByRole('button', { name: /Unavailable Mark II/ })
   await expect(disabled).toBeDisabled(); await expect(disabled).toContainText('This kiosk is unavailable at the moment'); await expect(disabled).toHaveCSS('opacity', '0.5')
+  const maintenance = page.getByRole('button', { name: /Maintenance kiosk/ })
+  await expect(maintenance).toBeDisabled(); await expect(maintenance).toContainText('Maintenance · shopping and collection paused')
   const occupied = page.getByRole('button', { name: /HAVE Mark I/ })
   await expect(occupied).toContainText('Saved cart · 2 items'); await occupied.click()
   const modal = page.getByRole('dialog', { name: 'This kiosk is physically used by another user.' })
@@ -81,6 +126,8 @@ test('Terminal picker disables unavailable machines and confirms another person�
   await expect(page.getByRole('dialog')).toHaveCount(0); await expect(page.getByRole('link', { name: /Pain & fever/ })).toBeVisible()
   await page.goto(origin + '/browse'); await expect(page.getByRole('button', { name: /Unknown status kiosk/ })).toContainText('Usage status unavailable')
   await page.getByRole('button', { name: 'العربية', exact: true }).click(); await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
+  await expect(page.getByRole('button', { name: /Maintenance kiosk/ })).toBeDisabled()
+  await expect(page.getByText('صيانة · التسوق والاستلام متوقفان مؤقتًا', { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 

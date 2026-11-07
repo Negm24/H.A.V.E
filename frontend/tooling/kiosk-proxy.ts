@@ -5,6 +5,8 @@ import { loadEnv, type Plugin } from 'vite'
 import { requestOrigin } from './development-access.ts'
 
 const methods = new Map([
+  ['/api/v1/terminals/availability/', 'GET'],
+  ['/api/v1/terminals/heartbeat/', 'POST'],
   ['/api/v1/terminals/sessions/', 'POST'],
   ['/api/v1/terminals/sessions/activity/', 'POST'],
   ['/api/v1/terminals/sessions/end/', 'POST'],
@@ -110,6 +112,7 @@ export function kioskProxy(testCredentials?: Record<string, string>): Plugin {
             'X-Terminal-Serial': serial, 'X-Terminal-Key': key,
           })
           if (req.headers.authorization) headers.set('Authorization', req.headers.authorization)
+          if (req.method === 'GET' && req.headers['x-have-background'] === '1') headers.set('X-Have-Background', '1')
           if (requestOrigin(req.headers.host, 5173)?.startsWith('https://')) headers.set('X-Have-Forwarded-Proto', 'https')
           // Only order-scoped HttpOnly result cookies cross this private boundary.
           // General Hub/owner cookies must never be forwarded to device routes.

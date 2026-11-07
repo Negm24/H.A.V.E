@@ -8,6 +8,10 @@
 *.pfx
 .secrets/
 development/access.local.json
+development/*.local.json
+development/*.local.txt
+development/host-agent-state.json*
+infrastructure/host-agent/.state/
 # Local SQL editor sessions and personal planning scratchpad (not app source)
 *.session.sql
 /plan-mode.txt

@@ -1,4 +1,5 @@
 {
+  "terminalMaintenance": "صيانة · التسوق والاستلام متوقفان مؤقتًا",
   "home": "العودة للرئيسية", "profile": "ملفي الشخصي", "backToBrowse": "العودة للأدوية", "browseMedicines": "تصفح الأدوية",
   "chooseTerminal": "من أين ستستلم أدويتك؟", "chooseTerminalDescription": "اختر جهاز H.A.V.E أولًا. ستتصفح أدوية هذا الجهاز فقط وتستلم طلبك المدفوع منه.", "browseHere": "تصفح هذا الجهاز", "noTerminals": "لا توجد أجهزة متاحة للاستلام حاليًا.", "collectionTerminal": "جهاز الاستلام", "changeTerminal": "تغيير جهاز الاستلام",
   "loading": "جارٍ التحميل…", "refresh": "تحديث", "unavailable": "هذه الخدمة غير متاحة مؤقتًا. حاول التحديث.", "working": "انتظر قليلًا…",

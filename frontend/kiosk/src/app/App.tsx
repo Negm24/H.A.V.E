@@ -6,6 +6,7 @@ import './kiosk.css'
 import { CatalogueProvider } from '../features/catalogue/hooks/use-catalogue'
 import { CollectionSummaryProvider } from '../features/orders/hooks/use-collection-summary'
 import { CheckoutAttemptProvider } from '../features/orders/hooks/use-checkout-attempt'
+import { TerminalAvailability } from '../features/session/components/TerminalAvailability'
 
 function SimulatorLocation({ id }: { id?: string }) {
   const location = useLocation()
@@ -21,5 +22,5 @@ function SimulatorLocation({ id }: { id?: string }) {
 }
 
 export default function App({ simulatorId }: { simulatorId?: string }) {
-  return <SessionProvider><CatalogueProvider><CollectionSummaryProvider><CheckoutAttemptProvider><BrowserRouter><SimulatorLocation id={simulatorId} /><AppRoutes /></BrowserRouter></CheckoutAttemptProvider></CollectionSummaryProvider></CatalogueProvider></SessionProvider>
+  return <SessionProvider><CatalogueProvider><CollectionSummaryProvider><CheckoutAttemptProvider><BrowserRouter><SimulatorLocation id={simulatorId} /><TerminalAvailability><AppRoutes /></TerminalAvailability></BrowserRouter></CheckoutAttemptProvider></CollectionSummaryProvider></CatalogueProvider></SessionProvider>
 }

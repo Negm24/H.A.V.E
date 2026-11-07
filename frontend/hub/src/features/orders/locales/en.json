@@ -1,4 +1,5 @@
 {
+  "terminalMaintenance": "Maintenance · shopping and collection paused",
   "home": "Back to home", "profile": "My profile", "backToBrowse": "Back to medicines", "browseMedicines": "Browse medicines",
   "chooseTerminal": "Where will you collect your medicines?", "chooseTerminalDescription": "Choose a H.A.V.E Terminal first. You will browse only the medicines available at that machine and collect your paid order there.", "browseHere": "Browse this Terminal", "noTerminals": "No collection Terminals are available right now.", "collectionTerminal": "Collection Terminal", "changeTerminal": "Change collection Terminal",
   "loading": "Loading…", "refresh": "Refresh", "unavailable": "This service is temporarily unavailable. Please refresh.", "working": "Please wait…",

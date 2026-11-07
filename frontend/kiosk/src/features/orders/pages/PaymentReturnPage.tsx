@@ -49,13 +49,13 @@ export function PaymentReturnPage() {
     if (Date.now() - lastActivity.current >= 5_000) { clearTimeout(activityTimer.current); renew() }
     else if (activityTimer.current === undefined) activityTimer.current = setTimeout(renew, 5_000 - (Date.now() - lastActivity.current))
   }, [finish, id, schedulePrivacy])
-  const read = useCallback(async () => {
+  const read = useCallback(async (background = false) => {
     const current = generation.current
     if (inFlight.current === current || document.hidden || ending.current || privateEnded.current || handoffActive.current) return
     if (!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(id)) { setError('privateResult'); return }
     inFlight.current = current
     try {
-      const result = await terminalPurchaseApi.result(id)
+      const result = await terminalPurchaseApi.result(id, undefined, background)
       if (current !== generation.current || ending.current) return
       setOrder(result); setError(''); void i18n.changeLanguage(result.language)
     } catch (cause) {
@@ -82,8 +82,8 @@ export function PaymentReturnPage() {
   }
   useEffect(() => {
     ending.current = false; privateEnded.current = false; generation.current++; lastActivity.current = -Infinity; schedulePrivacy(); void read()
-    const timer = setInterval(() => { if (Date.now() - lastTouch.current >= 60_000) finish(); else void read() }, 3_000)
-    const visible = () => { if (!document.hidden) { if (Date.now() - lastTouch.current >= 60_000) finish(); else void read() } }
+    const timer = setInterval(() => { if (Date.now() - lastTouch.current >= 60_000) finish(); else void read(true) }, 3_000)
+    const visible = () => { if (!document.hidden) { if (Date.now() - lastTouch.current >= 60_000) finish(); else void read(true) } }
     document.addEventListener('visibilitychange', visible)
     return () => { generation.current++; clearInterval(timer); clearTimeout(privacyTimer.current); clearTimeout(activityTimer.current); activityTimer.current = undefined; activityAbort.current?.abort(); document.removeEventListener('visibilitychange', visible) }
   }, [finish, read, schedulePrivacy])

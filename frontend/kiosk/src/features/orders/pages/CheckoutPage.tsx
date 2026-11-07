@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '@have/shared/api'
+import { recordFeature, useScreenReady } from '@have/shared/telemetry/react'
 import { useTranslation } from '@have/shared/i18n'
 import { terminalPurchaseApi, isHostedCheckoutUrl } from '@have/shared/api/purchase'
 import { Alert, Button } from '@have/shared/ui/controls'
@@ -19,12 +20,14 @@ import { isUnfinishedCheckout } from '../services/order-presentation'
 export function CheckoutPage() {
   const { t, i18n } = useTranslation('orders')
   const { controller, state } = useSession(), { cart, busy: cartBusy, ready, cartAvailable, refresh } = useCatalogue()
+  useScreenReady(ready && cartAvailable)
   const { attempt, begin, update, clear } = useCheckoutAttempt(), navigate = useNavigate()
   const reviewedCart = attempt?.basket ?? cart
   const [email, setEmail] = useState(attempt?.input.email ?? state.customer?.email ?? ''), [review, setReview] = useState(state.phase === 'customer' || !!attempt), [print, setPrint] = useState(true)
   const { run, error, busy } = useOrderOperation(`${state.phase}:${state.customer?.id ?? ''}`, 'paymentUnavailable')
   const guest = state.phase === 'guest'
   async function checkout() {
+    recordFeature('checkout_start')
     const result = await run(async () => {
       const pending = begin({ cart_version: cart.version, email: email.trim(), language: i18n.language === 'ar' ? 'ar' : 'en', print_requested: guest || print, return_simulator_id: new URLSearchParams(window.location.search).get('terminal') ?? undefined }, cart)
       let response

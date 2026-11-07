@@ -13,12 +13,13 @@ from apps.accounts.security.state import get_redis_client
 from apps.orders.models import Order
 from apps.payments.security.return_authorization import return_payment, terminal_session_active
 from apps.terminals.models import Terminal
+from apps.terminals.services.maintenance import require_customer_access
 from apps.terminals.security.state import session_key, payment_return_transition
 from apps.terminals.services.session_services import session_user, session_response
 
 
 def can_continue(payment, terminal):
-    return bool(payment.order.paid_at and payment.order.status == "COMPLETED"
+    return bool(not terminal.maintenance_enabled and payment.order.paid_at and payment.order.status == "COMPLETED"
         and terminal_session_active(terminal, payment.return_terminal_session_id or payment.order.terminal_session_id,
             payment.order.customer_id))
 
@@ -33,6 +34,7 @@ def finish_return(request, order_id, terminal, *, continue_session=False):
     identifier = payment.return_terminal_session_id or payment.order.terminal_session_id
     response, user = None, None
     if continue_session:
+        require_customer_access(terminal)
         if not can_continue(payment, terminal):
             raise AuthError("The original session ended. Sign in again; payment is not affected.", 409)
         raw = get_redis_client().get(session_key(terminal.pk))

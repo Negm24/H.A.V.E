@@ -146,10 +146,11 @@ def _reopen_rejected_doctor(
             doctor.professional_license_number = professional_license_number
             doctor.specialty, doctor.clinic_name, doctor.clinic_address = specialty, clinic_name, clinic_address
             doctor.approval_status = Doctor.ApprovalStatus.PENDING
+            doctor.application_submitted_at = now
             doctor.phone_hash = doctor.email_hash = None
             doctor.save(update_fields=[
                 "password_hash", "credential_changed_at", "professional_license_number", "specialty",
-                "clinic_name", "clinic_address", "approval_status", "phone_hash", "email_hash",
+                "clinic_name", "clinic_address", "approval_status", "phone_hash", "email_hash", "application_submitted_at",
             ])
     except IntegrityError as exc:
         _raise_conflict(exc)

@@ -10,6 +10,8 @@ export class ApiError extends Error {
 
 type JsonObject = Record<string, unknown>
 export interface RequestOptions {
+  /** Measurement-only marker for a scheduled read; never changes authorization. */
+  background?: boolean
   terminalSimulatorId?: string
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
@@ -37,13 +39,16 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const timeout = AbortSignal.timeout(options.timeoutMs ?? 15_000)
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout
   const headers = new Headers({ Accept: 'application/json' })
+  if (method === 'GET' && options.background === true) headers.set('X-Have-Background', '1')
   if (options.terminalSimulatorId) {
     if (!path.startsWith('/api/v1/terminals/') && !path.startsWith('/api/v1/auth/customers/terminal/')) {
       throw new Error('Terminal simulator selection is only allowed on Terminal routes.')
     }
     headers.set('X-Terminal-Simulator', options.terminalSimulatorId)
   }
-  if (options.body !== undefined) headers.set('Content-Type', 'application/json')
+  const multipart = typeof FormData !== 'undefined' && options.body instanceof FormData
+  // The browser supplies the multipart boundary; JSON remains the default.
+  if (options.body !== undefined && !multipart) headers.set('Content-Type', 'application/json')
   if (options.bearerToken) headers.set('Authorization', `Bearer ${options.bearerToken}`)
   if (options.csrf && method !== 'GET') {
     // Obtain a current token, including after owner login rotates it.
@@ -54,7 +59,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   try {
     response = await fetch(path, {
       method, headers, signal, credentials: 'same-origin', cache: 'no-store',
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: options.body === undefined ? undefined : multipart ? options.body as FormData : JSON.stringify(options.body),
     })
   } catch (error) {
     if (signal.aborted) throw new ApiError(options.signal?.aborted ? 'Request cancelled.' : 'Request timed out.', 0)

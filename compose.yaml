@@ -81,6 +81,7 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       REDIS_URL: redis://redis:6379/0
+      HOST_AGENT_TOKEN: ${HOST_AGENT_TOKEN:-}
       CART_DATA_EXPIRY: ${CART_DATA_EXPIRY:-86400}
       KASHIER_DEFAULT_TEST_KEY: ${KASHIER_DEFAULT_TEST_KEY:-}
       KASHIER_SECRET_KEY: ${KASHIER_SECRET_KEY:-}
@@ -120,6 +121,7 @@ services:
     build: ./backend
     restart: unless-stopped
     command: ["python", "manage.py", "order_worker"]
+    stop_grace_period: 90s
     environment: *backend-environment
     volumes:
       - ./backend:/app

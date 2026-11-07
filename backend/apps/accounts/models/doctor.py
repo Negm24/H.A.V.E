@@ -3,6 +3,7 @@ from django.utils import timezone
 
 
 class Doctor(models.Model):
+    application_submitted_at = models.DateTimeField(default=timezone.now, null=True, blank=True)
     class ApprovalStatus(models.TextChoices):
         PENDING = "PENDING", "Pending"
         APPROVED = "APPROVED", "Approved"

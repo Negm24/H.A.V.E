@@ -9,6 +9,7 @@ from apps.accounts.security.state import get_redis_client
 from apps.carts.security.state import customer_cart_key
 from apps.terminals.models import Terminal
 from apps.terminals.security.state import session_key
+from .maintenance import service_action_blocker
 
 
 def collection_terminals(user_id):
@@ -21,9 +22,14 @@ def collection_terminals(user_id):
         values = None
     result = []
     now = time.time()
+    service_blocker = service_action_blocker()
     for index, terminal in enumerate(terminals):
         row = {field: getattr(terminal, field) for field in (
             "serial_number", "display_name", "address_en", "address_ar", "status", "is_disabled")}
+        row["maintenance_enabled"] = terminal.maintenance_enabled
+        row["maintenance"] = terminal.maintenance_enabled
+        row["unavailable_reason"] = ("This Kiosk is disabled." if terminal.is_disabled else
+            "This Kiosk is temporarily closed for maintenance." if terminal.maintenance_enabled else service_blocker)
         row.update(occupancy="UNKNOWN", cart_total_quantity=None, cart_available=False)
         if values is not None:
             raw_session, raw_cart = values[2 * index:2 * index + 2]

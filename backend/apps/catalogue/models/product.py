@@ -20,6 +20,8 @@ class Product(models.Model):
     requires_prescription = models.BooleanField(default=False)
     max_quantity_per_order = models.IntegerField(null=True, blank=True, default=None)
     is_active = models.BooleanField(default=True)
+    image = models.ImageField(upload_to="products/", blank=True)
+    revision = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

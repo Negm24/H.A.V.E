@@ -13,11 +13,15 @@ from apps.orders.services.order_services import expire_orders
 from apps.orders.services.receipt_services import deliver_receipt
 from apps.payments.models import PaymentTransaction
 from apps.payments.services.payment_services import reconcile, process_refund, request_refund, fulfil_paid_terminal
+from apps.observability.worker_state import check_stop, progress
+from apps.operations.services.actions import run_pending_actions
 
 logger = logging.getLogger(__name__)
 
 
 def _run(work, stats, name):
+    check_stop()
+    progress(counts=stats)
     try:
         work()
         stats[name] += 1
@@ -28,12 +32,20 @@ def _run(work, stats, name):
         stats["errors"] += 1
         # Do not log provider responses, credentials or personal recipient data.
         logger.error("Order maintenance operation failed; durable work remains pending (%s).", name)
+    progress(counts=stats)
+    check_stop()
 
 
 def run_cycle():
+    check_stop()
+    progress()
     close_old_connections()
     now = timezone.now()
-    stats = {name: 0 for name in ("reconciled", "fulfilled", "expired", "refund_requested", "refunded", "receipts", "notices", "cart_cleanups", "errors")}
+    stats = {name: 0 for name in ("support_actions", "reconciled", "fulfilled", "expired", "refund_requested", "refunded", "receipts", "notices", "cart_cleanups", "errors")}
+    check_stop()
+    stats["support_actions"] = run_pending_actions(limit=20)
+    progress(counts=stats)
+    check_stop()
     due = PaymentTransaction.objects.filter(status__in=["PENDING", "UNKNOWN"], next_attempt_at__lte=now).filter(
         Q(lease_until__isnull=True) | Q(lease_until__lte=now))
     for pk in list(due.filter(operation="CAPTURE").values_list("pk", flat=True)[:100]):
@@ -44,6 +56,7 @@ def run_cycle():
     # A process may stop after verified payment commit but before simulated dispense.
     for pk in list(Order.objects.filter(collection_required=False, status="PENDING", paid_at__isnull=False).values_list("pk", flat=True)[:100]):
         _run(lambda pk=pk: fulfil_paid_terminal(pk), stats, "fulfilled")
+    check_stop()
     try:
         stats["expired"] = len(expire_orders(now=now))
     except Exception:
@@ -69,6 +82,7 @@ def run_cycle():
         Q(refund_email_lease_until__isnull=True) | Q(refund_email_lease_until__lte=now))
     for pk in list(refund_notices.values_list("pk", flat=True)[:100]):
         _run(lambda pk=pk: send_order_notice(pk, "refund"), stats, "notices")
+    progress(counts=stats, completed=True, state="idle")
     return stats
 
 

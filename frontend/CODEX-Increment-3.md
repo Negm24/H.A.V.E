@@ -1,5 +1,20 @@
 # Increment 3 — H.A.V.E Hub authentication
 
+## Current QR decision — 2026-11-06
+
+This supersedes the historical explicit approval/rejection UI described below.
+A signed-in customer scans the physical Terminal QR and Hub immediately sends
+the existing approval request once. There is no Approve/Reject button. Pre-scan
+copy explains that scanning authorises that kiosk. Camera tracks stop on decode;
+status polling reports completion only after Terminal consumes the approval.
+Invalid scans never approve. An uncertain approval is reconciled with read-only
+status checks, never an automatic POST retry; generate a fresh QR if needed.
+Backend paths, one-use/device/session/family checks and deadlines are unchanged.
+FR-33 and both app requirements snapshots reflect the requested behavior.
+Tests cover decoding, automatic approval, invalid QR, uncertain/lost approval,
+camera cleanup and real Hub-to-Terminal login. Physical-phone acceptance remains
+separate. See ../docs/verification/2026-11-06-readiness.md for current evidence.
+
 
 ## Bug-fix checkpoint — 2026-10-17
 
@@ -450,3 +465,30 @@ was Hub. Already-paid collection orders retain their collection action.
 Existing summary polling, deadlines, saved-card/security rules and Hub refresh
 coordination are unchanged. See backend/AUTH_GUIDE.md and the recovery browser
 suite. No new environment values, migration or networking changes.
+
+## Separate profile indicators — 2026-10-19
+
+My Profile's ready badge counts collection orders only. Awaiting payments appear
+separately as an amber warning at the card's bottom-inline-end (mirrored in RTL).
+No ready orders means no collection badge/highlight; no unpaid orders means no
+warning. History's combined number-only badge and existing backend counts/polling
+remain unchanged. Feature styling: account/styles/order-attention.css, using shared
+theme tokens. Responsive mixed-count fixtures cover 375/768/1440px in EN/AR.
+
+### Portrait warning refinement — 2026-10-19
+
+Hub account Dashboard and account/styles/order-attention.css use an orientation
+media query: portrait replaces the profile symbol with the warning icon alone;
+landscape restores the profile symbol plus full bottom-end payment warning/count.
+aria-describedby retains the translated count for assistive technology even when
+the sentence is visually hidden. Without unpaid orders the profile symbol stays.
+No JS orientation listeners, API changes or Kiosk styling changes. Browser tests
+rotate portrait → landscape → portrait in English/Arabic without mutations.
+
+### Anonymous request measurement refinement — 2026-11-07
+
+The shared transport adds `X-Have-Background: 1` only to GET requests explicitly
+marked `background: true`. Catalogue/cart/order/collection-Terminal timers and
+automatic focus/visibility refreshes use that per-call marker; initial/manual
+loads remain measured. Client/server telemetry also excludes internal CSRF-token
+reads. This marker changes only measurements, never authentication or deadlines.

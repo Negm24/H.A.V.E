@@ -93,7 +93,7 @@ class OwnerMeView(APIView):
         tags=[openapi.OWNER_SESSION],
         responses={200: OwnerIdentityOutputSerializer, 403: ErrorOutputSerializer},
         summary="Check the signed-in owner",
-        description="Uses the session cookie set at login. Run manually; polling counts as activity.",
+        description="Uses the session cookie set at login. Reads and polling never renew idle or absolute expiry.",
     )
     def get(self, request):
         return Response(OwnerIdentityOutputSerializer(request.user).data)

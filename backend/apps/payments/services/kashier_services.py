@@ -12,6 +12,7 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 from apps.accounts.security.errors import AuthError
+from apps.observability.metrics import record_provider_timeout
 
 API = "https://test-api.kashier.io"
 FEP = "https://test-fep.kashier.io"
@@ -97,7 +98,9 @@ def _call(host, path, *, method="GET", body=None, headers=None, allow_no_cards=F
                 r'"[A-Za-z][A-Za-z0-9_.]*" (?:must be [^\r\n]+|is required|is not allowed)', message) is not None)
         # Duplicate-order/5xx/timeout outcomes must be reconciled, not resubmitted.
         raise ProviderUnavailable(definitive=validation_rejected or exc.code in (401, 403) and method != "PUT") from None
-    except (URLError, TimeoutError, OSError, ValueError):
+    except (URLError, TimeoutError, OSError, ValueError) as exc:
+        if isinstance(exc, TimeoutError) or isinstance(exc, URLError) and isinstance(exc.reason, TimeoutError):
+            record_provider_timeout()
         raise ProviderUnavailable() from None
 
 

@@ -12,9 +12,17 @@ from apps.accounts.security.errors import AuthError
 from apps.accounts.security.permissions import eligible_customer
 from apps.accounts.security.tokens import token_hash
 from apps.terminals.security.state import execute_transition
+from apps.terminals.models import Terminal
 
 
 def operate(terminal, mode, raw_token="", *, user=None, qr_proof=None):
+    if mode in {"start", "activity"}:
+        # The service boundary owns this lock as well as HTTP callers. This
+        # serializes any session creation/renewal against maintenance and host
+        # service claims, including recovery workers and future callers.
+        with transaction.atomic():
+            current = Terminal.objects.select_for_update().get(pk=terminal.pk)
+            return _operate(current, mode, raw_token, user=user)
     if mode != "login":
         return _operate(terminal, mode, raw_token, user=user)
     if not eligible_customer(user):
@@ -26,10 +34,14 @@ def operate(terminal, mode, raw_token="", *, user=None, qr_proof=None):
         if (not eligible_customer(current)
                 or current.customer.credential_changed_at.isoformat() != verified_version):
             raise AuthError("Credentials changed. Sign in again.")
-        return _operate(terminal, mode, raw_token, user=current, qr_proof=qr_proof)
+        current_terminal = Terminal.objects.select_for_update().get(pk=terminal.pk)
+        return _operate(current_terminal, mode, raw_token, user=current, qr_proof=qr_proof)
 
 
 def _operate(terminal, mode, raw_token="", *, user=None, qr_proof=None):
+    if mode != "end":
+        from .maintenance import require_customer_access
+        require_customer_access(terminal)
     now = time.time()
     new_token = secrets.token_urlsafe(32) if mode in ("start", "login") else None
     update = {}

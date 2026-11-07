@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { generateFixtureQr } from './qr-fixture'
 
 const origin = 'http://localhost:5173'
 const customer = { id: 'HAV-C876-000000000024', account_type: 'CUSTOMER', first_name: 'Kiosk', last_name: 'Tester', phone_number: '+201099998876', email: 'kiosk-tester@example.test', date_of_birth: '24-01-2005', phone_verified_at: '2026-10-10T00:00:00Z' }
@@ -96,13 +97,13 @@ test('wrong PIN retains guest and clears the PIN', async ({ page }) => {
   await expect(page.getByLabel('Four-digit PIN', { exact: true })).toHaveValue('')
 })
 
-test('QR waits for confirmation and completes once', async ({ page }) => {
+test('QR waits for automatic approval and completes once', async ({ page }) => {
   const calls = await mockTerminal(page)
   await start(page)
   await openQrLogin(page)
   await page.getByRole('button', { name: 'Generate QR', exact: true }).click()
   await expect(page.locator('.qr-panel svg')).toBeVisible()
-  await expect(page.getByRole('status')).toContainText('Approve', { timeout: 5000 })
+  await expect(page.getByRole('status')).toContainText('automatic sign-in', { timeout: 5000 })
   await expect(page.getByRole('heading', { name: 'Hello Kiosk' })).toBeVisible({ timeout: 10_000 })
   expect(calls.filter(call => call.path.endsWith('/complete/'))).toHaveLength(1)
 })
@@ -194,9 +195,7 @@ test.describe('real backend kiosk smoke tests', () => {
     try {
       await start(page, false, true)
       await openQrLogin(page)
-      const created = page.waitForResponse(response => response.url().endsWith('/terminal/qr-login/') && response.request().method() === 'POST')
-      await page.getByRole('button', { name: 'Generate QR', exact: true }).click()
-      const qr = await (await created).json()
+      const qr = await generateFixtureQr(page)
       const hubHeaders = { Authorization: `Bearer ${access}` }
       const scanned = await page.request.post(backend + '/api/v1/auth/customers/hub/qr-login/scan/', { headers: hubHeaders, data: { qr_payload: qr.qr_payload } })
       expect(scanned.status()).toBe(200)

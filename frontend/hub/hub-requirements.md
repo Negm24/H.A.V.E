@@ -1,5 +1,26 @@
 # H.A.V.E Hub requirements
 
+Updated: 2026-11-07 (measurement refinement). Scheduled catalogue/cart/order and
+collection-Terminal reads carry a fixed GET-only background marker. They remain
+normal authenticated requests but do not contribute journey latency/error totals.
+Initial loads and explicit manual refreshes remain measured. The marker never
+changes authorization, polling cadence, basket lifetime or session deadlines.
+
+Updated: 2026-11-07 (Admin integration). Maintenance machines remain visible with
+disabled selection and bilingual maintenance/collection-paused wording. Backend
+checkout/resumption guards recheck availability; payment truth, saved baskets and
+original collection/expiry/refund deadlines remain. Shared anonymous allowlisted
+telemetry measures document Web Vitals separately from explicit screen-data-ready
+durations and feature event totals, without entered/search/clinical/credential or
+persistent identity data. Monitoring never renews authentication or cart deadlines.
+
+Updated: 2026-11-06 (QR login). This supersedes the historical manual approval UI.
+Scanning a valid Terminal QR automatically sends the existing approval request
+once; no confirmation/rejection tap is shown. Pre-scan copy explains kiosk access.
+Only server-confirmed Terminal completion is success. Uncertain approval uses
+status reads, never mutation replay; invalid scans do not approve. Camera cleanup,
+expiry, family/device/session checks and original Terminal deadlines are preserved.
+
 Updated: 2026-10-17 (bug fixes). Hub baskets remain independent of Terminal
 sessions. Successful Terminal PIN/QR login now discards guest items and starts an
 empty customer basket; this changes no saved Hub basket or authentication deadline.
@@ -34,6 +55,8 @@ and live backend contract take precedence over obsolete prototype descriptions.
 <!-- BEGIN PROJECT REQUIREMENTS SNAPSHOT: 01-requirements.md -->
 
 # H.A.V.E — Requirements Specification
+
+**Inventory expiry decision — 2026-11-07:** Any expired on-hand batch blocks its entire machine slot for customer availability, checkout and collection, including other fresh batches in that slot. Inventory shows a red border/exclamation for expired packs and yellow for packs expiring within 0–30 Cairo calendar days. Packs remain date-eligible through their expiry date. Owner resolution requires audited confirmation of physical removal; expired packs return to external inventory under their original batch and remain excluded from loading. Active reservations and uncertain dispensing cannot be overridden. Empty expired stock rows do not block; clearing expired packs preserves manual slot enable settings.
 
 **Bug-fix update — 2026-10-17:** Successful PIN/QR Terminal sign-in discards the guest basket and starts an empty customer basket without restarting the session's maximum clock. Hub baskets remain independent. Confirmed provider field-validation rejections release unpaid allocations; unknown/duplicate/timeout outcomes remain subject to reconciliation. No public-to-local payment-return bridge is implemented.
 
@@ -166,7 +189,7 @@ D-4 and D-6 are resolved above. Exact fictional insurance percentages and produc
 - **FR-32b** Note the deliberate asymmetry: the **PIN is 4 digits** (typed often, protected by lockout) while the **reset code is 6 digits** (typed once, must resist guessing because it can change the PIN).
 - **FR-32c** Doctors and owners shall recover their **passwords**, not PINs, through role-specific login-page SMS verification flows using the same shared code-generation and verification tools. Password recovery shall revoke existing sessions, require a fresh sign-in, and leave doctor approval and MFA enrollment unchanged. Owner account creation remains private.
 - **FR-32d** Recovery shall enforce resend cooldowns, per-phone and per-source send limits, code expiry, bounded verification attempts, and single-use reset authorization. Unknown or ineligible accounts shall receive the same generic request response. Proofs shall be bound to one account role and purpose.
-- **FR-33** A Terminal button shall generate a short-lived, one-use QR for that guest session. A signed-in Hub customer scans the QR, reviews the Terminal identity, and explicitly approves or rejects the login. Terminal completion shall consume approval and rotate the guest token into a customer token without restarting the guest session's absolute clock. Scanning alone and background polling shall not log in or renew Terminal activity.
+- **FR-33** A Terminal button shall generate a short-lived, one-use QR for that guest session. A signed-in Hub customer scans the QR to authorise login automatically, with no separate confirmation tap. Hub shall explain before scanning that it grants that kiosk access, validate the scan, and submit the existing approval request once. Terminal completion shall consume approval and rotate the guest token into a customer token without restarting the guest session's absolute clock. Scanning and background polling shall not renew Terminal activity. Invalid/expired scans shall never approve login; an uncertain approval shall be reconciled through status reads without replaying approval or reporting success before Terminal completion.
 - **FR-34** Repeated failed PIN attempts shall lock the account temporarily, with exponential back-off, and the attempt counter shall be enforced server-side.
 - **FR-34a** Because a 4-digit PIN has only 10,000 combinations, the system shall additionally rate-limit per mobile number, per terminal, and per source, and shall reject trivially guessable PINs (repeated digits, sequences, common patterns).
 - **FR-34b** _(DOCUMENT, not BUILD)_ Recycled mobile numbers: in production, prolonged account inactivity would force re-verification before prescription or insurance data is exposed, so a reassigned number could not inherit a stranger's medical history. Unclaimed prescriptions addressed to a phone number carry the same risk; safe real-world claiming would require stronger patient matching than phone possession alone. Out of scope for the project build; document this production gap explicitly.
@@ -494,6 +517,126 @@ checkout under the same valid device/session, never general account history.
 
 This update supersedes historical receipt-only forced-restart and original-channel-always-controls-collection descriptions. Existing idle/absolute authentication limits, saved-card rules, guest isolation and no-unattended-dispensing safeguards remain. No new environment variables, migrations or networking changes are required. Live Kashier submission remains user-operated.
 
+## Separate profile indicators — 2026-10-19
+
+My Profile's Ready to collect badge counts only paid, collectable orders. Actionable
+awaiting-payment checkouts appear separately as an amber warning at the bottom-inline-end
+of the card (bottom-right in English, mirrored in Arabic), with their own count.
+For one ready order and one unpaid checkout, show 1 Ready to collect plus Awaiting
+payment · 1, never 2 Ready to collect. With no ready orders, omit the collection
+badge/highlight; with no unpaid checkouts, omit the warning. Order History's existing
+combined number-only attention badge remains unchanged. This is presentation only;
+API counts, payment/session rules and summary polling are unchanged.
+
+Hub orientation refinement — 2026-10-19: in portrait, actionable unpaid checkout
+attention replaces My Profile's decorative icon with a warning symbol, without
+visible payment wording. In landscape, restore the profile icon and full bottom-end
+payment warning/count. Keep the unpaid count available to assistive technology in
+both orientations. With no unpaid checkouts, retain the normal profile icon.
+Collection indicators and Kiosk presentation remain unchanged.
+
+## Expanded Owner portal agreement — 2026-11-07
+
+This agreement supersedes the historical heading-only Admin and doctor-review-only
+scope. Full Advisor screens and prescriptions remain a separate subsequent milestone.
+
+- **FR-109** H.A.V.E Admin is an English-only, responsive private Owner portal with
+  Overview, Doctors, Customers, Orders & Payments, Catalogue, Inventory, Kiosks,
+  Technical and Activity sections. Reuse AutoPharm's bundled fonts, dark navigation,
+  purple actions and light content surfaces. Preserve selected records, focus, scroll
+  and unsaved drafts on refresh. Provide keyboard dialogs and reduced-motion support.
+- **FR-110** Reuse privately provisioned Owner phone/password login and SMS recovery,
+  server-side sessions and CSRF. Retain ten-minute inactivity and fixed two-hour
+  absolute expiry; no Remember Me. Only throttled human activity renews inactivity.
+  Polling never renews a deadline. Cross-tab logout/expiry clears private state and
+  discards late responses.
+- **FR-111** Review pending doctor applications with existing approval/rejection,
+  erasure and reapplication limits. New submissions record their real date; unknown
+  historical submission dates stay unknown. Block/unblock/force-sign-out apply only
+  to customers and approved doctors. Blocking requires a reason and invalidates Hub,
+  Advisor, Terminal and QR authorization. Unblocking needs fresh login and preserves
+  passwords, PINs, approval, MFA, orders and all existing deadlines. Confirmations
+  identify outstanding paid collections.
+- **FR-112** Search paginated account and order support records. Reuse existing
+  cancellation, payment/refund reconciliation and receipt-delivery services with
+  durable idempotent action IDs and explicit outcomes. Unknown results remain unknown.
+  Completed orders cannot be cancelled; no arbitrary paid/refunded/dispensed override.
+- **FR-113** Edit bilingual categories/products, prices, limits and future availability.
+  Deactivate referenced records rather than deleting them; preserve existing order
+  snapshots. Validate persistent optional images. Product image editing is available
+  from both Catalogue and Inventory through the same nullable customer image field.
+- **FR-114** Manage batches, expiry, slots, capacities and stock. Serialize stock
+  adjustments/reservations; protect active allocations, capacity, product/batch match
+  and expiry. Reassignment needs empty stock and no active allocations. Editable
+  records have revisions; stale writes require review with a conflict response.
+- **FR-114a** Owner restocking transfers packs from external batch balances using
+  atomic, idempotent movements. A different product is blocked until the slot is
+  emptied by returning packs to external inventory under their original batches.
+  Protect active allocations and conserve batch totals during reconciliation.
+  Inventory provides exactly24 fixed physical positions in six columns and four
+  rows, with front and angled views and actual-capacity fill bars. Reserved packs
+  are orange with text counts; product/image editing reuses
+  Catalogue. Keyboard and touch can perform the same transfers as drag-and-drop.
+- **FR-114b** Overview provides Cairo-time business charts and analytics, a
+  Saturday-start week, system health and fleet summaries. Revenue counts confirmed
+  successful captures; refunds and transaction outcomes retain their true states.
+  Historical category evidence stays unknown when no sale snapshot exists.
+- **FR-114c** Kiosk connection, valid customer session and Owner availability are
+  independent indicators. A fresh heartbeat (45 seconds) shows Online even when
+  the legacy saved machine status is OFFLINE. Redis failure reports Unknown.
+- **FR-114d** Technical has Health, Usage, Incidents and Service Controls. Health
+  includes per-service history/resource inspection. Overview contains page
+  experience and resource summaries. Usage shows anonymous action counts/trends.
+  Incident details identify observed triggers, affected targets, known impact and
+  relevant service/action links without inventing a cause.
+- **FR-115** Individual Kiosk Maintenance is separate from connectivity, container
+  status and credential revocation. Reject activation when any valid session exists,
+  session state is unknown or unsafe local financial/dispensing work exists. No
+  force, drain, queue or schedule. Recheck under the session/financial locks. Warn
+  that ALL access, including collection, stops and display paid waiting orders and
+  their unchanged deadlines. Maintenance preserves baskets, payment truth, expiry/
+  refund rules and health/reconciliation; explicit Owner action restores service.
+- **FR-116** Admin is available at localhost and private Tailscale Serve HTTPS port
+  9443. Preserve public Hub/Kiosk mappings on 443/8443. Exact-origin Host, CSRF and
+  forwarding rules apply. Public app proxies reject Owner/internal routes and strip
+  Owner session cookies because ports on one hostname share cookies.
+- **FR-117** Owner-only Technical monitoring reports Web Vitals LCP/INP/CLS separately
+  from explicit screen-data-ready times; API counts/latency/server errors; separate
+  validation/authentication rejections; grouped frontend failures; anonymous feature
+  event totals; backend-verified shopping outcomes; worker progress/backlogs/failures;
+  application last-seen; and Windows host versus container CPU/memory. Peripheral
+  health remains unknown unless reported. Anonymous counts are not unique users or
+  unique-user conversion. No live service-log viewer.
+- **FR-118** Telemetry accepts fixed metrics/events/labels only, excluding input text,
+  search queries, clinical content, credentials, persistent visitor identities and
+  recordings. Health checks, routine polls and telemetry traffic are excluded from
+  journey usage/error rates. Telemetry failure never fails or delays shopping.
+- **FR-119** Collect host/container samples every five seconds in a bounded fifteen-
+  minute live window. Keep one-minute aggregates seven days; unresolved incidents
+  remain, resolved incidents thirty days. Keep privileged activity for prototype
+  lifetime. Visible summaries refresh fifteen seconds; resources five seconds. Pause
+  polling when hidden and refresh on return. Distinguish live/stale/unavailable/
+  unknown/no-data; retain last-known values and timestamps. Stopped containers have
+  missing samples. Show at most four bounded SVG charts with units, sample counts,
+  timestamps, visible current values and accessible data tables.
+- **FR-120** Owners may Start/Stop/Restart only Hub, Kiosk, Advisor and order-worker
+  through an outbound-only authenticated Windows host agent. Backend, database,
+  Redis and Admin are protected; neither browser nor Django gets a Docker socket.
+  Restrict Compose project/service labels, show impact/eligibility, serialize per
+  service, expire queued jobs and journal commands. Block Kiosk Stop/Restart while
+  affected machines are active/unknown/unsafe, including races with new work. Worker
+  stopping must quiesce gracefully. Never replay an uncertain Restart automatically;
+  report unconfirmed results and reconcile evidence. Docker Desktop handles daemon/
+  protected-core recovery.
+- **FR-121** Privileged history records actor/action/target/time/outcome and permitted
+  operational changes without copying credentials, sensitive application contents or
+  erased doctor details. Additive migrations, isolated backend tests, frontend
+  checks/builds and standard/live/private-origin regressions establish readiness;
+  previously completed manual checks are recorded as user-verified separately.
+
+Implementation details and interfaces: [Admin contract](docs/admin-implementation-contract.md)
+and [Admin app guide](frontend/CODEX-Increment-5.md).
+
 <!-- END PROJECT REQUIREMENTS SNAPSHOT -->
 
 ## Hub implementation decisions — Increment 3
@@ -638,4 +781,21 @@ collection. An unpaid attempt explicitly resumed at its assigned Kiosk may dispe
 after verified payment while the latest bound local session remains live,
 regardless of its original purchase channel. Already-paid collection orders keep
 their explicit collection action. No new environment values or migrations.
+
+Updated: 2026-10-19 (separate profile indicators). Ready to collect shows only the
+collection count, not total attention. Awaiting payments have a separate amber
+bottom-inline-end warning with their own count, mirrored in RTL. Zero indicators
+are omitted. History's combined number-only badge, backend counts and polling
+remain unchanged. Responsive EN/AR layouts retain account feature styling.
+
+Updated: 2026-10-19 (portrait payment warning). Hub portrait replaces the profile
+icon with a warning symbol only when unpaid checkouts exist; no payment sentence
+is visible. Landscape restores the ordinary icon and bottom-end payment message/
+count. CSS orientation queries switch immediately on rotation, with no data or
+session changes. The warning remains an accessible description in portrait.
+No unpaid checkouts means the normal icon; collection counts stay separate.
+
+Updated: 2026-10-19 (warning icon background). In portrait, the profile icon's
+container uses the soft warning background when the unpaid-payment warning is
+present. Normal/landscape profile icons retain their existing purple background.
 

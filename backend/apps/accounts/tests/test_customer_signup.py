@@ -233,17 +233,28 @@ class CustomerSignupTests(TestCase):
 
     def test_concurrent_verification_can_consume_code_only_once(self):
         challenge = self.start_signup().json()["challenge_id"]
-        digest = _digest(f"{challenge}:{self.sms.call_args.kwargs['code']}")
+        phone_code = self.sms.call_args.kwargs["code"]
+        digest = _digest(f"{challenge}:{phone_code}")
+        next_code = "000002" if phone_code == "000001" else "000001"
         challenge_key = _challenge_key(challenge)
         latest_key = _latest_key("+201012345678")
 
         def consume(_):
             return self.redis.eval(VERIFY_SCRIPT, 2, challenge_key, latest_key, digest, 5,
-                                   _digest(f"{challenge}:000001"), 300)
+                                   _digest(f"{challenge}:{next_code}"), 300)
 
         with ThreadPoolExecutor(max_workers=4) as pool:
             results = list(pool.map(consume, range(4)))
         self.assertEqual(sum(bool(result) for result in results), 1)
+
+    def test_phone_and_email_stages_use_distinct_codes_on_random_collision(self):
+        with patch("apps.accounts.security.tokens.secrets.randbelow", return_value=1):
+            challenge = self.start_signup().json()["challenge_id"]
+            phone_code = self.sms.call_args.kwargs["code"]
+            self.assertEqual(self.verify(challenge).status_code, 202)
+        self.assertNotEqual(phone_code, self.email_code())
+        self.assertEqual(self.verify(challenge, code=phone_code).status_code, 400)
+        self.assertEqual(self.verify(challenge, code=self.email_code()).status_code, 201)
 
     def test_verification_redis_failure_preserves_pending_challenge(self):
         challenge = self.start_signup().json()["challenge_id"]

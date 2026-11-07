@@ -57,6 +57,11 @@ class Command(BaseCommand):
                 batch, _ = ProductBatch.objects.get_or_create(product=product, batch_number="HAVE-DEMO-BATCH", defaults={
                     "expiry_date": today + timedelta(days=-1 if index == 10 else 365),
                 })
+                existing_slot = TerminalSlot.objects.filter(terminal=terminal, slot_code=f"DEMO-{index:03}").first()
+                if existing_slot and not existing_slot.is_operational:
+                    continue
+                if not existing_slot and terminal.slots.filter(is_operational=True).count() >= 24:
+                    continue
                 slot, _ = TerminalSlot.objects.get_or_create(terminal=terminal, slot_code=f"DEMO-{index:03}", defaults={
                     "product": product, "capacity": 50, "is_enabled": index != 28,
                 })

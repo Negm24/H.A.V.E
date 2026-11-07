@@ -15,6 +15,9 @@
     "./api/catalogue": "./src/api/catalogue.ts",
     "./api/cart": "./src/api/cart.ts",
     "./api/purchase": "./src/api/purchase.ts",
+    "./api/owner": "./src/api/owner.ts",
+    "./telemetry": "./src/telemetry.ts",
+    "./telemetry/react": "./src/telemetry-react.ts",
     "./ui/catalogue": "./src/ui/catalogue.tsx",
     "./catalogue/discovery": "./src/catalogue/discovery.ts",
     "./i18n/catalogue/en.json": "./src/i18n/catalogue/en.json",
@@ -33,7 +36,8 @@
     "@fontsource-variable/inter": "5.3.0",
     "@fontsource-variable/noto-sans-arabic": "5.3.0",
     "i18next": "26.4.3",
-    "react-i18next": "17.0.16"
+    "react-i18next": "17.0.16",
+    "web-vitals": "6.2.3"
   },
   "peerDependencies": {
     "react": "19.3.0",

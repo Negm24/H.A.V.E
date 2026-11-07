@@ -4,7 +4,7 @@ const origin = 'http://localhost:5173'
 const orderId = '11111111-2222-4333-8444-555555555555'
 const customer = { id: 'HAV-C876-000000000024', account_type: 'CUSTOMER', first_name: 'Kiosk', last_name: 'Tester', phone_number: '+201099998876', email: 'kiosk-tester@example.test', date_of_birth: '24-01-2005', phone_verified_at: '2026-10-10T00:00:00Z' }
 
-async function fixture(page: Page, options: { stale?: boolean; missing?: boolean; returnedCustomer?: boolean; expiredSession?: boolean; arabic?: boolean; unpaidCue?: boolean } = {}) {
+async function fixture(page: Page, options: { stale?: boolean; missing?: boolean; returnedCustomer?: boolean; expiredSession?: boolean; arabic?: boolean; unpaidCue?: boolean; mixedCue?: boolean; noOrders?: boolean } = {}) {
   const calls: { path: string; body: Record<string, unknown> | null }[] = []
   const product = { id: 1, sku: 'TEST-SHOPPING', category_id: 1, name_en: 'Test purchase item', name_ar: 'منتج شراء تجريبي', active_ingredient: 'Demo', strength: '5 mg', dosage_form: 'Tablets', pack_description: '12 tablets', usage_instructions_en: 'Test only', usage_instructions_ar: 'للتجربة فقط', warnings_en: 'Demonstration', warnings_ar: 'تجريبي', symptom_tags: [], price: '18.50', currency: 'EGP', requires_prescription: false, max_quantity_per_order: null, stock_quantity: 12, quantity_limit: 12, image_url: null }
   let quantity = 0, revision = 0
@@ -23,7 +23,7 @@ async function fixture(page: Page, options: { stale?: boolean; missing?: boolean
     else if (path.endsWith('/cart/version/')) response = { version: cart().version }
     else if (path.includes('/cart/items/')) { quantity = body.quantity; revision++; response = cart() }
     else if (path.endsWith('/cart/')) { if (method === 'DELETE') { quantity = 0; revision++ }; response = cart() }
-    else if (path.endsWith('/orders/summary/')) response = options.unpaidCue ? { awaiting_collection_count: 0, at_terminal_count: 0, elsewhere_count: 0, collection_terminals: [], awaiting_payment_count: 2, attention_count: 2 } : { awaiting_collection_count: 2, at_terminal_count: 1, elsewhere_count: 1, collection_terminals: [{ serial_number: 'HAVE-TEST-001', display_name: 'HAVE Mark I', count: 1 }, { serial_number: 'HAVE-TEST-002', display_name: 'HAVE Mark II', count: 1 }] }
+    else if (path.endsWith('/orders/summary/')) response = options.noOrders ? { awaiting_collection_count: 0, at_terminal_count: 0, elsewhere_count: 0, collection_terminals: [], awaiting_payment_count: 0, attention_count: 0 } : options.mixedCue ? { awaiting_collection_count: 1, at_terminal_count: 1, elsewhere_count: 0, collection_terminals: [{ serial_number: 'HAVE-TEST-001', display_name: 'HAVE Mark I', count: 1 }], awaiting_payment_count: 1, attention_count: 2 } : options.unpaidCue ? { awaiting_collection_count: 0, at_terminal_count: 0, elsewhere_count: 0, collection_terminals: [], awaiting_payment_count: 2, attention_count: 2 } : { awaiting_collection_count: 2, at_terminal_count: 1, elsewhere_count: 1, collection_terminals: [{ serial_number: 'HAVE-TEST-001', display_name: 'HAVE Mark I', count: 1 }, { serial_number: 'HAVE-TEST-002', display_name: 'HAVE Mark II', count: 1 }] }
     else if (path.endsWith('/result/')) response = { ...order, status: 'COMPLETED', paid_at: new Date().toISOString(), total_paid: '18.50', can_continue_session: !options.expiredSession, language: options.arabic ? 'ar' : 'en' }
     else if (path.endsWith('/result/continue/')) response = { session_id: 'shopping-test', session_token: 'return-session-token', token_type: 'Bearer', idle_expires_in: 180, session_expires_in: 300, language: options.arabic ? 'ar' : 'en', ...(options.returnedCustomer ? { customer } : {}) }
     else if (path.endsWith('/result/end/') || path.endsWith('/result/activity/')) status = 204
@@ -83,10 +83,31 @@ test('payment result End session closes its proof and expired authentication can
 
 test('awaiting payment attracts attention without claiming that an unpaid order can be collected', async ({ page }) => {
   await fixture(page, { unpaidCue: true }); await start(page, true)
-  const card = page.locator('.home-card--collection')
-  await expect(card).toContainText('Awaiting payment · 2')
+  const card = page.locator('.home-card--payment')
+  await expect(card.locator('.payment-warning')).toContainText('Awaiting payment · 2')
+  await expect(card.locator('.collection-count')).toHaveCount(0)
+  await expect(card).not.toHaveClass(/home-card--collection/)
   await expect(card).not.toContainText('Ready to collect')
   await card.click(); await expect(page.locator('.collection-count--history')).toHaveText('2')
+})
+
+for (const arabic of [false, true]) test(`ready and unpaid orders have separate counts and bottom warning ${arabic ? 'Arabic' : 'English'}`, async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 600 }); await fixture(page, { mixedCue: true }); await start(page, true, arabic)
+  const card = page.locator('.home-card--collection'), warning = card.locator('.payment-warning')
+  await expect(card.locator('.collection-count')).toHaveText('1')
+  await expect(warning).toContainText('1')
+  await expect(card.locator('.collection-cue')).not.toContainText(arabic ? 'الدفع' : 'payment')
+  const outer = (await card.boundingBox())!, inner = (await warning.boundingBox())!
+  expect(outer.y + outer.height - inner.y - inner.height).toBeLessThanOrEqual(22)
+  expect(arabic ? inner.x - outer.x : outer.x + outer.width - inner.x - inner.width).toBeLessThanOrEqual(25)
+  await fits(page)
+  await page.screenshot({ path: `test-results/kiosk-separated-attention-${arabic ? 'ar' : 'en'}.png` })
+  await card.click(); await expect(page.locator('.collection-count--history')).toHaveText('2')
+})
+
+test('zero ready and unpaid orders show no attention badges', async ({ page }) => {
+  await fixture(page, { noOrders: true }); await start(page, true)
+  await expect(page.locator('.collection-cue,.payment-warning')).toHaveCount(0)
 })
 
 test('late receipt activity denial cannot reset an explicit session handoff', async ({ page }) => {

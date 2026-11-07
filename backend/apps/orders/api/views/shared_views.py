@@ -22,7 +22,8 @@ TERMINAL = "Terminal · Orders"
 def _data(order, terminal=None):
     data = order_data(order)
     data["terminal"]["status"] = order.terminal.status
-    data["can_collect"] = bool(terminal and order.terminal_id == terminal.pk and order.collection_required
+    data["can_collect"] = bool(terminal and not order.terminal.maintenance_enabled and not order.terminal.is_disabled
+        and order.terminal_id == terminal.pk and order.collection_required
         and order.paid_at and order.status == "PENDING" and order.collection_deadline and order.collection_deadline > timezone.now())
     data["payment_status"] = order.payments.filter(operation="CAPTURE").values_list("status", flat=True).first()
     data["refund_status"] = order.payments.filter(operation="REFUND").values_list("status", flat=True).first()

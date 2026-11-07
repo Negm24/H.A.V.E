@@ -57,8 +57,23 @@ it('issues a secure host-only cookie and preserves the simulator/payment return 
   expect(f.gate.upgradeAllowed(upgrade.req)).toBe(false)
   f.advance(10_000)
   expect((await f.request({ path: '/src/main.tsx', cookie })).continued).toBe(true)
-  f.advance(4 * 60 * 60 * 1000)
+  expect(setCookie).not.toContain('Max-Age=')
+  expect(setCookie).not.toContain('Expires=')
+  f.advance(7 * 24 * 60 * 60 * 1000)
+  expect((await f.request({ cookie })).continued).toBe(true)
+})
+
+it('explicit locking revokes the cookie and rejects cross-origin lock requests', async () => {
+  const f = fixture(), unlocked = await f.unlock(), cookie = unlocked.headers['Set-Cookie']!.split(';')[0]!
+  expect((await f.request({ path: '/_test-access/lock', cookie })).content).toContain('Lock access')
+  expect((await f.request({ path: '/_test-access/lock', method: 'POST', cookie, origin: 'https://evil.example' })).status).toBe(403)
+  expect((await f.request({ cookie })).continued).toBe(true)
+  const locked = await f.request({ path: '/_test-access/lock', method: 'POST', cookie })
+  expect(locked.status).toBe(303)
+  expect(locked.headers['Set-Cookie']).toContain('Max-Age=0')
   expect((await f.request({ cookie })).status).toBe(401)
+  const fresh = (await f.unlock()).headers['Set-Cookie']!.split(';')[0]!
+  expect((await f.request({ cookie: fresh })).continued).toBe(true)
 })
 
 it('rejects wrong passwords, cross-origin unlocks, malformed cookies and restarts', async () => {

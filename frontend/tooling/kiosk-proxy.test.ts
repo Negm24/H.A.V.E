@@ -53,7 +53,7 @@ it('selects only an exact unique configured simulator; rejects serials, missing 
   expect(resolveTerminalCredentials({ ...simulatorConfig, TERMINAL_SERIAL: 'legacy', TERMINAL_KEY: 'legacy-key' })).toBeUndefined()
 })
 
-async function proxyResponse(contentType = 'application/json', configured = true, simulator?: string, publicRequest = false, paymentRead = false) {
+async function proxyResponse(contentType = 'application/json', configured = true, simulator?: string, publicRequest = false, paymentRead = false, background?: string) {
   vi.stubEnv('TERMINAL_SERIAL', 'TEST-001')
   vi.stubEnv('TERMINAL_KEY', configured ? 'test-installation-secret' : '')
   const calls: IncomingHttpHeaders[] = []
@@ -73,6 +73,7 @@ async function proxyResponse(contentType = 'application/json', configured = true
   const req = Readable.from([]) as IncomingMessage
   req.url = '/api/v1/terminals/sessions/'; req.method = 'POST'
   req.headers = { host: 'localhost:5173', origin: 'http://localhost:5173', cookie: 'sessionid=owner', 'x-terminal-key': 'spoof', 'x-terminal-serial': 'spoof' }
+  if (background !== undefined) req.headers['x-have-background'] = background
   if (publicRequest) {
     req.headers.host = 'laptop.example.ts.net:8443'
     req.headers.origin = 'https://laptop.example.ts.net:8443'
@@ -128,6 +129,16 @@ it('forwards only the trusted HTTPS marker for an exact public Kiosk request', a
 it('does not forward Hub, owner or gate cookies shared by hostname across HTTPS ports', async () => {
   const { calls } = await proxyResponse('application/json', true, firstId, true, true)
   expect(calls[0]?.cookie).toBe('have_payment_' + 'a'.repeat(32) + '=receipt')
+})
+
+it('passes the exact measurement marker only for GET without changing device authority', async () => {
+  const marked = await proxyResponse('application/json', true, firstId, false, true, '1')
+  expect(marked.calls[0]?.['x-have-background']).toBe('1')
+  expect(marked.calls[0]?.['x-terminal-serial']).toBe('TEST-001')
+  const wrong = await proxyResponse('application/json', true, firstId, false, true, '2')
+  expect(wrong.calls[0]?.['x-have-background']).toBeUndefined()
+  const mutation = await proxyResponse('application/json', true, firstId, false, false, '1')
+  expect(mutation.calls[0]?.['x-have-background']).toBeUndefined()
 })
 
 it('routes two simulator selectors to different server-held credentials without leaking the selector upstream', async () => {

@@ -5,12 +5,14 @@ from django.utils import timezone
 
 from apps.catalogue.models import Product
 from apps.terminals.models import TerminalSlot, TerminalStock
+from apps.terminals.services.expiry import expired_slot_ids, expiry_today
 
 
 def terminal_products(terminal=None):
     """Assigned products remain discoverable even when every batch is exhausted."""
     filters = {"is_active": True, "category__is_active": True,
-               "terminal_slots__is_enabled": True, "terminal_slots__terminal__is_disabled": False}
+               "terminal_slots__is_enabled": True, "terminal_slots__terminal__is_disabled": False,
+               "terminal_slots__terminal__maintenance_enabled": False}
     if terminal is not None:
         filters["terminal_slots__terminal"] = terminal
     products = Product.objects.select_related("category").filter(**filters)
@@ -19,14 +21,14 @@ def terminal_products(terminal=None):
 
 def availability(terminal=None):
     # Defensive read: direct SQL/admin mistakes must never make invalid stock sellable.
-    slots = TerminalSlot.objects.filter(is_enabled=True, terminal__is_disabled=False)
+    slots = TerminalSlot.objects.filter(is_enabled=True, terminal__is_disabled=False, terminal__maintenance_enabled=False).exclude(pk__in=expired_slot_ids())
     if terminal is not None:
         slots = slots.filter(terminal=terminal)
     valid_slots = slots.annotate(
         total=Sum("stock__quantity_on_hand"),
     ).filter(total__lte=F("capacity")).values("pk")
     rows = TerminalStock.objects.filter(
-        terminal_slot_id__in=valid_slots, batch__expiry_date__gte=timezone.localdate(),
+        terminal_slot_id__in=valid_slots, batch__expiry_date__gte=expiry_today(),
         batch__product_id=F("terminal_slot__product_id"),
     ).values("id", "terminal_slot__product_id", "quantity_on_hand")
     # A deadline alone does not release stock: an uncertain payment must be
@@ -56,7 +58,7 @@ def product_data(product, stock):
         "currency": "EGP", "requires_prescription": product.requires_prescription,
         "max_quantity_per_order": product.max_quantity_per_order, "stock_quantity": quantity,
         "quantity_limit": 0 if product.requires_prescription else min(quantity, product.max_quantity_per_order) if product.max_quantity_per_order is not None else quantity,
-        "image_url": None,
+        "image_url": product.image.url if product.image else None,
     }
 
 
@@ -70,4 +72,4 @@ def list_categories(terminal=None):
     counts = Counter(product.category_id for product in products)
     categories = {product.category_id: product.category for product in products}
     return [{"id": pk, "name_en": categories[pk].name_en, "name_ar": categories[pk].name_ar,
-             "product_count": count, "image_url": None} for pk, count in sorted(counts.items())]
+             "product_count": count, "image_url": categories[pk].image.url if categories[pk].image else None} for pk, count in sorted(counts.items())]

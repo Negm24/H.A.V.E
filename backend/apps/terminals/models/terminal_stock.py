@@ -7,6 +7,7 @@ class TerminalStock(models.Model):
     batch = models.ForeignKey("catalogue.ProductBatch", on_delete=models.PROTECT, related_name="terminal_stock")
     quantity_on_hand = models.IntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
+    revision = models.PositiveIntegerField(default=1)
 
     def clean(self):
         super().clean()

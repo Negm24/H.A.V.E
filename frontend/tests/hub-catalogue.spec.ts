@@ -179,6 +179,9 @@ test('background reads do not write carts, and the hidden Hub stops polling', as
   await page.clock.fastForward(15050)
   await expect.poll(() => mock.calls.filter(call => call.path === '/api/v1/hub/catalogue/products/').length).toBeGreaterThan(before)
   await page.evaluate(() => { Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' }); document.dispatchEvent(new Event('visibilitychange')) })
-  const hidden = mock.calls.length; await page.clock.fastForward(45000); expect(mock.calls.length).toBe(hidden)
+  // Telemetry may flush its final batch on hide; it is not a catalogue/cart
+  // poll and cannot write or renew either basket or authentication state.
+  const reads = () => mock.calls.filter(call => call.method === 'GET' && /^\/api\/v1\/hub\/(catalogue|cart)\//.test(call.path)).length
+  const hidden = reads(); await page.clock.fastForward(45000); expect(reads()).toBe(hidden)
   expect(mock.calls.filter(call => call.path.startsWith('/api/v1/hub/cart/') && call.method !== 'GET')).toHaveLength(0)
 })

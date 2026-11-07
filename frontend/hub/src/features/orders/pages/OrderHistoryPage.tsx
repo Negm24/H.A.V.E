@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { hubPurchaseApi, isHostedCheckoutUrl, type PurchaseOrder } from '@have/shared/api/purchase'
 import { ApiError } from '@have/shared/api'
+import { useScreenReady } from '@have/shared/telemetry/react'
 import { useTranslation } from '@have/shared/i18n'
 import { Alert, Button } from '@have/shared/ui/controls'
 import { CatalogueModal } from '@have/shared/ui/catalogue'
@@ -17,6 +18,7 @@ import '../styles/orders.css'
 export function OrderHistoryPage() {
   const { t, i18n } = useTranslation('hubPurchase'), { session, customer } = useSession(), navigate = useNavigate(), catalogue = useHubCatalogue()
   const { refresh: refreshSummary } = useCollectionSummary(), { orders, loading, failed, refresh } = useOrderHistory()
+  useScreenReady(!loading && !failed, 'order_history')
   const [cancel, setCancel] = useState<PurchaseOrder | null>(null), [busy, setBusy] = useState<string | null>(null), [error, setError] = useState('')
   const active = useRef<AbortController | null>(null), pending = orders.filter(unfinishedCheckout), history = orders.filter(order => !unfinishedCheckout(order))
   const now = useOrderClock(pending.length > 0)

@@ -8,7 +8,7 @@ export interface NetworkProductDetail { product: CatalogueProduct; availability_
 const base = '/api/v1/hub/catalogue/'
 const scope = (path: string, serial?: string) => path + (serial ? `?terminal_serial=${encodeURIComponent(serial)}` : '')
 export const hubCatalogueApi = {
-  categories: (token: string, signal?: AbortSignal, serial?: string) => request<NetworkCatalogue<CatalogueCategory>>(scope(base + 'categories/', serial), { bearerToken: token, signal }),
-  products: (token: string, signal?: AbortSignal, serial?: string) => request<NetworkCatalogue<CatalogueProduct>>(scope(base + 'products/', serial), { bearerToken: token, signal }),
-  product: (token: string, id: number, signal?: AbortSignal, serial?: string) => request<NetworkProductDetail>(scope(base + `products/${id}/`, serial), { bearerToken: token, signal }),
+  categories: (token: string, signal?: AbortSignal, serial?: string, background = false) => request<NetworkCatalogue<CatalogueCategory>>(scope(base + 'categories/', serial), { bearerToken: token, signal, background }),
+  products: (token: string, signal?: AbortSignal, serial?: string, background = false) => request<NetworkCatalogue<CatalogueProduct>>(scope(base + 'products/', serial), { bearerToken: token, signal, background }),
+  product: (token: string, id: number, signal?: AbortSignal, serial?: string, background = false) => request<NetworkProductDetail>(scope(base + `products/${id}/`, serial), { bearerToken: token, signal, background }),
 }

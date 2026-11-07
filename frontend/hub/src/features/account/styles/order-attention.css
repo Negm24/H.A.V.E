@@ -1,0 +1,52 @@
+.hub-service--payment {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.hub-profile-payment-icon {
+  display: none;
+  color: var(--color-warning);
+  font-size: 18px;
+  font-weight: 500;
+}
+.hub-payment-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-end;
+  margin-block-start: auto;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--color-warning-soft);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.hub-payment-warning > span[aria-hidden] {
+  color: var(--color-warning);
+}
+.hub-service--payment .hub-collection-cue {
+  margin-block-end: 12px;
+}
+.hub-service.hub-service--payment > p {
+  margin-block-end: 12px;
+}
+@media (orientation: portrait) {
+  .hub-service--payment > .hub-service-icon {
+    background: var(--color-warning-soft);
+  }
+  .hub-service--payment .hub-profile-symbol,
+  .hub-service--payment .hub-payment-warning {
+    display: none;
+  }
+  .hub-profile-payment-icon {
+    display: inline;
+  }
+  .hub-service--payment .hub-collection-cue {
+    margin-block-end: 0;
+  }
+  .hub-service.hub-service--payment > p {
+    margin-block-end: 0;
+  }
+}

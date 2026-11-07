@@ -6,6 +6,7 @@ class ProductBatch(models.Model):
     batch_number = models.CharField(max_length=100)
     expiry_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
+    revision = models.PositiveIntegerField(default=1)
 
     class Meta:
         db_table = "product_batches"

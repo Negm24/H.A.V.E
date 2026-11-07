@@ -14,6 +14,7 @@ class OrderProduct(models.Model):
     product_name_en_snapshot = models.CharField(max_length=200)
     product_name_ar_snapshot = models.CharField(max_length=200)
     pack_description_snapshot = models.CharField(max_length=200)
+    category_name_snapshot = models.CharField(max_length=200, null=True, blank=True)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     quantity_requested = models.PositiveIntegerField()
     quantity_dispensed = models.PositiveIntegerField(default=0)

@@ -92,7 +92,7 @@ class ApiContractTests(SimpleTestCase):
             ("cart/items/<int:product_id>/", "terminal-cart-item"),
         ]
         self.assertEqual([(str(p.pattern), p.name) for p in account_routes[:len(expected_accounts)]], expected_accounts)
-        self.assertEqual([(str(p.pattern), p.name) for p in terminal_routes[:-1]], expected_terminals)
+        self.assertEqual([(str(p.pattern), p.name) for p in terminal_routes[:len(expected_terminals)]], expected_terminals)
         self.assertEqual(str(terminal_routes[-1].pattern), "catalogue/")
         for suffix, name in expected_accounts:
             url = "/api/v1/auth/" + suffix

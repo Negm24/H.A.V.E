@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from '@have/shared/i18n'
 import { Button, Alert } from '@have/shared/ui/controls'
 import { CartButton } from '@have/shared/ui/catalogue'
+import { useScreenReady } from '@have/shared/telemetry/react'
 import { KioskFrame } from '../../../layouts/KioskFrame'
 import { useSession } from '../../session/hooks/use-session'
 import { useCatalogue } from '../hooks/use-catalogue'
@@ -16,6 +17,7 @@ export function CatalogueFrame({ title, back, children, search = true, controls 
   const { cart, error, ready, refresh, cartAvailable } = useCatalogue()
   const [modal, setModal] = useState<'cart' | 'guidance' | null>(null)
   const navigate = useNavigate(), location = useLocation()
+  useScreenReady(ready && !error, location.pathname.includes('/search') ? 'search' : 'browse')
   const warning = state.remaining <= 30
   useEffect(() => { if (warning) setModal(null) }, [warning])
   return <KioskFrame title={title} back={back}><div className="catalogue-shell">

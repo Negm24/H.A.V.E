@@ -16,7 +16,9 @@ def load_development_access(path=ACCESS_FILE):
     except (OSError, ValueError):
         raise ValueError("Cannot read development/access.local.json. Check its JSON syntax and permissions.") from None
     fields = {"hubPublicOrigin", "kioskPublicOrigin", "kioskAccessPassword"}
-    if not isinstance(data, dict) or set(data) != fields or any(not isinstance(data[key], str) for key in fields):
+    if (not isinstance(data, dict) or not fields.issubset(data)
+            or set(data) - fields - {"ownerPrivateOrigin"}
+            or any(not isinstance(data[key], str) for key in fields)):
         raise ValueError("development/access.local.json requires exactly hubPublicOrigin, kioskPublicOrigin and kioskAccessPassword strings.")
     for field, ports in (("hubPublicOrigin", (None, 443)), ("kioskPublicOrigin", (None, 443, 8443))):
         value = data[field]
@@ -35,4 +37,18 @@ def load_development_access(path=ACCESS_FILE):
         raise ValueError("Hub and Kiosk must use different public origins.")
     if not 16 <= len(data["kioskAccessPassword"]) <= 256:
         raise ValueError("kioskAccessPassword must contain 16 to 256 characters.")
+    if "ownerPrivateOrigin" in data:
+        try:
+            value = data["ownerPrivateOrigin"]
+            owner = urlsplit(value)
+            valid = (owner.scheme == "https" and owner.port == 9443
+                     and not owner.username and not owner.password and not owner.path
+                     and not owner.query and not owner.fragment and owner.hostname
+                     and re.fullmatch(r"[a-z0-9]+(?:[.-][a-z0-9]+)+", owner.hostname)
+                     and not re.fullmatch(r"[0-9.]+", owner.hostname)
+                     and value == f"https://{owner.hostname}:9443")
+        except (ValueError, TypeError, AttributeError):
+            valid = False
+        if not valid:
+            raise ValueError("ownerPrivateOrigin must be an exact HTTPS origin on private port 9443.")
     return data

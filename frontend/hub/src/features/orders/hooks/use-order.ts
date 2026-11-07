@@ -10,19 +10,19 @@ export function useOrder(id: string) {
   useEffect(() => {
     const controller = new AbortController(); let timer: ReturnType<typeof setTimeout>, flight = false
     setSnapshot({ key, order: null }); setLoading(true); setError('')
-    const load = async () => {
+    const load = async (background = false) => {
       if (flight || controller.signal.aborted || document.visibilityState !== 'visible') return
       flight = true; clearTimeout(timer)
       try {
-        const result = await session.authorized(token => hubPurchaseApi.detail(token, id, controller.signal), true)
+        const result = await session.authorized(token => hubPurchaseApi.detail(token, id, controller.signal, background), true)
         if (!controller.signal.aborted) {
           setSnapshot({ key, order: result }); setError('')
-          if (result.status === 'PENDING' || result.status === 'DISPENSING' || result.payment_state === 'CHECKING_PAYMENT') timer = setTimeout(() => void load(), 3_000)
+          if (result.status === 'PENDING' || result.status === 'DISPENSING' || result.payment_state === 'CHECKING_PAYMENT') timer = setTimeout(() => void load(true), 3_000)
         }
       } catch (failure) { if (!controller.signal.aborted) setError(failure instanceof ApiError && failure.status === 404 ? 'orderNotFound' : 'unavailable') }
       finally { flight = false; if (!controller.signal.aborted) setLoading(false) }
     }
-    const visible = () => { clearTimeout(timer); if (document.visibilityState === 'visible') void load() }
+    const visible = () => { clearTimeout(timer); if (document.visibilityState === 'visible') void load(true) }
     void load(); document.addEventListener('visibilitychange', visible); window.addEventListener('focus', visible)
     return () => { controller.abort(); clearTimeout(timer); document.removeEventListener('visibilitychange', visible); window.removeEventListener('focus', visible) }
   }, [key, session, attempt])

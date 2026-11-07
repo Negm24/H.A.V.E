@@ -1,5 +1,23 @@
 # Increment 2 — Terminal authentication and mock customer dashboard
 
+## Continuous readiness — 2026-11-07
+
+Device heartbeat/availability reads continue while hidden and retry on reconnect.
+They do not renew customer sessions. The protected HTTPS testing gate no longer
+expires after four hours; its browser-session cookie is valid until explicit
+locking or Kiosk service restart. Operator lock confirmation is at
+`/_test-access/lock`. Localhost remains ungated. A frozen browser or sleeping host
+cannot report; physical boot-bound authentication needs an installed device agent.
+
+## Current QR decision — 2026-11-06
+
+Hub now approves once automatically after a successful camera scan, without a
+confirmation button. Terminal instructions in both languages say to scan and wait
+for login. The existing backend completion, token rotation, one-use QR checks and
+original absolute session deadline are unchanged. Historical manual approval
+steps below describe the earlier UI. See the current readiness assessment in
+../docs/verification/2026-11-06-readiness.md.
+
 
 ## Bug-fix checkpoint — 2026-10-17
 
@@ -628,3 +646,21 @@ collection-required. Profile highlights include distinct awaiting-payment wordin
 History is a combined number-only badge. Session controller, API wrapper/proxy,
 locales and browser/unit coverage are updated. See backend/AUTH_GUIDE.md for the
 manual flow and expired-session safety checks; no new env values or migrations.
+
+## Separate profile indicators — 2026-10-19
+
+My Profile uses awaiting_collection_count alone for the purple Ready to collect
+badge/highlight. Awaiting payments get a separate amber bottom-inline-end warning
+with their own count; it mirrors in Arabic and is hidden when zero. History keeps
+the combined number-only badge. Styling stays in dashboard/styles/collection.css;
+no backend/API, polling, session or payment change. Mixed/ready-only/unpaid-only/
+empty browser fixtures verify counts, layout and RTL at 1024×600.
+
+### Anonymous request measurement refinement — 2026-11-07
+
+The shared transport adds `X-Have-Background: 1` only to GET requests explicitly
+marked `background: true`. Catalogue/cart/order/private-result timers and automatic
+focus/visibility refreshes use that per-call marker. Initial reads and manual
+refreshes remain journey measurements. Client/server telemetry excludes marked
+GETs and internal CSRF-token reads; mutations always remain eligible. The Kiosk
+proxy forwards only that exact GET marker alongside its unchanged device authority.

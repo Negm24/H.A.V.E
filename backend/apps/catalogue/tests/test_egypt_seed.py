@@ -27,7 +27,7 @@ class EgyptCatalogueSeedTests(TestCase):
         self.seed()
         self.assertEqual(Category.objects.count(), len(CATEGORIES))
         self.assertEqual(Product.objects.count(), len(PRODUCTS))
-        self.assertEqual(TerminalStock.objects.count(), 2 * len(PRODUCTS))
+        self.assertEqual(TerminalStock.objects.count(), 2 * 24)
         for row in PRODUCTS:
             product = Product.objects.get(sku=row["sku"])
             product.full_clean()
@@ -37,8 +37,8 @@ class EgyptCatalogueSeedTests(TestCase):
             if row["source"]:
                 self.assertIn(row["source"], SOURCES)
         for terminal in self.terminals:
-            self.assertEqual(len(list_categories(terminal)), 10)
-            self.assertEqual(terminal_products(terminal).count(), len(PRODUCTS))
+            self.assertEqual(len(list_categories(terminal)), len({row["category"] for row in PRODUCTS[:24]}))
+            self.assertEqual(terminal_products(terminal).count(), 24)
             counts = set(availability(terminal).values())
             self.assertTrue({0, 1, 5, 6}.issubset(counts))
             terminal.refresh_from_db()
@@ -71,7 +71,9 @@ class EgyptCatalogueSeedTests(TestCase):
         self.assertFalse(TerminalSlot.objects.filter(product__sku__startswith="HAVE-DEMO-", is_enabled=True).exists())
         for terminal in self.terminals:
             self.assertFalse(terminal_products(terminal).filter(sku__startswith="HAVE-DEMO-").exists())
-        self.assertEqual(TerminalStock.objects.filter(terminal_slot__product__sku__startswith="HAVE-DEMO-").count(), 56)
+        self.assertEqual(TerminalStock.objects.filter(terminal_slot__product__sku__startswith="HAVE-DEMO-").count(), 48)
+        for terminal in self.terminals:
+            self.assertEqual(terminal.slots.filter(is_operational=True).count(), 24)
 
     def test_missing_terminal_and_production_fail_without_changes(self):
         with self.assertRaises(CommandError):

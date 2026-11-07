@@ -21,12 +21,12 @@ export function OrderDetailPage() {
   const [order, setOrder] = useState<PurchaseOrder | null>(null), [confirm, setConfirm] = useState<'cancel' | 'reorder' | 'collect' | null>(null)
   const { run, busy, error } = useOrderOperation(orderId)
   const warning = state.remaining <= 30
-  const load = useCallback(async (preserveError = false) => { const result = await run(() => controller.request((token, signal) => terminalPurchaseApi.detail(token, orderId, signal)), !preserveError); if (result) setOrder(result) }, [controller, orderId, run])
+  const load = useCallback(async (preserveError = false, background = false) => { const result = await run(() => controller.request((token, signal) => terminalPurchaseApi.detail(token, orderId, signal, background)), !preserveError); if (result) setOrder(result) }, [controller, orderId, run])
   useEffect(() => { setOrder(null); void load() }, [load])
   useEffect(() => { if (warning) setConfirm(null) }, [warning])
   useEffect(() => {
     if (!order || !['PENDING', 'DISPENSING'].includes(order.status) && order.payment_state !== 'CHECKING_PAYMENT') return
-    const timer = setInterval(() => { if (!document.hidden) void load(true) }, 3_000)
+    const timer = setInterval(() => { if (!document.hidden) void load(true, true) }, 3_000)
     return () => clearInterval(timer)
   }, [load, order?.status, order?.payment_state])
   async function act() {

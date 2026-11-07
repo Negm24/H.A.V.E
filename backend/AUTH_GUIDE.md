@@ -690,7 +690,14 @@ password returns their application status, a wrong one returns 401.
   but burns that proof. Request a fresh code rather than retrying the same proof.
 - Simultaneous completions cannot both succeed.
 
-## QR login: Terminal displays, Hub scans and confirms
+## QR login: Terminal displays, Hub automatically approves after scanning
+
+UI update — 2026-11-06: signed-in Hub now sends the existing confirm endpoint
+automatically once immediately after a valid scan. No user confirmation tap is
+required. The API sequence below remains valid for API testing; references to a
+manual Approve/Reject screen are historical. Uncertain client approval uses status
+reads, never automatic POST replay. Backend permission/expiry/one-use checks and
+Terminal completion remain unchanged.
 
 This is a backend flow. The Terminal frontend will render `qr_payload` as an image;
 the Hub frontend will scan it. For now, **copying the payload in Swagger/Postman
@@ -1309,3 +1316,36 @@ types include the continuation contract, and migration drift is absent. English/
 Arabic guest/customer returns fit 1024×600, and a late receipt-activity denial
 cannot reset a successful explicit handoff. Provider outcomes are mocked; no card
 submission or new live payment/dispensing claim is made by these checks.
+## Expanded Admin operations — 2026-11-07
+
+The Owner UI is at localhost:5176 and the private Tailscale Serve HTTPS :9443 origin.
+Use an existing privately provisioned Owner account; there is no public signup.
+`python manage.py provision_owner` remains the private interactive provisioning
+command. Never put passwords in command arguments or committed fixtures.
+
+Legacy `/api/v1/auth/owners/` authentication/recovery/decision contracts remain;
+paginated operational APIs live under `/api/v1/owner/`. Owner cookies and CSRF apply
+to all mutations. Read-only `/owner/session/` returns both deadlines; only the
+throttled explicit `/owner/session/activity/` renews inactivity. Polling does not
+extend the fixed two-hour session maximum. Public Hub/Kiosk/Advisor proxies reject
+Owner/internal routes, strip Owner session cookies and enforce private origins.
+
+Doctor rejection still erases personal application data. Blocking a customer or
+approved doctor instead revokes login generations, including Terminal/QR proofs,
+without changing PIN/password/MFA/approval or existing order/deadline records.
+Unblock requires fresh login. Legacy submission dates stay unknown.
+
+Owner financial actions are durable jobs consumed by order-worker. Inspect the job
+and authoritative order/payment/refund state; UNKNOWN is never confirmed success.
+Existing provider/receipt leases prevent duplicate work. Completed orders remain
+non-cancellable. Inventory revisions and PostgreSQL locks reject stale/unsafe edits.
+
+Maintenance serializes with session/financial entry and refuses live/unknown/busy
+machines. Confirmations show waiting paid collections and unchanged deadlines.
+Restoration is explicit. Reconciliation/health continue while customer access,
+including collection, is paused. Service controls use the separate outbound-only
+host agent and fixed labels; protected core services are not browser-controllable.
+
+See [Admin contract](../docs/admin-implementation-contract.md),
+[app guide](../frontend/CODEX-Increment-5.md) and
+[current evidence](../docs/verification/2026-11-07-admin-readiness.md).

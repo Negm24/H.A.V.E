@@ -23,6 +23,13 @@ it('missing configuration supports localhost; malformed configuration fails with
     expect(() => readDevelopmentAccess(file(JSON.stringify({ ...valid, ...changes })))).toThrow()
   }
 })
+it('permits only an exact private Admin HTTPS origin on port 9443', () => {
+  const ownerPrivateOrigin = 'https://laptop.example.ts.net:9443'
+  expect(readDevelopmentAccess(file(JSON.stringify({ ...valid, ownerPrivateOrigin })))?.ownerPrivateOrigin).toBe(ownerPrivateOrigin)
+  for (const origin of ['http://laptop.example.ts.net:9443', 'https://laptop.example.ts.net', 'https://laptop.example.ts.net:8443', ownerPrivateOrigin + '/', ownerPrivateOrigin + '/api', 'https://user:secret@laptop.example.ts.net:9443']) {
+    expect(() => readDevelopmentAccess(file(JSON.stringify({ ...valid, ownerPrivateOrigin: origin })))).toThrow()
+  }
+})
 it('rejects wildcard, HTTP, paths, credentials, IPs, arbitrary ports and identical origins', () => {
   for (const origin of ['http://laptop.example.ts.net', 'https://*.ts.net', 'https://laptop.example.ts.net/', 'https://laptop.example.ts.net/path', 'https://laptop.example.ts.net?x=1', 'https://laptop.example.ts.net#fragment', 'https://user:secret@laptop.example.ts.net', 'https://localhost', 'https://127.0.0.1', 'https://laptop.example.ts.net:443', 'https://laptop.example.ts.net:8443', 'https://laptop.example.ts.net:10000']) {
     expect(() => readDevelopmentAccess(file(JSON.stringify({ ...valid, hubPublicOrigin: origin })))).toThrow()

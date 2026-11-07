@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { hubPurchaseApi, isHostedCheckoutUrl } from '@have/shared/api/purchase'
 import { ApiError } from '@have/shared/api'
+import { recordFeature, useScreenReady } from '@have/shared/telemetry/react'
 import { useTranslation } from '@have/shared/i18n'
 import { Alert, Button } from '@have/shared/ui/controls'
 import { Field } from '@have/shared/ui/forms'
@@ -12,6 +13,7 @@ import '../styles/orders.css'
 export function CheckoutPage() {
   const { t, i18n } = useTranslation('hubPurchase'), { customer, session } = useSession(), navigate = useNavigate()
   const { terminal, cart, cartError, loading, refresh } = useHubCatalogue()
+  useScreenReady(!loading && !!cart && !cartError)
   const [email, setEmail] = useState(customer?.email ?? ''), [busy, setBusy] = useState(false), [error, setError] = useState('')
   const key = useRef<{ terminal: string; version: string; id: string } | null>(null), active = useRef<AbortController | null>(null)
   useEffect(() => () => active.current?.abort(), [])
@@ -20,6 +22,7 @@ export function CheckoutPage() {
     event.preventDefault()
     const retrying = key.current?.version === cart?.version && key.current?.terminal === terminal.serial_number
     if (!cart?.items.length || cart.has_issues && !retrying || busy || cartError) return
+    recordFeature('checkout_start')
     const controller = new AbortController(); active.current = controller; setBusy(true); setError('')
     if (!key.current || key.current.version !== cart.version || key.current.terminal !== terminal.serial_number) key.current = { terminal: terminal.serial_number, version: cart.version, id: crypto.randomUUID() }
     try {

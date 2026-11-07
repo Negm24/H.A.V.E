@@ -1,5 +1,10 @@
 # H.A.V.E — Django backend
 
+Current project assessment: [6 November 2026 readiness report](docs/verification/2026-11-06-readiness.md)
+and [requirement checklist](docs/verification/2026-11-06-checklist.md).
+Hub QR scanning now authorises Terminal login automatically without a confirmation
+tap; the existing server-side approval and completion checks remain enforced.
+
 The backend includes owner authentication, customer signup, Hub login/refresh/logout, and Terminal guest/customer sessions. PostgreSQL, Redis, and Django run through Docker Compose.
 
 ## Bug-fix checkpoint — 2026-10-17
@@ -149,3 +154,43 @@ attention, without calling unpaid orders ready to collect.
 No migration or .env update is needed. Restart `order-worker` after updating the
 code, keep the existing apps/backend running, and follow the new payment-return
 walkthrough in [the testing guide](backend/AUTH_GUIDE.md#payment-return-continuation--2026-10-18).
+
+## Expanded Admin workspace — 2026-11-07
+
+H.A.V.E Admin now provides the privately provisioned Owner workspace: doctor review,
+customer support, guarded payment/receipt recovery, catalogue/images, inventory,
+individual Kiosk maintenance, technical monitoring and privileged activity.
+Full Advisor UI and prescriptions remain the next independent milestone.
+
+Open `http://localhost:5176`, or the exact private HTTPS `ownerPrivateOrigin` on
+port 9443 from `development/access.local.json`. Admin uses Tailscale **Serve**, not
+public Funnel; Hub 443 / Kiosk 8443 mappings stay unchanged. Public app proxies block
+Owner/internal APIs and strip Owner session cookies. Owner sessions expire after
+ten inactive minutes or two hours total; dashboard polling does not renew them.
+
+The private mapping is `tailscale serve --bg --https=9443 http://127.0.0.1:5176`.
+Add only the exact `ownerPrivateOrigin` from the example configuration; keep the
+existing public mappings and Kiosk access password.
+
+Rebuild updated dependencies with `docker compose --profile frontend build`, review
+`docker compose run --rm --no-deps backend python manage.py migrate --plan`, then
+apply the additive migrations and start the existing services. Keep existing
+database/Redis volumes and private files. Uploaded media persists in `backend/media`.
+No migration resets stock, orders, baskets, credentials or application history.
+
+The separate [Windows host agent](infrastructure/host-agent/README.md) provides real
+host/container measurements and fixed, journaled controls. Start it with
+`infrastructure/host-agent/start-host-agent.ps1`; it runs hidden with private
+`development/host-agent.local.json` and matching root `.env` `HOST_AGENT_TOKEN`.
+It requires no Owner sign-in to collect. Docker Desktop handles daemon/core recovery.
+Do not delete its journal to retry an uncertain action.
+
+Read [the Admin guide](frontend/CODEX-Increment-5.md),
+[integration contract](docs/admin-implementation-contract.md) and the dated
+[verification evidence](docs/verification/2026-11-07-admin-readiness.md).
+
+The approved Admin redesign adds external stock transfers, the mapped 24-position
+Inventory cabinet, financial charts and independent Kiosk indicators. Technical
+has Health, Usage, Incidents and Service Controls. See the
+[redesign evidence](docs/verification/2026-11-07-admin-redesign.md) and
+[design agreement](docs/admin-implementation-contract.md).

@@ -15,15 +15,22 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf import settings
-from django.urls import include, path
+from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from config.views import health
+from config.media import catalogue_image
+from apps.observability.api.urls import owner_urlpatterns as technical_urls, public_urlpatterns as telemetry_urls, internal_urlpatterns as host_agent_urls
 from apps.catalogue.api.urls import hub_urlpatterns
 from apps.orders.api.urls import hub_urlpatterns as hub_orders, terminal_urlpatterns as terminal_orders, owner_urlpatterns as owner_orders
 from apps.payments.api.urls import hub_urlpatterns as hub_payments
 
 urlpatterns = [
+    path("api/v1/owner/technical/", include(technical_urls)),
+    path("api/v1/owner/", include("apps.operations.api.urls")),
+    path("api/v1/telemetry/", include(telemetry_urls)),
+    path("internal/host-agent/", include(host_agent_urls)),
+    re_path(r"^media/(?P<path>.+)$", catalogue_image, name="catalogue-image"),
     path("api/v1/health/", health, name="health"),
     path("api/v1/auth/", include("apps.accounts.api.urls")),
     path("api/v1/terminals/", include("apps.terminals.api.urls")),

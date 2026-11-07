@@ -118,6 +118,11 @@ class Command(BaseCommand):
             batch, _ = ProductBatch.objects.get_or_create(product=product, batch_number="HAVE-EG-TEST-20261016",
                 defaults={"expiry_date": timezone.localdate() + timedelta(days=365)})
             for terminal_index, terminal in enumerate(terminals):
+                existing_slot = TerminalSlot.objects.filter(terminal=terminal, slot_code=f"EG-{index + 1:03}").first()
+                if existing_slot and not existing_slot.is_operational:
+                    continue
+                if not existing_slot and terminal.slots.filter(is_operational=True).count() >= 24:
+                    continue
                 slot, new = TerminalSlot.objects.get_or_create(terminal=terminal, slot_code=f"EG-{index + 1:03}",
                     defaults={"product": product, "capacity": 40})
                 if slot.product_id != product.pk:

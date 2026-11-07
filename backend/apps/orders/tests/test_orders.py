@@ -190,7 +190,9 @@ class OrderTests(TestCase):
     def test_stock_drift_requires_review_and_no_partial_decrement(self):
         order = self.reserve()
         mark_paid(order.pk)
-        set_stock(slot_id=self.slot.pk, batch=self.batch, quantity=1)
+        # Simulate an out-of-band physical/SQL discrepancy. The supported stock
+        # writer now prevents reductions below these active reservations.
+        type(self.stock).objects.filter(pk=self.stock.pk).update(quantity_on_hand=1)
         with self.assertRaises(AuthError):
             fulfil_order(order.pk)
         order.refresh_from_db()
