@@ -1,7 +1,10 @@
 # H.A.V.E — Django backend
 
-Current project assessment: [6 November 2026 readiness report](docs/verification/2026-11-06-readiness.md)
+Shopping foundation assessment: [6 November 2026 readiness report](docs/verification/2026-11-06-readiness.md)
 and [requirement checklist](docs/verification/2026-11-06-checklist.md).
+For the later Owner workspace, read the [7 November Admin readiness report](docs/verification/2026-11-07-admin-readiness.md),
+[redesign verification](docs/verification/2026-11-07-admin-redesign.md), and
+[current Admin agreement](docs/admin-implementation-contract.md).
 Hub QR scanning now authorises Terminal login automatically without a confirmation
 tap; the existing server-side approval and completion checks remain enforced.
 
@@ -73,7 +76,7 @@ No virtual-environment activation is needed for Docker commands. Do not start a 
 docker compose up -d --force-recreate backend
 ```
 
-`docker compose down` preserves PostgreSQL data. `down -v` deletes its volume; it is not a normal restart command. Frontend services are enabled through the `frontend` profile; kiosk and Hub authentication/catalogue integration is implemented. Advisor/Admin remain heading-only shells.
+`docker compose down` preserves PostgreSQL data. `down -v` deletes its volume; it is not a normal restart command. Frontend services are enabled through the `frontend` profile; kiosk and Hub authentication/catalogue integration is implemented. Admin provides the private Owner workspace described below; Advisor remains a heading-only shell.
 
 Run authentication tests inside Docker:
 
