@@ -41,7 +41,7 @@ agreements remain protected. No forced changes to already satisfactory screens.
   coordinate visual findings with the UI queue.
 - [ ] M6: Inspect contract-test coverage and record justified regression-test gaps.
 
-Preserve the shared lock, isolated worktree, main/live-data protection, separate
+Preserve the shared lock, maintenance branch, main/live-data protection, separate
 commits and honest evidence requirements. UI work is the Owner's main priority.
 Finish each run with exact files/commits, covered/unvisited areas, checks, blockers
 and review decisions. One queue completing must not stop the other. Do not push
@@ -55,13 +55,11 @@ links, translations, accessibility and documentation consistency. Preserve all
 features, contracts, data, historical evidence and unfinished application scope.
 No live fixtures, migrations, service controls, pushes, merges or main edits.
 
-Reuse branch `codex/overnight-maintenance` at
-`D:/Projects/AutoPharm/.maintenance-worktrees/overnight` for both schedules.
-The directory is locally excluded in `.git/info/exclude`. Both schedules must
-atomically create the shared `.git/autopharm-maintenance.lock` before writing;
-if it exists, skip without touching the worktree. Release only your own lock.
-An uncommitted or otherwise occupied worktree is a blocker, not permission to
-reset or discard work. This first run started from main `12c42f6`.
+Both schedules use `codex/overnight-maintenance` directly in `D:/Projects/AutoPharm`.
+Use this single checkout. Acquire `.git/autopharm-maintenance.lock` before writes
+and release only your own lock. Skip if the checkout is on another branch, has
+pending edits, or another maintenance run holds the lock. The historical initial
+run below started from main `12c42f6` using the since-removed linked checkout.
 
 ## Finite approved backlog
 
