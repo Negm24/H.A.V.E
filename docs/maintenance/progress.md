@@ -1,5 +1,52 @@
 # AutoPharm maintenance progress
 
+## Current Owner authorization - 8 November 2026: expanded coverage
+
+This section supersedes the completed single-item README backlog and its stop
+instructions below. That backlog is historical. There are now TWO independent
+pending queues. Read the current schedule prompt for the complete safeguards.
+Do not mark either queue complete until all its coverage areas have evidence or
+precise blockers. Add route-level and evidence-based subitems within these areas;
+continue those items across runs without redoing completed checks.
+
+### 11:50 - Primary goal: UI tour and polish - Sol 6.1 Extra High
+
+- [ ] UI1: Inventory all implemented routes, dialogs and key UI states in Hub,
+  Kiosk, Admin and the existing Advisor surface. Build a finite screen checklist.
+- [ ] UI2: Tour Hub on phone/tablet/desktop, including English/Arabic and RTL;
+  implement and verify justified cosmetic improvements.
+- [ ] UI3: Tour Kiosk at 1024x600 with touch keyboard, English/Arabic and RTL;
+  preserve session behavior and implement verified visual refinements.
+- [ ] UI4: Tour all Admin sections, charts, cabinet, dialogs and responsive states;
+  implement and verify justified visual refinements.
+- [ ] UI5: Inspect/polish Advisor's existing surface only; no unfinished features.
+- [ ] UI6: Verify semantic colors, purposeful animation/transitions, reduced
+  motion, focus, touch access, loading/error/empty states and visual consistency.
+  Include before/after fictional-data screenshots and isolated preview steps.
+
+Animations/transitions and meaningful color polish are explicitly authorized.
+Existing feature actions, navigation, business behavior, scope and design
+agreements remain protected. No forced changes to already satisfactory screens.
+
+### 05:00 - Cautious maintenance - Sol 6.1 Medium
+
+- [ ] M1: Inspect unused files/imports/assets and verify dynamic/config references;
+  delete only proven-unused eligible files, preserving history/runtime/private data.
+- [ ] M2: Investigate implemented journeys and existing tests; reproduce and report
+  defects. Behavior-changing fixes remain proposals for Owner acceptance.
+- [ ] M3: Inspect duplication, large components and structural inconsistencies;
+  make small verified behavior-preserving cleanups only.
+- [ ] M4: Audit current docs, commands and links against code; preserve history.
+- [ ] M5: Check translation completeness, error consistency and accessibility;
+  coordinate visual findings with the UI queue.
+- [ ] M6: Inspect contract-test coverage and record justified regression-test gaps.
+
+Preserve the shared lock, isolated worktree, main/live-data protection, separate
+commits and honest evidence requirements. UI work is the Owner's main priority.
+Finish each run with exact files/commits, covered/unvisited areas, checks, blockers
+and review decisions. One queue completing must not stop the other. Do not push
+or merge. Stop when the applicable coverage and actionable backlog are exhausted.
+
 ## Run policy and isolation
 
 Approved scope: verified unused-file removal; cosmetic UI corrections; documented
