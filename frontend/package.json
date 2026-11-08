@@ -9,8 +9,9 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter './kiosk' --filter './hub' --filter './advisor' --filter './admin' dev",
+    "dev:corporate": "pnpm --filter @autopharm/corporate dev",
     "typecheck": "pnpm -r typecheck",
-    "build": "pnpm --filter @have/kiosk --filter @have/hub --filter @have/advisor --filter @have/admin build",
+    "build": "pnpm --filter @have/kiosk --filter @have/hub --filter @have/advisor --filter @have/admin --filter @autopharm/corporate build",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "check": "pnpm typecheck && pnpm test && pnpm build"

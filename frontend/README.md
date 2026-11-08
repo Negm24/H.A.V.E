@@ -660,3 +660,18 @@ API timing comes from backend request-processing histograms stored in PostgreSQL
 History observations are inspected directly on the timeline with hover, tap or
 arrow keys. The Overview period selector also refreshes collection outcomes
 using that period, rather than leaving the fleet query at its default month.
+## AutoPharm public homepage
+
+From `frontend/corporate`, run `node serve.mjs` and open http://127.0.0.1:5177/.
+English is served at `/` and Arabic at `/ar/`. Restart the preview after changes.
+Run `node --test site.test.mjs` for the data and rendered-page checks, and
+`node build.mjs` to generate the independently hostable `dist/` directory.
+These commands need Node only. When workspace fonts are installed, the build
+bundles Inter and Noto Sans Arabic with their licenses; otherwise it uses system fonts.
+The public figures, locations and milestones are illustrative records in
+`corporate/data.mjs`. Contact form previews stay on the device.
+
+The preceding homepage design is preserved in `corporate/classic/`. From
+`frontend/corporate`, run `node serve.mjs --classic` to preview it or
+`node build.mjs --classic` to restore it in the current static output.
+The default build and preview use the redesigned homepage.

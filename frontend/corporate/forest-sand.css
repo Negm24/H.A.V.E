@@ -1,0 +1,74 @@
+/* Sand canvas (60%), forest surfaces and type (30%), electric purple accents (10%). */
+:root {
+  --paper: #f5eddf;
+  --surface: #fffaf1;
+  --ink: #192e24;
+  --muted: #505d50;
+  --line: #d7cebb;
+  --deep: #194331;
+  --forest-tint: #dce6d7;
+  --on-forest: #f5eddf;
+  --accent: #7332ef;
+  --accent-hover: #5e22cd;
+  --accent-light: #decaff;
+  --purple: var(--deep);
+  --lilac: var(--forest-tint);
+}
+
+.stage {
+  background: radial-gradient(ellipse at 48% 54%, #fffaf1 5%, #e5ddc9 69%, #cabfa4);
+}
+.chart, .review-grid figure, .locator input, input, textarea, select, .skip:focus {
+  background: var(--surface);
+}
+.impact, .hosting, .product {
+  background: var(--deep);
+  color: var(--on-forest);
+}
+.impact small, .metrics span, .section.hosting p, .section.product p:not(.kicker) {
+  color: #e2e9db;
+}
+.product .kicker, .product .sub {
+  color: var(--on-forest);
+}
+.product a:focus-visible {
+  outline-color: var(--accent-light);
+}
+.product .sub:is(:hover,:focus-visible) {
+  color: var(--accent-light);
+}
+.impact .metrics > div + div, .steps article, .product .sub {
+  border-color: #718e7a;
+}
+.contact {
+  background: #e9dfca;
+}
+.step, .idx {
+  background: var(--forest-tint);
+  color: var(--deep);
+}
+.bars i {
+  background: #8ba995;
+}
+.bars div:last-child i, .map button[aria-pressed=true] {
+  background: var(--accent);
+}
+.places button[aria-pressed=true] {
+  background: #eee4fd;
+}
+.map button:not([aria-pressed=true]) {
+  background: var(--deep);
+}
+.map button[aria-pressed=true] {
+  box-shadow: 0 0 0 6px #7332ef30;
+}
+@keyframes locate-pin {
+  from { box-shadow: 0 0 0 0 #7332ef80; }
+  to { box-shadow: 0 0 0 10px transparent; }
+}
+.stage figcaption, .outline, .sub, .timeline li, input, .locator input, select, textarea {
+  border-color: #a79e8d;
+}
+.hosting .outline {
+  border-color: currentColor;
+}
