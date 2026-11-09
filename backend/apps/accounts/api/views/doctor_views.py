@@ -4,7 +4,6 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from drf_spectacular.utils import (
-    OpenApiExample,
     OpenApiResponse,
     extend_schema,
     extend_schema_view,
@@ -16,14 +15,12 @@ from rest_framework.views import APIView
 
 from config import openapi
 from apps.accounts.security.authentication import AdvisorAuthentication
-from apps.accounts.security.errors import SignupError
 from apps.accounts.services.doctor_services import password_reset
 from apps.accounts.services.doctor_services.advisor_sessions import (
     end_advisor_session,
     refresh_advisor_session,
 )
 from apps.accounts.services.doctor_services.login import begin_doctor_login, complete_doctor_login
-from apps.accounts.services.doctor_services.signup import request_doctor_signup, verify_doctor_signup
 
 from ..serializers.doctor_serializers import (
     DoctorIdentityOutputSerializer,
@@ -32,9 +29,6 @@ from ..serializers.doctor_serializers import (
     DoctorMfaInputSerializer,
     DoctorPasswordResetCompleteInputSerializer,
     DoctorSessionOutputSerializer,
-    DoctorSignupChallengeOutputSerializer,
-    DoctorSignupInputSerializer,
-    DoctorSignupVerificationInputSerializer,
 )
 from ..serializers.shared_serializers import (
     ErrorOutputSerializer,
@@ -42,74 +36,35 @@ from ..serializers.shared_serializers import (
     RecoveryProofOutputSerializer,
     RecoveryRequestInputSerializer,
     RecoveryVerifyInputSerializer,
-    SignupEmailStepOutputSerializer,
 )
-from .shared_views import CustomerSessionView, ERRORS, RecoveryActionView, signup_error_response, source
+from .shared_views import CustomerSessionView, ERRORS, RecoveryActionView, source
 
 
 
 @method_decorator(never_cache, name="dispatch")
-@method_decorator(sensitive_post_parameters("password"), name="dispatch")
 class DoctorSignupView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        tags=[openapi.ADVISOR_SIGNUP], request=DoctorSignupInputSerializer,
-        summary="Start a doctor application or resend its code",
-        description=("No account is created until the SMS code is verified. The local mock SMS appears "
-                     "only in the server terminal. Resubmit the full form after resend_after seconds "
-                     "to replace an earlier code. Verification creates a PENDING application; "
-                     "the owner approves it in the dashboard before the doctor can use Advisor."),
-        responses={202: DoctorSignupChallengeOutputSerializer,
-                   400: OpenApiResponse(description="Invalid application fields or weak password."),
-                   429: ErrorOutputSerializer, 503: ErrorOutputSerializer},
-        examples=[OpenApiExample("Doctor", request_only=True, value={
-            "first_name": "Mona", "last_name": "Hassan", "phone_number": "01212345678",
-            "email": "doctor@example.test", "password": "REPLACE-WITH-A-STRONG-PASSWORD",
-            "professional_license_number": "EG-MED-12345", "specialty": "Family medicine",
-            "clinic_name": "Demo Clinic", "clinic_address": "12 Example Street, Cairo",
-        })],
-    )
+    @extend_schema(tags=[openapi.ADVISOR_SIGNUP], request=None, deprecated=True,
+                   summary="Retired: use registration/start/",
+                   description="Doctor applications now require the professional-verification registration wizard.",
+                   responses={410: ErrorOutputSerializer})
     def post(self, request):
-        serializer = DoctorSignupInputSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        try:
-            result = request_doctor_signup(data=serializer.validated_data, source=source(request))
-        except SignupError as exc:
-            return signup_error_response(exc)
-        return Response(result, status=202)
+        return Response({"detail": "Use the professional-verification registration wizard."}, status=410)
 
 
 @method_decorator(never_cache, name="dispatch")
-@method_decorator(sensitive_post_parameters("code"), name="dispatch")
 class DoctorSignupVerificationView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        tags=[openapi.ADVISOR_SIGNUP], request=DoctorSignupVerificationInputSerializer,
-        summary="Verify the SMS code, then the email code, to submit the doctor application",
-        description=("Call twice with the same challenge ID and phone. First send the SMS code: "
-                     "202 means an email code was sent. Then send the emailed code: 201 creates a "
-                     "PENDING doctor (or reopens a previously rejected application under the limit) "
-                     "and notifies the owner. It does not sign the doctor in. Duplicates and a "
-                     "rejection limit (403) are reported only after both codes are correct."),
-        responses={201: DoctorIdentityOutputSerializer, 202: SignupEmailStepOutputSerializer,
-                   400: OpenApiResponse(description="Invalid input, wrong/expired/used code."),
-                   403: ErrorOutputSerializer, 409: ErrorOutputSerializer,
-                   429: ErrorOutputSerializer, 503: ErrorOutputSerializer},
-    )
+    @extend_schema(tags=[openapi.ADVISOR_SIGNUP], request=None, deprecated=True,
+                   summary="Retired: use registration/verify/",
+                   description="SMS/email verification now opens a private draft, not a pending doctor account.",
+                   responses={410: ErrorOutputSerializer})
     def post(self, request):
-        serializer = DoctorSignupVerificationInputSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        try:
-            email_step, user = verify_doctor_signup(**serializer.validated_data, source=source(request))
-        except SignupError as exc:
-            return signup_error_response(exc)
-        if email_step:
-            return Response(email_step, status=202)
-        return Response(DoctorIdentityOutputSerializer(user).data, status=201)
+        return Response({"detail": "Use the professional-verification registration wizard."}, status=410)
 
 
 def advisor_response(result):

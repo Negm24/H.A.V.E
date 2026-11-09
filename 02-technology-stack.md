@@ -1,5 +1,61 @@
 # H.A.V.E — Technology Stack and Architecture
 
+## Planned production hosting and domains — 8 November 2026
+
+**User decision:** production applications will be hosted on **AWS**, using a
+purchased domain. `autopharm.com` is the intended domain, subject to availability
+and acquisition; this document does not claim it has been purchased or configured.
+This is a production hosting plan, not an instruction to deploy now. Current
+Docker, localhost and Tailscale development access remain separate.
+
+| Address | Purpose | Access |
+|---|---|---|
+| `www.autopharm.com` | Static AutoPharm company introduction: who we are, what we do, introduction to our first platform H.A.V.E, and achieved statistics such as kiosk and customer counts | Public |
+| `have.autopharm.com` | H.A.V.E platform entry point; recommended landing page explaining the platform and linking to Hub and Advisor | Public; entry-page content is a recommendation to finalize |
+| `terminal.have.autopharm.com/?terminal=XXX` | Terminal frontend, selecting the intended machine | Device/customer access under existing Terminal rules |
+| `hub.have.autopharm.com` | Customer Hub | Public entry, authenticated customer features |
+| `advisor.have.autopharm.com` | Doctor Advisor | Public entry, approved-doctor authentication for prescribing |
+| Private Admin application | Owner administration; suggested name `admin.have.autopharm.com`, final private hostname/access method to be decided | Private network access plus Owner authentication; never public Funnel |
+
+`have.autopharm.com` is a platform address, not a required redirect chain: each
+application subdomain opens its own application directly. Recommend redirecting
+the apex `autopharm.com` to `www.autopharm.com`. Production URLs use ordinary
+HTTPS without development port numbers or the temporary `/advisor/` mount.
+
+### Production architecture guidance
+
+- Keep one authoritative Django backend and shared catalogue/account/business
+  records. Separate frontend subdomains do not imply separate databases or a
+  microservice rewrite. Prefer each app's same-origin `/api/` routing to that
+  backend, retaining exact Host/Origin, CSRF, cookie and authorization boundaries.
+- A machine selector such as `XXX` identifies a destination; it is not a device
+  credential or authorization grant. Do not put credentials in the URL. Production
+  provisioning must retain device authentication and existing session rules.
+- Admin privacy must be enforced through network/access controls as well as Owner
+  authentication. A hard-to-guess hostname or an unlinked public page is insufficient.
+- Publish only approved aggregate statistics on the company website. Define what
+  each count means (for example installed versus available kiosks), give an update
+  time, and exclude patient, prescription and account details. A scheduled published
+  snapshot can keep the website static; live counters are optional future design.
+- Use domain-specific HTTPS certificates covering all selected hostnames. A
+  certificate for `*.autopharm.com` alone does not cover `hub.have.autopharm.com`;
+  include the platform hosts explicitly or provide appropriate additional coverage.
+
+**Suggested AWS services, not yet a finalized deployment design:** Route 53 for
+DNS, ACM for TLS certificates, and S3 with CloudFront for the public static site.
+These services support a custom-domain HTTPS static website; see
+[AWS's static-site architecture guidance](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/getting-started-cloudfront-overview.html).
+Choose backend/worker compute, private networking, persistent media, secrets,
+backups, monitoring, region and deployment automation during production planning.
+Do not move the Windows development container-control agent into production as-is.
+
+**Superseding hosting decision:** AWS hosts production infrastructure, including
+PostgreSQL. Supabase is excluded entirely. Exact AWS database/Redis services,
+sizing and migration details remain deployment decisions; the provider decision
+is settled. Local Docker development remains unchanged. No deployment is performed.
+
+---
+
 **Bug-fix update — 17 October 2026:** Terminal PIN/QR login atomically discards the
 guest basket without resetting the absolute session clock. Provider creation-field
 validation failures release unpaid allocations; lost session references are recovered
@@ -35,8 +91,8 @@ AutoPharm will use a **modular monolith** architecture with three independent Re
 | Styling | Tailwind CSS plus a shared AutoPharm design system |
 | Backend | Python + Django + Django REST Framework |
 | API style | Versioned REST API with OpenAPI documentation |
-| Database | PostgreSQL hosted by Supabase |
-| Supabase role | Managed PostgreSQL infrastructure only, not the application backend |
+| Database | PostgreSQL hosted on AWS; exact service pending deployment design |
+| Production infrastructure | AWS; Django remains the application backend |
 | Background work | Celery + Redis |
 | Kiosk hardware | Local Python device-agent service |
 | Repository | GitHub monorepo |
@@ -45,7 +101,7 @@ AutoPharm will use a **modular monolith** architecture with three independent Re
 
 The principal architectural rules are:
 
-> Django is the only authoritative application backend. Terminal, Advisor, and Hub never access PostgreSQL or Supabase directly, nor call one another directly.
+> Django is the only authoritative application backend. Terminal, Advisor, and Hub never access PostgreSQL directly, nor call one another directly.
 
 > SOLID is applied where it protects business rules, integrations, or testability. Simple code remains simple; abstractions are not created merely to satisfy a pattern.
 
@@ -420,7 +476,7 @@ Avoid one large `KioskHardwareManager` interface containing printing, dispensing
 
 #### Dependency Inversion Principle
 
-Clinical and transactional business rules must depend on abstractions rather than Supabase, Celery, an SMS vendor, a printer model, or another external implementation.
+Clinical and transactional business rules must depend on abstractions rather than an AWS service, Celery, an SMS vendor, a printer model, or another external implementation.
 
 Dependencies are wired at the composition boundary, normally Django settings/application startup or the device-agent startup module.
 
@@ -477,10 +533,10 @@ Domain layer
                ▲
                │
 Infrastructure layer
-  Django ORM, Celery, Supabase/PostgreSQL, external adapters
+  Django ORM, Celery, AWS-hosted PostgreSQL, external adapters
 ```
 
-The domain layer must not import Django REST Framework, Celery, Supabase clients, HTTP libraries, or hardware libraries.
+The domain layer must not import Django REST Framework, Celery, cloud-provider clients, HTTP libraries, or hardware libraries.
 
 Django models may be used as persistence models, but important multi-step rules should live in named domain/application services rather than signals, serializers, views, or model `save()` methods.
 
@@ -583,7 +639,7 @@ Unit tests should inject fakes or mocks for:
 - Printers and dispensers.
 - External regulatory simulations.
 
-Core prescription, inventory, payment, and dispensing rules must be testable without starting React, Redis, Celery, Supabase, an SMS gateway, or physical hardware.
+Core prescription, inventory, payment, and dispensing rules must be testable without starting React, Redis, Celery, AWS services, an SMS gateway, or physical hardware.
 
 ### 7.9 API conventions
 
@@ -680,7 +736,7 @@ A simple reference-data module may remain only `models.py`, `api/`, and `tests/`
 
 ---
 
-## 8. Database and Supabase
+## 8. Database and AWS hosting
 
 ### 8.1 Database choice
 
@@ -714,33 +770,17 @@ Mock insurance uses customer activations, covered-product links, expiry, a confi
 
 Guidance rules, bilingual questions, safety checks, ranking, and explanations live in versioned application configuration files. Products carry symptom tags; no dedicated guidance database tables or persisted customer symptom answers are required. Tags alone do not constitute safe recommendation logic.
 
-### 8.2 Supabase boundary
+### 8.2 AWS database boundary
 
-Supabase will host PostgreSQL, but Supabase will not replace Django.
-
-The project uses:
-
-- Supabase PostgreSQL hosting.
-- Supabase database dashboard where useful.
-- Supabase connection pooling where required by the deployment environment.
-
-The initial architecture does not use:
-
-- Direct frontend database access.
-- Supabase Auth.
-- Supabase Edge Functions.
-- Supabase's Data API from Terminal, Advisor, or Hub.
-- Supabase Row Level Security as a duplicate application-authorization system.
-
-If the hosted project exposes Supabase Data API features by default, public/anonymous access must be disabled or restricted to a schema containing no AutoPharm application tables. No Supabase anonymous or service-role key is shipped in either frontend.
-
-Django connects to Supabase using a normal PostgreSQL connection string. Django owns migrations, authentication, authorization, validation, and business rules.
-
-This boundary keeps the application portable. The database can later move from Supabase to another PostgreSQL provider without rewriting either frontend.
+Production PostgreSQL is hosted on AWS; the exact service is selected during
+deployment planning. Django owns migrations, authentication, authorization and
+business rules. Frontends never connect directly to PostgreSQL. Credentials stay
+server-side; restricted networking, pooling, backups and recovery are part of
+the AWS deployment design. Local development retains Docker PostgreSQL.
 
 ### 8.3 Environments
 
-Local development uses PostgreSQL through Docker Compose. Shared staging uses Supabase. The graduation demonstration defaults to the local/LAN container profile, with the hosted environment available as a secondary option.
+Local development uses PostgreSQL through Docker Compose. Shared hosted staging uses AWS-hosted PostgreSQL. The graduation demonstration defaults to the local/LAN container profile, with the hosted environment available as a secondary option.
 
 Recommended environments:
 
@@ -748,12 +788,12 @@ Recommended environments:
 |---|---|---|
 | Local | Docker PostgreSQL | Individual development and tests |
 | Test/CI | Temporary PostgreSQL | Automated tests |
-| Staging | Supabase PostgreSQL | Team integration and examiner rehearsal |
+| Staging | AWS-hosted PostgreSQL | Team integration and examiner rehearsal |
 | Demo | Local/LAN Docker PostgreSQL | Internet-independent graduation demonstration |
 
 Developers must not run experimental migrations against the shared demonstration database.
 
-Supabase free hosting is convenient but must not be the only demo-day plan. The repository will include a local/LAN demonstration profile using the same Django and PostgreSQL containers with seeded fictional data. This provides a recoverable fallback if venue internet or the hosted free tier is unavailable.
+AWS hosting must not be the only demo-day plan. The repository will include a local/LAN demonstration profile using the same Django and PostgreSQL containers with seeded fictional data. This provides a recoverable fallback if venue internet or the hosted environment is unavailable.
 
 ---
 
@@ -1016,7 +1056,7 @@ The same containerized backend must support:
 
 - Local developer profile.
 - CI test profile.
-- Shared hosted staging profile using Supabase PostgreSQL.
+- Shared hosted staging profile using AWS-hosted PostgreSQL.
 - Local/LAN graduation-demo profile with seeded fictional data.
 
 Production-like deployments place Django behind an HTTPS reverse proxy. Configuration is supplied through environment variables or a secrets manager; environment-specific URLs and credentials never appear in source code.
@@ -1141,7 +1181,7 @@ docs/insurance-model
 
 Database model changes and their migrations must be committed in the same pull request.
 
-Secrets, `.env` files, Supabase keys, SMS credentials, signing keys, and production database URLs must never be committed.
+Secrets, `.env` files, AWS credentials, SMS credentials, signing keys, and production database URLs must never be committed.
 
 ---
 
@@ -1194,8 +1234,8 @@ The version should be available in:
 | Next.js as frontend and backend | Rejected; duplicates Django responsibilities and provides no needed SSR benefit |
 | Flask as the main backend | Rejected; Django provides more of the required security and data-management foundation |
 | Node.js main backend | Rejected; the selected Python ecosystem better matches integrations and device tooling |
-| Supabase as full backend | Rejected; Django remains the authoritative application layer |
-| Direct frontend-to-Supabase access | Rejected; bypasses central business and authorization rules |
+| Hosting provider as full backend | Rejected; Django remains the authoritative application layer |
+| Direct frontend-to-database access | Rejected; bypasses central business and authorization rules |
 | Microservices | Rejected for the graduation-project team and scope |
 | GraphQL | Rejected initially; REST is simpler for this system |
 | Redux by default | Rejected; TanStack Query plus local state is sufficient initially |
@@ -1236,7 +1276,7 @@ The confirmed AutoPharm system technology is:
 React + Vite + TypeScript
 Tailwind CSS + shared AutoPharm design system
 Django + Django REST Framework
-PostgreSQL hosted on Supabase
+PostgreSQL hosted on AWS
 Celery + Redis
 Authenticated local Python kiosk device agent
 Pragmatic SOLID + dependency inversion + composition
@@ -1299,3 +1339,15 @@ See [Admin contract](docs/admin-implementation-contract.md),
 [app guide](frontend/CODEX-Increment-5.md) and
 [host agent](infrastructure/host-agent/README.md). Full Advisor UI/prescriptions are
 the next independent milestone, not implied by Admin doctor support.
+## Advisor verification storage — 9 November 2026
+
+Doctor registration drafts and document ownership/retirement metadata are stored
+in PostgreSQL. Verification images use `DOCTOR_VERIFICATION_ROOT`, separate from
+public catalogue media. Local Docker persists the ignored
+`backend/private_verification` directory through the backend bind mount. Private
+reads pass through Django authorization; no public file URL is issued. The existing
+order worker performs bounded minute cleanup and retries physical deletion.
+
+AWS hosting must provision durable private storage, restricted backup access and
+documented backup expiry before real credential uploads. An S3 adapter or a new
+verification provider is not introduced in this increment. No Supabase is used.

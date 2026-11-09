@@ -1,5 +1,6 @@
 """Restart-safe database work discovery; no queue-only financial work."""
 import logging
+import time
 
 from django.db import close_old_connections
 from django.db.models import F, Q
@@ -17,6 +18,21 @@ from apps.observability.worker_state import check_stop, progress
 from apps.operations.services.actions import run_pending_actions
 
 logger = logging.getLogger(__name__)
+_registration_cleanup_at = 0.0
+
+
+def _registration_cleanup():
+    """Independent, bounded private-file cleanup; never block financial recovery."""
+    global _registration_cleanup_at
+    now = time.monotonic()
+    if now < _registration_cleanup_at:
+        return
+    _registration_cleanup_at = now + 60
+    try:
+        from apps.accounts.services.doctor_services.registration_drafts import cleanup_registrations
+        cleanup_registrations()
+    except Exception:
+        logger.error('Private registration cleanup deferred; it will be retried.')
 
 
 def _run(work, stats, name):
@@ -40,6 +56,7 @@ def run_cycle():
     check_stop()
     progress()
     close_old_connections()
+    _registration_cleanup()
     now = timezone.now()
     stats = {name: 0 for name in ("support_actions", "reconciled", "fulfilled", "expired", "refund_requested", "refunded", "receipts", "notices", "cart_cleanups", "errors")}
     check_stop()

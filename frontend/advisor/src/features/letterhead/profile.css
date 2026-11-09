@@ -1,0 +1,22 @@
+.advisor-profile {margin-block-end:24px;}
+.advisor-profile > summary {display:flex;gap:14px;align-items:center;cursor:pointer;list-style:none;}
+.advisor-profile > summary::-webkit-details-marker {display:none;}
+.advisor-profile > summary::after {content:'+';margin-inline-start:auto;font-size:24px;color:var(--advisor-purple,#5d5294);}
+.advisor-profile[open] > summary::after {content:'−';}
+.advisor-profile summary strong,.advisor-profile summary small {display:block;}
+.advisor-profile summary small {margin-top:4px;color:var(--advisor-muted,#595d6c);font-size:12px;}
+.advisor-profile-icon {display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--accent-soft,#e7e5fe);color:var(--primary,#5d5294);flex-shrink:0;}
+.advisor-profile-icon svg {width:25px;height:25px;}
+.advisor-profile-body {border-top:1px solid var(--border,#cfd3e5);margin-top:20px;padding-top:20px;}
+.advisor-profile-identity {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:16px;background:var(--content-panel,#f3f5fe);border-radius:12px;}
+.advisor-profile-identity > div {display:grid;gap:5px;overflow-wrap:anywhere;align-content:start;}
+.advisor-profile-identity small,.advisor-profile-hint {color:var(--advisor-muted,#595d6c);font-size:12px;line-height:1.7;}
+.advisor-profile-body h3 {margin-block:24px 14px;}
+.advisor-profile-phone {margin-top:24px;border-top:1px solid var(--border,#cfd3e5);}
+.advisor-profile-phone-row {display:flex;gap:12px;align-items:end;max-width:540px;}
+.advisor-profile-phone-row label {flex:1;min-width:0;}
+.advisor-profile-phone-row button {white-space:nowrap;}
+.advisor-profile-verification {max-width:540px;display:grid;gap:12px;margin-top:20px;}
+.advisor-profile-verification small {font-size:12px;color:var(--advisor-muted,#595d6c);}
+@media(max-width:650px){.advisor-profile-identity{grid-template-columns:1fr;}.advisor-profile-phone-row{align-items:stretch;flex-direction:column;}.advisor-profile summary small{font-size:11px;}}
+@media(prefers-reduced-motion:no-preference){.advisor-profile-body{animation:advisor-profile-reveal .18s ease-out;}@keyframes advisor-profile-reveal{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}}

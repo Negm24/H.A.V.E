@@ -30,6 +30,14 @@ it('permits only an exact private Admin HTTPS origin on port 9443', () => {
     expect(() => readDevelopmentAccess(file(JSON.stringify({ ...valid, ownerPrivateOrigin: origin })))).toThrow()
   }
 })
+it('permits an exact dedicated Advisor origin or the shared Hub origin', () => {
+  const advisorPublicOrigin = 'https://laptop.example.ts.net:10000'
+  expect(readDevelopmentAccess(file(JSON.stringify({ ...valid, advisorPublicOrigin })))?.advisorPublicOrigin).toBe(advisorPublicOrigin)
+  expect(readDevelopmentAccess(file(JSON.stringify({ ...valid, advisorPublicOrigin: valid.hubPublicOrigin })))?.advisorPublicOrigin).toBe(valid.hubPublicOrigin)
+  for (const origin of [advisorPublicOrigin + '/', advisorPublicOrigin + '/api', 'http://laptop.example.ts.net:10000', 'https://laptop.example.ts.net:9443', 'https://other.example.ts.net', 'https://user:secret@laptop.example.ts.net:10000', null]) {
+    expect(() => readDevelopmentAccess(file(JSON.stringify({ ...valid, advisorPublicOrigin: origin })))).toThrow()
+  }
+})
 it('rejects wildcard, HTTP, paths, credentials, IPs, arbitrary ports and identical origins', () => {
   for (const origin of ['http://laptop.example.ts.net', 'https://*.ts.net', 'https://laptop.example.ts.net/', 'https://laptop.example.ts.net/path', 'https://laptop.example.ts.net?x=1', 'https://laptop.example.ts.net#fragment', 'https://user:secret@laptop.example.ts.net', 'https://localhost', 'https://127.0.0.1', 'https://laptop.example.ts.net:443', 'https://laptop.example.ts.net:8443', 'https://laptop.example.ts.net:10000']) {
     expect(() => readDevelopmentAccess(file(JSON.stringify({ ...valid, hubPublicOrigin: origin })))).toThrow()

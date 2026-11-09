@@ -27,7 +27,8 @@
     "./auth/input": "./src/auth/input.ts",
     "./ui/controls": "./src/ui/controls.tsx",
     "./ui/forms": "./src/ui/forms.tsx",
-    "./i18n": "./src/i18n/index.ts"
+    "./i18n": "./src/i18n/index.ts",
+    "./api/advisor": "./src/api/advisor.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

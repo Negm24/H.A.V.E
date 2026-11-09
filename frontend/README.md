@@ -660,3 +660,60 @@ API timing comes from backend request-processing histograms stored in PostgreSQL
 History observations are inspected directly on the timeline with hover, tap or
 arrow keys. The Overview period selector also refreshes collection outcomes
 using that period, rather than leaving the fleet query at its default month.
+
+
+## Advisor v1 — in-person prescription issuance
+
+Open http://localhost:5175. Advisor supports Arabic/English and RTL, doctor
+application and sequential phone/email verification, Owner review status, TOTP
+setup/sign-in, recovery and refresh-session logout. The workspace contains New
+prescription, My prescriptions and Clinic letterhead. See
+[the Advisor guide](CODEX-Increment-4.md) and
+[the implementation agreement](../docs/advisor-v1-contract.md).
+
+Doctors confirm an exact-phone lookup or manually enter a patient, select
+reviewed eligible real shared-catalogue medicines without stock filtering, and
+review/sign the prescription. Refills default to zero. Issuing uses the existing valid session without an additional signing challenge. Duplicate/uncertain submission
+recovery preserves the original action ID. Signed records have issuer-only
+history, required-reason revocation and atomic corrected replacements.
+
+Optional formal PDFs use bilingual labels, English medicine details, unchanged
+clinical instructions, original clinic-logo/letterhead snapshots and one blank
+signature space at bottom left on the final page. Logo/PDF reads are authenticated.
+The server image includes WeasyPrint, Pango/Noto fonts and pypdf.
+
+The prescribing review list is explicit. Preview the initial academic manifest:
+
+```powershell
+docker compose exec backend python manage.py review_prescribing_products --initial-academic
+```
+
+Apply that reviewed manifest with --apply. Further exact SKUs require --sku and
+--reason; --controlled and --revoke exclude entries. A changed formulation needs
+review again. The initial list references existing EDA-listed catalogue entries;
+reviewing eligibility never changes price, stock or existing Rx/OTC flags.
+
+V1 ends at issuance. Hub/Kiosk prescription claiming, purchasing and dispensing
+are subsequent work. Remote consultations remain a separately designed future
+idea. Acceptance uses fictional patients in isolated databases, browser mocks,
+and an opt-in real-browser walkthrough against an isolated backend. See
+[Advisor readiness and repeatable acceptance](../docs/verification/2026-11-08-advisor-v1.md).
+
+
+Advisor public development link: **https://youssefnegm.tail6b0802.ts.net/advisor/**.
+Advisor uses a dedicated `/advisor/` handler on the existing HTTPS port 443;
+Hub remains at `/`, Kiosk on 8443 and private Admin on 9443. Tailscale's Advisor
+handler targets `http://127.0.0.1:5175/advisor`, preserving the Vite base path.
+The optional `advisorPublicOrigin` is the same exact HTTPS origin as Hub, without
+the `/advisor/` path. Local http://localhost:5175 redirects to `/advisor/` too.
+API calls remain at `/api/` on the same origin, using the existing backend proxy.
+Port 10000 was retired because Windows reserves TCP ports 9922-10021 on this
+machine. No Windows reservation, DNS or firewall changes were needed.
+
+Advisor now provides a progressive structured dosage editor with fixed catalogue units, custom text or explicit omission. Signed instructions appear in review, history and PDFs. See the Advisor implementation agreement.
+
+Advisor letterheads use a fixed three-column bilingual PDF header with offline Ruqah typography. As of 9 November, new headers derive identity and professional details from the stored doctor profile rather than editable identity overrides; historical signed snapshots remain unchanged. Registration includes medical school/university, visible in Owner review and erased on rejection. The official AutoPharm image is bundled from docs/Logos and displayed in the upper-right PDF header and live preview; both languages appear in the same PDF.
+
+The [registration verification report](../docs/verification/2026-11-09-advisor-registration.md)
+records the four-step bilingual application, private seven-day drafts and document
+review, approved profile/phone edits, completed checks and remaining manual acceptance.

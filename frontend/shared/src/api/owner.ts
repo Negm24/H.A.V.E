@@ -16,6 +16,14 @@ export interface RecoveryChallenge { challenge_id: string; expires_in: number; r
 export interface RecoveryProof { reset_token: string; expires_in: number }
 export interface CabinetSlot extends AdminRecord { id: number; slot_code: string; product_id: number | null; product_name: string; image_url: string | null; capacity: number; revision: number; row: number | null; column: number | null; quantity: number; reserved_quantity: number; batches: AdminRecord[] }
 export interface Cabinet { serial_number: string; revision: number; confirmed: boolean; slots: CabinetSlot[] }
+export type DoctorDocumentKind = 'graduation' | 'id_front' | 'id_back' | 'passport' | 'syndicate' | 'practice_license'
+export interface DoctorVerification {
+  documents: { kind: DoctorDocumentKind; uploaded_at: string; content_type: string }[]
+  syndicate_registration_number: string
+  professional_license_number: string | null
+  specialty: string
+  specialty_ar: string
+}
 
 const base = '/api/v1/owner/'
 const auth = '/api/v1/auth/owners/'
@@ -33,6 +41,17 @@ async function call<T>(path: string, options: RequestOptions = {}) {
   }
 }
 export const ownerApi = {
+  doctorVerification: (id: string, signal?: AbortSignal) => request<DoctorVerification>(auth + `doctors/${safe(id)}/verification/`, { signal }),
+  saveDoctorVerification: (id: string, body: AdminRecord, signal?: AbortSignal) => request<DoctorVerification>(auth + `doctors/${safe(id)}/verification/`, { method: 'PATCH', csrf: true, body, signal }),
+  async doctorDocument(id: string, kind: DoctorDocumentKind, signal?: AbortSignal) {
+    const response = await fetch(auth + `doctors/${safe(id)}/verification/documents/${kind}/`, { credentials: 'same-origin', cache: 'no-store', signal: signal ?? AbortSignal.timeout(15000) })
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) window.dispatchEvent(new Event('have:owner:session-ended'))
+      throw new ApiError('This verification document is unavailable.', response.status)
+    }
+    if (!response.headers.get('content-type')?.startsWith('image/')) throw new ApiError('Invalid verification image response.', 0)
+    return response.blob()
+  },
   session: (signal?: AbortSignal) => call<OwnerSession>('session/', { signal }),
   activity: (signal?: AbortSignal) => call<OwnerSession>('session/activity/', { method: 'POST', csrf: true, body: {}, signal }),
   login: (data: { phone_number: string; password: string }, signal?: AbortSignal) => request<OwnerIdentity>(auth + 'login/', { method: 'POST', body: data, csrf: true, signal }),

@@ -98,6 +98,7 @@ async function mockAdmin(context: BrowserContext, options: { signedIn?: boolean;
     else if (path.endsWith('/owners/logout/')) { state.signedIn = false; status = 204 }
     else if (path.includes('/password-reset/')) { if (path.endsWith('/request/')) response = { challenge_id: 'reset-fictional', expires_in: 300, resend_after: 1 }; else if (path.endsWith('/verify/')) response = { reset_token: 'fictional-proof', expires_in: 300 }; else response = { detail: 'Changed' } }
     else if (!state.signedIn || state.expired) { status = 403; response = { detail: 'Owner session ended.' } }
+    else if (path.includes('/auth/owners/doctors/') && path.endsWith('/verification/')) response = { documents: [], syndicate_registration_number: '', professional_license_number: '', specialty: 'General', specialty_ar: '' }
     else if (path.endsWith('/session/activity/')) { state.deadline = Date.now() + 600000; response = session() }
     else if (path.endsWith('/session/')) response = session()
     else if (path.endsWith('/overview/')) response = { pending_doctors: 1, review_payments: 1, pending_receipts: 1, low_stock: 1, unavailable_kiosks: 0, observed_at: new Date(now).toISOString() }
@@ -131,6 +132,36 @@ async function mockAdmin(context: BrowserContext, options: { signedIn?: boolean;
   return { calls, state }
 }
 async function go(page: Page, path = '/overview') { await page.goto(origin + path); await expect(page.getByRole('heading', { level: 1 })).toBeVisible() }
+
+test('Owner can inspect private professional images, record optional details and approve without a checklist', async ({ context, page }) => {
+  const mock = await mockAdmin(context)
+  let metadata = { syndicate_registration_number: '', professional_license_number: '', specialty: '', specialty_ar: '' }
+  await context.route('**/api/v1/auth/owners/doctors/*/verification/**', async route => {
+    const path = new URL(route.request().url()).pathname
+    if (path.includes('/documents/')) return route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="700" height="420"><rect width="700" height="420" fill="#fff"/><rect x="15" y="15" width="670" height="390" rx="22" fill="#f3f5fe" stroke="#5d5294"/><text x="50" y="85" font-size="28" fill="#292b31">FICTIONAL PROFESSIONAL CARD</text><circle cx="115" cy="200" r="52" fill="#d8d2ed"/><text x="210" y="185" font-size="24">Example Doctor</text><text x="210" y="230" font-size="22">Test evidence only</text></svg>' })
+    if (route.request().method() === 'PATCH') metadata = { ...metadata, ...route.request().postDataJSON() }
+    return route.fulfill({ json: { ...metadata, documents: [{ kind: 'syndicate', uploaded_at: '2026-11-09T10:00:00Z', content_type: 'image/jpeg' }, { kind: 'graduation', uploaded_at: '2026-11-09T10:00:00Z', content_type: 'image/jpeg' }] } })
+  })
+  await go(page, '/doctors')
+  await page.getByRole('button', { name: 'View Example' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Doctor details' })
+  await expect(dialog.getByRole('img', { name: 'Medical Syndicate card' })).toBeVisible()
+  await dialog.getByRole('button', { name: 'Zoom image' }).click()
+  await expect(dialog.getByRole('region', { name: 'Scrollable enlarged verification image' })).toBeVisible()
+  await dialog.getByRole('button', { name: /Graduation certificate/ }).click()
+  await expect(dialog.getByRole('img', { name: 'Graduation certificate' })).toBeVisible()
+  await dialog.getByText('Optional professional details', { exact: true }).click()
+  await dialog.getByLabel('Syndicate Registration Number (optional)', { exact: true }).fill('TEST-123')
+  await dialog.getByRole('button', { name: 'Save professional details', exact: true }).click()
+  await expect(dialog.getByText('Professional details saved.', { exact: true })).toBeVisible()
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth + 2)).toBe(true)
+  if (process.env.E2E_VISUAL === 'true') await page.screenshot({ path: 'test-results/doctor-verification-mobile.png' })
+  await dialog.getByRole('button', { name: 'Approve doctor', exact: true }).click()
+  await dialog.getByRole('button', { name: 'Confirm decision', exact: true }).click()
+  await expect(dialog.getByText('Doctor approved. They can now complete MFA sign-in.', { exact: true })).toBeVisible()
+  expect(mock.state.decision).toBe('APPROVED')
+})
 
 test('Owner login uses fresh CSRF, cookie session, English navigation and clears private state on logout', async ({ context, page }) => {
   const mock = await mockAdmin(context, { signedIn: false }); await go(page, '/login')

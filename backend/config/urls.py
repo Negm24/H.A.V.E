@@ -26,6 +26,7 @@ from apps.orders.api.urls import hub_urlpatterns as hub_orders, terminal_urlpatt
 from apps.payments.api.urls import hub_urlpatterns as hub_payments
 
 urlpatterns = [
+    path("api/v1/advisor/", include("apps.prescriptions.urls")),
     path("api/v1/owner/technical/", include(technical_urls)),
     path("api/v1/owner/", include("apps.operations.api.urls")),
     path("api/v1/telemetry/", include(telemetry_urls)),

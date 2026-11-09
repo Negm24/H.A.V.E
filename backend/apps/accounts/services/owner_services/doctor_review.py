@@ -67,11 +67,17 @@ def reject_doctor(*, doctor_id, owner, reason=""):
         doctor.rejection_count += 1
         doctor.rejection_reason = reason or None
         doctor.professional_license_number = None
-        doctor.specialty = doctor.clinic_name = doctor.clinic_address = ""
+        doctor.specialty = doctor.clinic_name = doctor.clinic_address = doctor.medical_school = ""
+        doctor.name_ar = doctor.clinic_name_ar = doctor.clinic_address_ar = doctor.specialty_ar = ""
+        doctor.nationality = doctor.country_of_graduation = doctor.syndicate_registration_number = ""
+        from apps.accounts.services.doctor_services.registration_drafts import retire_documents
+        retire_documents(doctor.verification_documents.filter(pending_delete=False))
         _record_decision(doctor, owner, Doctor.ApprovalStatus.REJECTED)
         doctor.save(update_fields=[
             "phone_hash", "email_hash", "rejection_count", "rejection_reason", "professional_license_number",
-            "specialty", "clinic_name", "clinic_address",
+            "specialty", "clinic_name", "clinic_address", "medical_school",
+            "name_ar", "clinic_name_ar", "clinic_address_ar", "specialty_ar",
+            "nationality", "country_of_graduation", "syndicate_registration_number",
             "approval_status", "reviewed_by_owner", "reviewed_at",
         ])
 

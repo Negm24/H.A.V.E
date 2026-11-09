@@ -13,5 +13,5 @@ export default defineConfig({
     '@have/shared/api/terminal': fileURLToPath(new URL('./shared/src/api/terminal.ts', import.meta.url)),
     '@have/shared/api': fileURLToPath(new URL('./shared/src/api/http.ts', import.meta.url)),
   } },
-  test: { environment: 'jsdom', include: ['shared/src/**/*.test.ts', 'kiosk/src/**/*.test.ts', 'hub/src/**/*.test.ts', 'tooling/**/*.test.ts'], restoreMocks: true },
+  test: { environment: 'jsdom', include: ['shared/src/**/*.test.ts', 'kiosk/src/**/*.test.ts', 'hub/src/**/*.test.ts', 'advisor/src/**/*.test.ts', 'tooling/**/*.test.ts'], restoreMocks: true },
 })

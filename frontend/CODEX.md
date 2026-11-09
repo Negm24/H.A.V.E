@@ -14,7 +14,7 @@ It records the preserved design, shared structure, backend boundaries, and accep
 | 1 | Shared foundation and four empty Docker-runnable apps | [Foundation](CODEX-Increment-1.md) |
 | 2 | Terminal authentication and mock dashboard | [Terminal](CODEX-Increment-2.md) |
 | 3 | Hub authentication and QR approval | [Hub](CODEX-Increment-3.md) |
-| 4 | Advisor authentication | [Reserved, currently empty](CODEX-Increment-4.md) |
+| 4 | Advisor access, in-person prescription issuance and PDF letterhead | [Advisor v1](CODEX-Increment-4.md) |
 | 5 | Expanded private Owner portal, operations and technical monitoring | [Admin](CODEX-Increment-5.md) |
 
 Future increment files are intentionally empty until that increment is planned.

@@ -118,6 +118,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/doctors/profile/phone/request/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_auth_doctors_profile_phone_request_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/doctors/signup/": {
         parameters: {
             query?: never;
@@ -128,8 +144,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Start a doctor application or resend its code
-         * @description No account is created until the SMS code is verified. The local mock SMS appears only in the server terminal. Resubmit the full form after resend_after seconds to replace an earlier code. Verification creates a PENDING application; the owner approves it in the dashboard before the doctor can use Advisor.
+         * Retired: use registration/start/
+         * @deprecated
+         * @description Doctor applications now require the professional-verification registration wizard.
          */
         post: operations["api_v1_auth_doctors_signup_create"];
         delete?: never;
@@ -205,6 +222,22 @@ export interface paths {
         put?: never;
         /** Start guest session; replace any previous session on this device */
         post: operations["api_v1_terminals_sessions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/prescriptions/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_advisor_prescriptions_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -305,6 +338,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/doctors/profile/phone/verify/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_auth_doctors_profile_phone_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/doctors/registration/documents/{kind}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_auth_doctors_registration_documents_retrieve"];
+        put: operations["api_v1_auth_doctors_registration_documents_update"];
+        post?: never;
+        delete: operations["api_v1_auth_doctors_registration_documents_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/doctors/registration/verify/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_auth_doctors_registration_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/doctors/signup/verify/": {
         parameters: {
             query?: never;
@@ -315,8 +396,9 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verify the SMS code, then the email code, to submit the doctor application
-         * @description Call twice with the same challenge ID and phone. First send the SMS code: 202 means an email code was sent. Then send the emailed code: 201 creates a PENDING doctor (or reopens a previously rejected application under the limit) and notifies the owner. It does not sign the doctor in. Duplicates and a rejection limit (403) are reported only after both codes are correct.
+         * Retired: use registration/verify/
+         * @deprecated
+         * @description SMS/email verification now opens a private draft, not a pending doctor account.
          */
         post: operations["api_v1_auth_doctors_signup_verify_create"];
         delete?: never;
@@ -334,6 +416,22 @@ export interface paths {
         };
         /** Get one doctor application with times previously rejected */
         get: operations["api_v1_auth_owners_doctors_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/owners/doctors/{doctor_id}/verification/documents/{kind}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_auth_owners_doctors_verification_documents_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1192,6 +1290,278 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/letterhead/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_advisor_letterhead_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_advisor_letterhead_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/advisor/letterhead/logo/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_advisor_letterhead_logo_retrieve"];
+        put?: never;
+        post: operations["api_v1_advisor_letterhead_logo_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/letterhead/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_advisor_letterhead_preview_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/medicines/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_advisor_medicines_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/patient-lookup/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_advisor_patient_lookup_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/prescriptions/issue/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_advisor_prescriptions_issue_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/prescriptions/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_advisor_prescriptions_search_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/prescriptions/{id}/pdf/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_advisor_prescriptions_pdf_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/prescriptions/{id}/replace/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_advisor_prescriptions_replace_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/advisor/prescriptions/{id}/revoke/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_advisor_prescriptions_revoke_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/doctors/profile/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_auth_doctors_profile_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_auth_doctors_profile_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/auth/doctors/registration/current/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_auth_doctors_registration_current_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_auth_doctors_registration_current_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/auth/doctors/registration/restart/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_auth_doctors_registration_restart_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/doctors/registration/resume/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_auth_doctors_registration_resume_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/doctors/registration/start/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_auth_doctors_registration_start_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/doctors/registration/submit/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_v1_auth_doctors_registration_submit_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/owners/doctors/{doctor_id}/verification/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_v1_auth_owners_doctors_verification_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["api_v1_auth_owners_doctors_verification_partial_update"];
         trace?: never;
     };
     "/api/v1/auth/owners/orders/{order_id}/cancel/": {
@@ -2525,12 +2895,108 @@ export interface components {
          * @enum {string}
          */
         AccountActionActionEnum: "block" | "unblock" | "sign-out";
+        AdvisorLetterhead: {
+            header_details?: components["schemas"]["HeaderDetailsInput"];
+            doctor_name: string;
+            doctor_name_ar: string;
+            doctor_details_en: string;
+            doctor_details_ar: string;
+            revision: number;
+            alignment: string;
+            contact_line: string;
+            has_logo: boolean;
+            clinic_name: string;
+            clinic_name_ar: string;
+            clinic_address: string;
+        };
+        AdvisorMedicine: {
+            id: number;
+            name_en: string;
+            strength: string;
+            dosage_form: string;
+            pack_description: string;
+            requires_prescription: boolean;
+            dose_unit: string | null;
+        };
+        AdvisorMedicinePage: {
+            items: components["schemas"]["AdvisorMedicine"][];
+            total: number;
+            page: number;
+            page_size: number;
+        };
+        AdvisorPatientLookup: {
+            found: boolean;
+            patient_phone_number: string;
+            patient_first_name?: string;
+            patient_last_name?: string;
+            /** Format: date */
+            patient_date_of_birth?: string;
+        };
+        AdvisorPrescription: {
+            /** Format: uuid */
+            id: string;
+            reference: string;
+            status: string;
+            patient_phone_number: string;
+            patient_first_name: string;
+            patient_last_name: string;
+            /** Format: date */
+            patient_date_of_birth: string;
+            doctor: {
+                [key: string]: unknown;
+            };
+            clinic: {
+                [key: string]: unknown;
+            };
+            letterhead: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            issued_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            lines: components["schemas"]["AdvisorPrescriptionLine"][];
+            /** Format: date-time */
+            revoked_at: string | null;
+            revocation_reason: string;
+            /** Format: uuid */
+            replaces_id: string | null;
+            /** Format: uuid */
+            replaced_by_id: string | null;
+            claim_status: string;
+        };
+        AdvisorPrescriptionLine: {
+            product_id: number;
+            name_en: string;
+            strength: string;
+            dosage_form: string;
+            pack_description: string;
+            instructions: string;
+            instructions_ar?: string;
+            dosage?: unknown;
+            dose_unit?: string | null;
+            quantity: number;
+            refills: number;
+        };
+        AdvisorPrescriptionPage: {
+            items: components["schemas"]["AdvisorPrescription"][];
+            total: number;
+            page: number;
+            page_size: number;
+        };
         AdvisorSession: {
             access_token: string;
             token_type: string;
             expires_in: number;
             doctor: components["schemas"]["DoctorIdentity"];
         };
+        /**
+         * @description * `left` - left
+         *     * `center` - center
+         *     * `right` - right
+         * @enum {string}
+         */
+        AlignmentEnum: "left" | "center" | "right";
         AnonymousTelemetryBatch: {
             app: components["schemas"]["AppEnum"];
             events: {
@@ -2565,6 +3031,8 @@ export interface components {
             quantity: number;
             revision: number;
         };
+        /** @enum {unknown} */
+        BlankEnum: "";
         BusinessOutput: {
             /** Format: date-time */
             observed_at: string;
@@ -2805,6 +3273,16 @@ export interface components {
             /** Format: email */
             readonly email: string | null;
             readonly professional_license_number: string | null;
+            readonly medical_school: string;
+            readonly name_ar: string;
+            readonly clinic_name_ar: string;
+            readonly clinic_address_ar: string;
+            readonly specialty_ar: string;
+            readonly nationality: string;
+            readonly country_of_graduation: string;
+            readonly syndicate_registration_number: string;
+            /** Format: date-time */
+            readonly application_submitted_at: string | null;
             readonly specialty: string;
             readonly clinic_name: string;
             readonly clinic_address: string;
@@ -2834,7 +3312,15 @@ export interface components {
             readonly phone_number: string;
             /** Format: email */
             readonly email: string;
-            readonly professional_license_number: string;
+            readonly professional_license_number: string | null;
+            readonly name_ar: string;
+            readonly clinic_name_ar: string;
+            readonly clinic_address_ar: string;
+            readonly specialty_ar: string;
+            readonly nationality: string;
+            readonly country_of_graduation: string;
+            readonly syndicate_registration_number: string;
+            readonly medical_school: string;
             readonly specialty: string;
             readonly clinic_name: string;
             readonly clinic_address: string;
@@ -2878,24 +3364,23 @@ export interface components {
             new_password: string;
             confirm_password: string;
         };
-        DoctorSignup: {
-            first_name: string;
-            last_name: string;
-            phone_number: string;
-            /** Format: email */
-            email: string;
-            password: string;
-            professional_license_number: string;
-            specialty: string;
-            clinic_name: string;
-            clinic_address: string;
-        };
-        DoctorSignupChallenge: {
+        DoctorPhoneChallenge: {
             /** Format: uuid */
             challenge_id: string;
             expires_in: number;
             resend_after: number;
+        };
+        DoctorPhoneChanged: {
             detail: string;
+        };
+        DoctorPhoneInput: {
+            phone_number: string;
+        };
+        DoctorPhoneVerifyInput: {
+            phone_number: string;
+            /** Format: uuid */
+            challenge_id: string;
+            code: string;
         };
         DoctorSignupVerification: {
             phone_number: string;
@@ -2903,6 +3388,44 @@ export interface components {
             challenge_id: string;
             code: string;
         };
+        DoctorVerificationOutput: {
+            syndicate_registration_number?: string;
+            specialty?: string;
+            specialty_ar?: string;
+            professional_license_number?: string;
+            documents: components["schemas"]["VerificationDocumentOutput"][];
+        };
+        DosageInput: {
+            mode: components["schemas"]["ModeEnum"];
+            catalogue_form?: string;
+            /** Format: decimal */
+            amount?: string;
+            schedule?: components["schemas"]["ScheduleEnum"];
+            times?: string[];
+            hours?: number;
+            daily_count?: number;
+            meals?: components["schemas"]["MealsEnum"][];
+            /** @default unspecified */
+            food: components["schemas"]["FoodEnum"];
+            duration?: components["schemas"]["DurationEnum"];
+            duration_count?: number;
+            /** Format: date */
+            until?: string;
+            first_time?: string;
+            /** Format: date-time */
+            once_at?: string;
+            reason?: string;
+            max_doses?: number;
+            notes?: string;
+        };
+        /**
+         * @description * `days` - days
+         *     * `weeks` - weeks
+         *     * `until` - until
+         *     * `ongoing` - ongoing
+         * @enum {string}
+         */
+        DurationEnum: "days" | "weeks" | "until" | "ongoing";
         Error: {
             detail: string;
         };
@@ -2959,6 +3482,20 @@ export interface components {
             collection_outcomes: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * @description * `unspecified` - unspecified
+         *     * `before` - before
+         *     * `with` - with
+         *     * `after` - after
+         * @enum {string}
+         */
+        FoodEnum: "unspecified" | "before" | "with" | "after";
+        HeaderDetailsInput: {
+            doctor_name_en?: string;
+            doctor_name_ar?: string;
+            details_en?: string;
+            details_ar?: string;
         };
         HeartbeatInput: {
             app_version?: string;
@@ -3022,12 +3559,43 @@ export interface components {
          * @enum {string}
          */
         IncidentAcknowledgmentStatusEnum: "ACKNOWLEDGED";
+        IssueInput: {
+            /** Format: uuid */
+            action_id: string;
+            patient_phone_number: string;
+            patient_first_name: string;
+            patient_last_name: string;
+            /** Format: date */
+            patient_date_of_birth: string;
+            /** Format: date-time */
+            expires_at: string;
+            lines: components["schemas"]["LineInput"][];
+        };
+        /**
+         * @description * `graduation` - Graduation certificate
+         *     * `id_front` - National ID front
+         *     * `id_back` - National ID back
+         *     * `passport` - Passport identity page
+         *     * `syndicate` - Syndicate card
+         *     * `practice_license` - Practice licence
+         * @enum {string}
+         */
+        KindEnum: "graduation" | "id_front" | "id_back" | "passport" | "syndicate" | "practice_license";
         /**
          * @description * `en` - en
          *     * `ar` - ar
          * @enum {string}
          */
         LanguageEnum: "en" | "ar";
+        LineInput: {
+            product_id: number;
+            /** @default  */
+            instructions: string;
+            dosage?: components["schemas"]["DosageInput"];
+            quantity: number;
+            /** @default 0 */
+            refills: number;
+        };
         LoadInput: {
             slot_id: number;
             product_id: number;
@@ -3041,6 +3609,14 @@ export interface components {
             slot_id: number;
             product_id: number;
             quantity: number;
+        };
+        LogoInput: {
+            revision: number;
+            /** Format: uri */
+            file: string;
+        };
+        LookupInput: {
+            phone_number: string;
         };
         Maintenance: {
             enabled: boolean;
@@ -3058,6 +3634,20 @@ export interface components {
             paid_waiting_orders: components["schemas"]["PaidCollectionOutput"][];
             warning: string;
         };
+        /**
+         * @description * `breakfast` - breakfast
+         *     * `lunch` - lunch
+         *     * `dinner` - dinner
+         * @enum {string}
+         */
+        MealsEnum: "breakfast" | "lunch" | "dinner";
+        /**
+         * @description * `structured` - structured
+         *     * `custom` - custom
+         *     * `none` - none
+         * @enum {string}
+         */
+        ModeEnum: "structured" | "custom" | "none";
         MovementActionOutput: {
             /** Format: uuid */
             id: string;
@@ -3240,12 +3830,44 @@ export interface components {
             /** Format: decimal */
             total_paid: string;
         };
+        PatchedDoctorProfileInput: {
+            specialty?: string;
+            specialty_ar?: string;
+            clinic_name?: string;
+            clinic_name_ar?: string;
+            clinic_address?: string;
+            clinic_address_ar?: string;
+        };
+        PatchedDoctorVerificationInput: {
+            syndicate_registration_number?: string;
+            specialty?: string;
+            specialty_ar?: string;
+            professional_license_number?: string;
+        };
         PatchedIncidentAcknowledgment: {
             status?: components["schemas"]["IncidentAcknowledgmentStatusEnum"];
         };
         PatchedLayoutInput: {
             revision?: number;
             positions?: components["schemas"]["Position"][];
+        };
+        PatchedLetterheadInput: {
+            revision?: number;
+            alignment?: components["schemas"]["AlignmentEnum"];
+            contact_line?: string;
+        };
+        PatchedRegistrationDetailsInput: {
+            first_name?: string;
+            last_name?: string;
+            name_ar?: string;
+            clinic_name?: string;
+            clinic_name_ar?: string;
+            clinic_address?: string;
+            clinic_address_ar?: string;
+            nationality?: string;
+            country_of_graduation?: string;
+            medical_school?: string;
+            professional_license_number?: string;
         };
         PaymentOutcomeOutput: {
             status: components["schemas"]["TransactionStatusEnum"];
@@ -3287,6 +3909,10 @@ export interface components {
             slot_id: number;
             row: number;
             column: number;
+        };
+        PreviewInput: {
+            alignment?: components["schemas"]["AlignmentEnum"];
+            contact_line?: string;
         };
         ProductOutput: {
             id: number;
@@ -3359,10 +3985,72 @@ export interface components {
             challenge_id: string;
             code: string;
         };
+        RegistrationDraftOutput: {
+            /** Format: uuid */
+            id: string;
+            status: components["schemas"]["RegistrationDraftOutputStatusEnum"];
+            data: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            expires_at: string;
+            /** Format: date-time */
+            last_saved_at: string;
+            documents: components["schemas"]["VerificationDocumentOutput"][];
+            doctor_id?: string | null;
+        };
+        /**
+         * @description * `DRAFT` - DRAFT
+         *     * `SUBMITTED` - SUBMITTED
+         * @enum {string}
+         */
+        RegistrationDraftOutputStatusEnum: "DRAFT" | "SUBMITTED";
+        RegistrationImageInput: {
+            /** Format: uri */
+            image: string;
+        };
+        RegistrationResumeInput: {
+            phone_number: string;
+            password: string;
+        };
+        RegistrationStartInput: {
+            first_name: string;
+            last_name: string;
+            name_ar: string;
+            clinic_name: string;
+            clinic_name_ar: string;
+            clinic_address: string;
+            clinic_address_ar: string;
+            nationality: string;
+            country_of_graduation: string;
+            medical_school: string;
+            professional_license_number?: string;
+            phone_number: string;
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        RegistrationSubmitInput: {
+            /** Format: uuid */
+            action_id: string;
+        };
         ReorderInput: {
             cart_version: string;
             /** @default false */
             replace_existing: boolean;
+        };
+        ReplaceInput: {
+            /** Format: uuid */
+            action_id: string;
+            patient_phone_number: string;
+            patient_first_name: string;
+            patient_last_name: string;
+            /** Format: date */
+            patient_date_of_birth: string;
+            /** Format: date-time */
+            expires_at: string;
+            lines: components["schemas"]["LineInput"][];
+            reason: string;
         };
         ResumeCheckoutInput: {
             return_simulator_id?: string;
@@ -3385,6 +4073,11 @@ export interface components {
             /** Format: date-time */
             end: string;
         };
+        RevokeInput: {
+            /** Format: uuid */
+            action_id: string;
+            reason: string;
+        };
         SavedCardOutput: {
             brand: string;
             last_four: string;
@@ -3395,6 +4088,16 @@ export interface components {
             cards: components["schemas"]["SavedCardOutput"][];
             setup_message: string;
         };
+        /**
+         * @description * `times` - times
+         *     * `interval` - interval
+         *     * `daily` - daily
+         *     * `meals` - meals
+         *     * `once` - once
+         *     * `prn` - prn
+         * @enum {string}
+         */
+        ScheduleEnum: "times" | "interval" | "daily" | "meals" | "once" | "prn";
         Search: {
             query?: string;
             /** @default 1 */
@@ -3420,6 +4123,28 @@ export interface components {
             receipt_pending?: boolean;
             low_stock?: boolean;
         };
+        SearchInput: {
+            /** @default  */
+            query: string;
+            /** @default  */
+            status: components["schemas"]["SearchInputStatusEnum"] | components["schemas"]["BlankEnum"];
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            /** @default 1 */
+            page: number;
+            /** @default 20 */
+            page_size: number;
+        };
+        /**
+         * @description * `` -
+         *     * `ACTIVE` - ACTIVE
+         *     * `EXPIRED` - EXPIRED
+         *     * `REVOKED` - REVOKED
+         * @enum {string}
+         */
+        SearchInputStatusEnum: "ACTIVE" | "EXPIRED" | "REVOKED";
         /** @description Returned after the SMS code: submit the emailed code to the same verify endpoint. */
         SignupEmailStep: {
             /** Format: uuid */
@@ -3489,6 +4214,12 @@ export interface components {
             reason: string;
             /** Format: uuid */
             action_id: string;
+        };
+        VerificationDocumentOutput: {
+            kind: components["schemas"]["KindEnum"];
+            /** Format: date-time */
+            uploaded_at: string;
+            content_type: string;
         };
         WebhookInput: {
             event: string;
@@ -3820,7 +4551,7 @@ export interface operations {
             };
         };
     };
-    api_v1_auth_doctors_signup_create: {
+    api_v1_auth_doctors_profile_phone_request_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -3829,36 +4560,32 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DoctorSignup"];
-                "application/x-www-form-urlencoded": components["schemas"]["DoctorSignup"];
-                "multipart/form-data": components["schemas"]["DoctorSignup"];
+                "application/json": components["schemas"]["DoctorPhoneInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["DoctorPhoneInput"];
+                "multipart/form-data": components["schemas"]["DoctorPhoneInput"];
             };
         };
         responses: {
-            202: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DoctorSignupChallenge"];
+                    "application/json": components["schemas"]["DoctorPhoneChallenge"];
                 };
             };
-            /** @description Invalid application fields or weak password. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            503: {
+        };
+    };
+    api_v1_auth_doctors_signup_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4128,6 +4855,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_prescriptions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorPrescription"];
                 };
             };
         };
@@ -4444,7 +5192,98 @@ export interface operations {
             };
         };
     };
-    api_v1_auth_doctors_signup_verify_create: {
+    api_v1_auth_doctors_profile_phone_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DoctorPhoneVerifyInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["DoctorPhoneVerifyInput"];
+                "multipart/form-data": components["schemas"]["DoctorPhoneVerifyInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorPhoneChanged"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_documents_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_documents_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["RegistrationImageInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationDraftOutput"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_documents_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_verify_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -4459,12 +5298,12 @@ export interface operations {
             };
         };
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DoctorIdentity"];
+                    "application/json": components["schemas"]["RegistrationDraftOutput"];
                 };
             };
             202: {
@@ -4475,38 +5314,18 @@ export interface operations {
                     "application/json": components["schemas"]["SignupEmailStep"];
                 };
             };
-            /** @description Invalid input, wrong/expired/used code. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            503: {
+        };
+    };
+    api_v1_auth_doctors_signup_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4549,6 +5368,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    api_v1_auth_owners_doctors_verification_documents_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doctor_id: string;
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
                 };
             };
         };
@@ -7327,6 +8168,531 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_letterhead_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorLetterhead"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_letterhead_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedLetterheadInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedLetterheadInput"];
+                "multipart/form-data": components["schemas"]["PatchedLetterheadInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorLetterhead"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_letterhead_logo_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                };
+            };
+        };
+    };
+    api_v1_advisor_letterhead_logo_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["LogoInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["LogoInput"];
+                "application/json": components["schemas"]["LogoInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorLetterhead"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_letterhead_preview_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PreviewInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["PreviewInput"];
+                "multipart/form-data": components["schemas"]["PreviewInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
+    api_v1_advisor_medicines_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SearchInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["SearchInput"];
+                "multipart/form-data": components["schemas"]["SearchInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorMedicinePage"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_patient_lookup_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LookupInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["LookupInput"];
+                "multipart/form-data": components["schemas"]["LookupInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorPatientLookup"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_prescriptions_issue_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["IssueInput"];
+                "multipart/form-data": components["schemas"]["IssueInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorPrescription"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_prescriptions_search_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SearchInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["SearchInput"];
+                "multipart/form-data": components["schemas"]["SearchInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorPrescriptionPage"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_prescriptions_pdf_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
+    api_v1_advisor_prescriptions_replace_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReplaceInput"];
+                "multipart/form-data": components["schemas"]["ReplaceInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorPrescription"];
+                };
+            };
+        };
+    };
+    api_v1_advisor_prescriptions_revoke_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["RevokeInput"];
+                "multipart/form-data": components["schemas"]["RevokeInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorPrescription"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_profile_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorIdentity"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_profile_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDoctorProfileInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedDoctorProfileInput"];
+                "multipart/form-data": components["schemas"]["PatchedDoctorProfileInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorIdentity"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_current_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationDraftOutput"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_current_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedRegistrationDetailsInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedRegistrationDetailsInput"];
+                "multipart/form-data": components["schemas"]["PatchedRegistrationDetailsInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationDraftOutput"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_restart_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_resume_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationResumeInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["RegistrationResumeInput"];
+                "multipart/form-data": components["schemas"]["RegistrationResumeInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationDraftOutput"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_start_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationStartInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["RegistrationStartInput"];
+                "multipart/form-data": components["schemas"]["RegistrationStartInput"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryChallengeOutput"];
+                };
+            };
+        };
+    };
+    api_v1_auth_doctors_registration_submit_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationSubmitInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["RegistrationSubmitInput"];
+                "multipart/form-data": components["schemas"]["RegistrationSubmitInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorIdentity"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorIdentity"];
+                };
+            };
+        };
+    };
+    api_v1_auth_owners_doctors_verification_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doctor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorVerificationOutput"];
+                };
+            };
+        };
+    };
+    api_v1_auth_owners_doctors_verification_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doctor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDoctorVerificationInput"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedDoctorVerificationInput"];
+                "multipart/form-data": components["schemas"]["PatchedDoctorVerificationInput"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorVerificationOutput"];
                 };
             };
         };

@@ -1,5 +1,7 @@
 from unittest.mock import patch
 import time
+from tempfile import TemporaryDirectory
+from apps.accounts.tests.test_doctor_signup import APPLICATION as WIZARD_APPLICATION, BASE, upload_and_submit
 
 from django.conf import settings
 from django.core import mail
@@ -29,6 +31,11 @@ APPLICATION = {
 class OwnerDoctorReviewTests(SessionFixtures, TestCase):
     def setUp(self):
         self.setup_sessions()
+        self.temp = TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        storage = override_settings(DOCTOR_VERIFICATION_ROOT=self.temp.name)
+        storage.enable()
+        self.addCleanup(storage.disable)
         self.owner = create_owner_account(first_name="Owner", last_name="Tester",
             phone_number="01112345678", email="owner@example.test", password=PASSWORD)
         self.doctor = create_doctor_account(**{k: v for k, v in APPLICATION.items()})
@@ -59,15 +66,15 @@ class OwnerDoctorReviewTests(SessionFixtures, TestCase):
 
     def resignup(self, **changes):
         self.cleanup_redis()  # resend cooldowns and send budgets are not under test here
-        start = self.client.post(DOCTORS + "signup/", APPLICATION | changes, format="json")
+        start = self.client.post(BASE + "start/", WIZARD_APPLICATION | {"email": APPLICATION["email"], "professional_license_number": APPLICATION["professional_license_number"]} | changes, format="json", HTTP_X_CSRFTOKEN=self.csrf())
         self.assertEqual(start.status_code, 202, start.data)
         body = {"challenge_id": start.json()["challenge_id"],
                 "phone_number": changes.get("phone_number", APPLICATION["phone_number"])}
-        step = self.client.post(DOCTORS + "signup/verify/", body | {"code": self.sms.call_args.kwargs["code"]}, format="json")
+        step = self.client.post(BASE + "verify/", body | {"code": self.sms.call_args.kwargs["code"]}, format="json", HTTP_X_CSRFTOKEN=self.csrf())
         self.assertEqual(step.status_code, 202, step.data)
         with self.captureOnCommitCallbacks(execute=True):
-            return self.client.post(DOCTORS + "signup/verify/",
-                                    body | {"code": self.email_code.call_args.kwargs["code"]}, format="json")
+            response = self.client.post(BASE + "verify/", body | {"code": self.email_code.call_args.kwargs["code"]}, format="json", HTTP_X_CSRFTOKEN=self.csrf())
+            return upload_and_submit(self, response)
 
     def reject_and_resignup(self, times):
         for _ in range(times):
