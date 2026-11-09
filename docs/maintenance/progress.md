@@ -87,6 +87,40 @@ additional work requires new evidence or Owner instruction.
 
 ## Run ledger
 
+### 2026-11-09 — 11:50 UI tour: inventory and Admin navigation
+
+- Existing checkout clean on `codex/overnight-maintenance`; acquired the shared
+  lock atomically with this run's unique owner token before writes. No other
+  checkout, clone, branch change, push, merge or live operation.
+- Current authorization supersedes the old completed/stop memory. Source route,
+  dialog and state inventory for all four apps committed as `9b7ad3a`. Explicit
+  HI/KI/AI/DI icon queues added; 05:00 M1–M6 remain independently pending.
+- Completed A0a/AI-shell: reviewed all nine Admin sidebar icons and retained
+  labels. Replaced the doctor cross/container with person/stethoscope and phone
+  menu glyph with the existing SVG system; increased its 35px target to 44px.
+  Other sidebar icons need no change. One fix attempt, successful.
+- Inspected fictional-data before/after captures at 1440×900, 768×900 and
+  375×900 (drawer open/closed). Verified labels/current state, target dimensions,
+  keyboard trap/Escape/focus return, no document overflow and reduced motion.
+  Admin is English-only. Existing animations are retained without new motion.
+- Required checks against this checkout: five typechecks, 146 unit tests in
+  30 files, four builds, and all 34 standard Admin browser regressions passed.
+  The browser suite changed only its local test origin to isolated port 5277;
+  fictional API interception and assertions were retained. No Docker evidence.
+  Existing bundle advisories remain. Whitespace and report file links checked.
+- Sandbox browser/temp isolation initially prevented execution; approved host-side
+  isolated processes resolved it. No remaining blocker for the selected item.
+  No backend, real-device, external, live-data or full-system visual acceptance
+  claimed. No behavior-changing proposal or Owner decision needed.
+- Exact files, screenshots, test limitations and local fictional preview steps:
+  [UI navigation evidence](../verification/2026-11-09-ui-navigation.md).
+- Milestone reached: full source inventory + rendered Admin navigation polish.
+  All Hub/Kiosk/Advisor rendered rows and Admin content/dialog/chart/state tours
+  remain pending; see the finite checklist. Next: Hub/Kiosk profile person-icon
+  finding, then Advisor tab placeholders, with fresh bilingual rendered evidence.
+  Neither coverage queue is complete; later runs continue unchecked rows.
+  Both temporary preview processes were stopped; only this run's lock is released.
+
 ### 2026-11-09 — Owner-authorized checkpoint integration
 
 - The scheduled 05:00 run stopped at its branch/dirty-tree gate: active Advisor

@@ -37,7 +37,8 @@ Source: `frontend/hub/src/app/routes.tsx`, feature pages and `layouts/HubLayout.
 - [ ] H14 `/orders`: history, pending checkout and cancellation confirmation.
 - [ ] H15 `/orders/:orderId`: receipt, collection/deadline/status, cancel/reorder
   confirmations and uncertain outcomes.
-- [ ] H16 `/payment-methods`: empty/list/delete confirmation and errors.
+- [ ] H16 `/payment-methods`: read-only saved-card list, empty/loading/errors,
+  expiry details and browse link. No removal action is implemented.
 - [ ] HI Icon audit: header/navigation, service/profile/customer icons, QR,
   basket, catalogue and order/payment controls; selective phone labels only when clear.
 
@@ -74,8 +75,11 @@ Source: `frontend/kiosk/src/app/routes.tsx`, feature pages and `layouts/KioskFra
 
 Source: `frontend/admin/src/app/App.tsx`, layout and feature pages/components.
 
-- [ ] A0 Shared shell: all nine navigation entries, current item, phone drawer,
-  scrim/Escape/focus return, session warning and footer.
+- [x] A0a Shared navigation: all nine sidebar icons/labels, current item, phone
+  drawer, keyboard trap/Escape/focus return and footer at 1440/768/375px.
+  [Rendered evidence](../verification/2026-11-09-ui-navigation.md).
+- [ ] A0b Remaining shell states: boot/loading, idle warning/expiry and refresh
+  focus/scroll retention require their own rendered state tour (regressions separate).
 - [ ] A1 `/login`, `/forgot-password`: form, recovery steps, errors and completion.
 - [ ] A2 `/overview`: four totals; business period, revenue/payment/refund charts;
   product/category/channel/average/busy-time/Kiosk analytics; health/resources/API
@@ -101,6 +105,8 @@ Source: `frontend/admin/src/app/App.tsx`, layout and feature pages/components.
 - [ ] AI Icon audit: nine sidebar entity/action icons, mobile menu, dismiss,
   record/view/edit/image, inventory, chart and technical controls. Shell subset can
   complete independently of the remaining in-page icons.
+  - [x] AI-shell: sidebar and phone menu audited/rendered; doctor/person semantics
+    and consistent menu SVG corrected. Other eight sidebar icons need no change.
 
 ## Advisor (implemented v1 only)
 
@@ -125,16 +131,18 @@ Source: `frontend/advisor/src/app/App.tsx` (state-based tabs at `/advisor/`).
 
 ## Evidence and findings
 
-No rows above are complete at inventory creation. Shared cross-cutting UI6 remains
-pending until the relevant row variants have evidence. Keep the 05:00 M1–M6 queue
-independent in [progress](progress.md).
+Only A0a/AI-shell are visually complete in this run. The Doctors list is visible
+as context in the captures; its dialogs, filters and state variants remain A3.
+Shared cross-cutting UI6 remains pending until the relevant row variants have
+evidence. Keep the 05:00 M1–M6 queue independent in [progress](progress.md).
 
 Actionable source findings within this inventory:
 
-1. AI/A0: Doctors sidebar icon depicts a cross/container without a person; replace
-   with a recognizable medical professional using the existing inline SVG system.
-   Mobile navigation uses a font glyph and a 35px target; inspect rendered evidence
-   before replacing it with a consistent SVG and adequate target. Attempts: 0/2.
+1. **Completed AI-shell/A0a:** Doctors icon replaced with a person/stethoscope in
+   the existing inline SVG system. Phone menu now uses the same 20px/1.7-stroke
+   icon style and a 44px target instead of a font glyph/35px target. Labels/actions
+   and existing motion/focus behavior retained. Rendered before/after inspected
+   at 1440/768/375px. Attempts: 1/2; successful.
 2. HI/H4 and KI/K6: profile uses `◎` / `◉` rather than a person. Pending rendered
    evidence; preserve payment/collection cues and Kiosk size/keyboard constraints.
 3. DI/D3: workspace tabs use `＋`, `▤`, `▧` placeholders. Pending rendered evidence;
