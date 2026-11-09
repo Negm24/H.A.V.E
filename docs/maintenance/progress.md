@@ -11,8 +11,9 @@ continue those items across runs without redoing completed checks.
 
 ### 11:50 - Primary goal: UI tour and polish - Sol 6.1 Extra High
 
-- [ ] UI1: Inventory all implemented routes, dialogs and key UI states in Hub,
-  Kiosk, Admin and the existing Advisor surface. Build a finite screen checklist.
+- [x] UI1: Inventory all implemented routes, dialogs and key UI states in Hub,
+  Kiosk, Admin and the existing Advisor surface. Finite source-based checklist:
+  [UI coverage](ui-coverage.md), 9 November. Rendering coverage remains separate.
 - [ ] UI2: Tour Hub on phone/tablet/desktop, including English/Arabic and RTL;
   implement and verify justified cosmetic improvements.
 - [ ] UI3: Tour Kiosk at 1024x600 with touch keyboard, English/Arabic and RTL;
@@ -23,6 +24,9 @@ continue those items across runs without redoing completed checks.
 - [ ] UI6: Verify semantic colors, purposeful animation/transitions, reduced
   motion, focus, touch access, loading/error/empty states and visual consistency.
   Include before/after fictional-data screenshots and isolated preview steps.
+- [ ] UI7: Explicit icon audit and selective mobile labels across all four apps;
+  use HI/KI/AI/DI in the finite checklist. Retain localized names and visible
+  labels where meaning is ambiguous; record rendered evidence per changed surface.
 
 Animations/transitions and meaningful color polish are explicitly authorized.
 Existing feature actions, navigation, business behavior, scope and design
