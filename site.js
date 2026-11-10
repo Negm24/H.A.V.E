@@ -317,6 +317,7 @@ async function mountTurntable() {
       studio.canvas.remove()
       studio = null
       model.hidden = false
+      cabinet.append(model)
       orient()
     })
   } catch { /* The CSS model supports the same controls without WebGL. */ }
@@ -363,8 +364,8 @@ async function mountTurntable() {
     orient()
   })
   orient()
-  image.after(model)
-  image.hidden = true
+  if (!studio) cabinet.append(model)
+  image.remove()
 }
 // Keep the original photograph if canvas, the texture, or 3D rendering is unavailable.
 if (CSS.supports('transform-style','preserve-3d')) mountTurntable().catch(() => {})
