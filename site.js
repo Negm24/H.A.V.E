@@ -8,13 +8,14 @@ function createStudioKiosk(frontPhoto, cabinet, onContextLost) {
   const vertex = `
     attribute vec3 position, normal;
     attribute float material;
-    uniform float angle, aspect;
+    uniform float angle, pitch, aspect;
     varying vec3 world, facing, local;
     varying float materialId;
     void main() {
       float s=sin(angle), c=cos(angle);
       mat3 yaw=mat3(c,0.,-s, 0.,1.,0., s,0.,c);
-      mat3 tilt=mat3(1.,0.,0., 0.,.985,.173, 0.,-.173,.985);
+      float ct=cos(pitch), st=sin(pitch);
+      mat3 tilt=mat3(1.,0.,0., 0.,ct,st, 0.,-st,ct);
       world=tilt*yaw*position;
       facing=tilt*yaw*normal;
       local=position;
@@ -197,12 +198,13 @@ function createStudioKiosk(frontPhoto, cabinet, onContextLost) {
   for(const param of [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER]) gl.texParameteri(gl.TEXTURE_2D,param,gl.LINEAR)
   gl.enable(gl.DEPTH_TEST)
   const angleLoc=gl.getUniformLocation(program,'angle'),aspectLoc=gl.getUniformLocation(program,'aspect')
-  let angle=.38, playing=false, visible=true, frame=0, previous=null
+  let angle=.38, pitch=.174, playing=false, visible=true, frame=0, previous=null
   function draw() {
     const w=canvas.width,h=canvas.height
     gl.viewport(0,0,w,h)
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
     gl.uniform1f(angleLoc,angle)
+    gl.uniform1f(gl.getUniformLocation(program,'pitch'),pitch)
     gl.uniform1f(aspectLoc,w/h)
     gl.drawElements(gl.TRIANGLES,opaqueIndices,gl.UNSIGNED_SHORT,0)
     // Composite the pane over the finished interior, while the cabinet still masks it.
@@ -243,7 +245,7 @@ function createStudioKiosk(frontPhoto, cabinet, onContextLost) {
     onContextLost()
   },{once:true})
   resize()
-  return {canvas,setPlaying(value){playing=value;schedule()}}
+  return {canvas,setOrientation(yaw,tilt){angle=yaw;pitch=tilt;draw()},setPlaying(value){playing=value;schedule()}}
 }
 
 const places = [...document.querySelectorAll('[data-place]')]
@@ -303,38 +305,66 @@ async function mountTurntable() {
     panel.className = 'face ' + side
     model.append(panel)
   }
-  const button = exhibit.querySelector('.spin-control')
-  const preference = matchMedia('(prefers-reduced-motion: reduce)')
+  const cabinet = image.parentElement
   let studio
-  let playing = !preference.matches
+  let yaw = .38, pitch = .174
+  function orient() {
+    model.style.transform = `rotateX(${-pitch}rad) rotateY(${yaw}rad)`
+    studio?.setOrientation(yaw, pitch)
+  }
   try {
-    studio = createStudioKiosk(model.querySelector('.front'), image.parentElement, () => {
+    studio = createStudioKiosk(model.querySelector('.front'), cabinet, () => {
       studio.canvas.remove()
       studio = null
       model.hidden = false
-      model.style.animationPlayState = playing ? 'running' : 'paused'
+      orient()
     })
-  } catch {
-    // The CSS turntable also works on devices with unavailable GPU resources.
-  }
+  } catch { /* The CSS model supports the same controls without WebGL. */ }
   if (studio) {
-    studio.canvas.setAttribute('role','img')
-    studio.canvas.setAttribute('aria-label',image.alt)
     image.after(studio.canvas)
     model.hidden = true
   }
-  const setPlaying = value => {
-    playing = value
-    studio?.setPlaying(playing)
-    model.style.animationPlayState = playing ? 'running' : 'paused'
-    button.textContent = playing ? button.dataset.pause : button.dataset.play
+  cabinet.tabIndex = 0
+  cabinet.setAttribute('role', 'group')
+  cabinet.setAttribute('aria-label', image.alt)
+  cabinet.setAttribute('aria-describedby', 'rotate-hint')
+  cabinet.classList.add('interactive')
+  exhibit.querySelector('.rotate-hint').hidden = false
+  let drag = null
+  cabinet.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0) return
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY }
+    cabinet.setPointerCapture(event.pointerId)
+    cabinet.classList.add('dragging')
+  })
+  cabinet.addEventListener('pointermove', event => {
+    if (!drag || event.pointerId !== drag.id) return
+    yaw += (event.clientX - drag.x) * .01
+    pitch += (event.clientY - drag.y) * .01
+    drag.x = event.clientX
+    drag.y = event.clientY
+    orient()
+  })
+  function endDrag(event) {
+    if (!drag || event.pointerId !== drag.id) return
+    drag = null
+    cabinet.classList.remove('dragging')
+    if (cabinet.hasPointerCapture(event.pointerId)) cabinet.releasePointerCapture(event.pointerId)
   }
-  setPlaying(!preference.matches)
-  button.addEventListener('click', () => setPlaying(model.style.animationPlayState !== 'running'))
-  preference.addEventListener('change', () => setPlaying(!preference.matches))
+  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) cabinet.addEventListener(name, endDrag)
+  cabinet.addEventListener('keydown', event => {
+    if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home'].includes(event.key)) return
+    event.preventDefault()
+    if (event.key === 'Home') { yaw = .38; pitch = .174 }
+    if (event.key === 'ArrowLeft') yaw -= .15
+    if (event.key === 'ArrowRight') yaw += .15
+    if (event.key === 'ArrowUp') pitch -= .15
+    if (event.key === 'ArrowDown') pitch += .15
+    orient()
+  })
+  orient()
   image.after(model)
   image.hidden = true
-  button.hidden = false
 }
 // Keep the original photograph if canvas, the texture, or 3D rendering is unavailable.
 if (CSS.supports('transform-style','preserve-3d')) mountTurntable().catch(() => {})

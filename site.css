@@ -916,7 +916,7 @@ header nav a:is(:hover,:focus-visible) { color:var(--violet-light); }
 .kiosk-model {
   --w:min(54cqw,72cqh); --d:calc(var(--w)*.52); --h:calc(var(--w)*1.13);
   position:relative;width:var(--w);height:var(--h);transform-style:preserve-3d;
-  animation:turn-kiosk 16s linear infinite;
+  transform:rotateX(-10deg) rotateY(22deg);
 }
 .studio-kiosk { position:absolute;inset:0;width:100%;height:100%; }
 .cabinet:has(.studio-kiosk)::before {
@@ -1074,4 +1074,18 @@ footer { border-top:1px solid var(--hairline); }
   .review-grid {grid-template-columns:1fr;}
   .review-grid figure + figure {border-inline-start:0;border-top:1px solid var(--hairline);}
   .review-grid figure {padding:20px 0;}
+}
+
+/* Reserve separate rows for the label, model, and gesture hint at every size. */
+.exhibit { display:flex;flex-direction:column;aspect-ratio:auto;min-width:0; }
+.exhibit figcaption { position:relative;top:auto;right:auto;order:-1;align-self:flex-end;flex-shrink:0; }
+.cabinet { position:relative;inset:auto;width:100%;height:clamp(270px,36vw,500px);overflow:hidden;flex-shrink:0; }
+.cabinet.interactive { touch-action:none;cursor:grab;user-select:none; }
+.cabinet.dragging { cursor:grabbing; }
+.cabinet canvas,.cabinet img { pointer-events:none; }
+.rotate-hint { margin:8px 0;text-align:center;font-size:12px;opacity:.8; }
+@media(max-width:700px) {
+  .exhibit { aspect-ratio:auto;margin-block:24px 20px; }
+  .exhibit figcaption { top:auto;font-size:10px; }
+  .cabinet { inset:auto;height:300px; }
 }
