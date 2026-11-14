@@ -369,18 +369,6 @@ async function mountTurntable() {
 }
 // Keep the original photograph if canvas, the texture, or 3D rendering is unavailable.
 if (CSS.supports('transform-style','preserve-3d')) mountTurntable().catch(() => {})
-const metricPicker = document.querySelector('.switches')
-metricPicker.hidden = false
-for (const button of metricPicker.querySelectorAll('button')) {
-  button.addEventListener('click', () => {
-    for (const option of metricPicker.querySelectorAll('button')) {
-      option.setAttribute('aria-pressed', String(option === button))
-    }
-    for (const chart of document.querySelectorAll('[data-series]')) {
-      chart.hidden = chart.dataset.series !== button.dataset.showSeries
-    }
-  })
-}
 function selectPlace(id) {
   for (const el of [...places, ...pins]) {
     el.setAttribute('aria-pressed', String((el.dataset.place || el.dataset.pin) === id))
