@@ -1,0 +1,10 @@
+{
+  "name": "@autopharm/corporate",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node serve.mjs",
+    "build": "node build.mjs",
+    "test": "node --test site.test.mjs"
+  }
+}

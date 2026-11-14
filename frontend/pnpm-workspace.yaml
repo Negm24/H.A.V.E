@@ -1,4 +1,5 @@
 packages:
+  - corporate
   - kiosk
   - hub
   - advisor
