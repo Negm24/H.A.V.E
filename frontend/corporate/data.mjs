@@ -39,3 +39,11 @@ export const milestones=[
   {date:'2026-08',title:['Over a thousand monthly collecting customers','تجاوز ألف عميل مستلم خلال شهر واحد']},
 ]
 export const productURL='https://have.autopharm.com/'
+
+// One sample assortment, with each distinct product assigned to one category.
+export const assortment = [
+ {label:['Pain relief','تسكين الألم'],products:['Panadol Advance','Panadol Extra','Brufen','Cetal','Doliprane']},
+ {label:['Cold & allergy','البرد والحساسية'],products:['Zyrtec','Otrivin Adult','Panadol Cold & Flu Day']},
+ {label:['Skin care','العناية بالبشرة'],products:['Bepanthen Moisturizing Cream','Panthenol']},
+ {label:['Digestive care','العناية بالهضم'],products:['Miopan','Antodine']}
+]

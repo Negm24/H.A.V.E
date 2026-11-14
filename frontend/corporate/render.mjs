@@ -1,4 +1,4 @@
-import { locations, months, latest, collections, reviews, milestones, productURL } from './data.mjs'
+import { locations, assortment, milestones } from './data.mjs'
 
 export function render(lang, fonts = false) {
   const ar = lang === 'ar', i = ar ? 1 : 0
@@ -6,32 +6,18 @@ export function render(lang, fonts = false) {
   const num = value => new Intl.NumberFormat(ar?'ar-EG':'en-GB').format(value)
   const month = (date,year=false) => new Intl.DateTimeFormat(ar?'ar-EG':'en-GB',{month:year?'long':'short',...(year?{year:'numeric'}:{}),timeZone:'UTC'}).format(new Date(date+'-01T12:00:00Z'))
   const clock = hour => new Intl.DateTimeFormat(ar?'ar-EG':'en-GB',{hour:'numeric',minute:'2-digit',hourCycle:'h23',timeZone:'UTC'}).format(Date.UTC(2026,0,1,hour))
-  const sample=t('Illustrative data','بيانات توضيحية')
   const brand='<span class="symbol" aria-hidden="true"></span><b dir="ltr">AutoPharm</b>'
   const arrow='<span class="arrow" aria-hidden="true">↗</span>'
-  const explore=t('Explore H.A.V.E','اكتشف H.A.V.E')
-  const nav=[['company',t('Company','الشركة')],['product','H.A.V.E'],['impact',t('Impact','الأثر')],['coverage',t('Locations','المواقع')]]
+  const nav=[['company',t('Company','الشركة')],['product','H.A.V.E'],['milestones',t('Growth','التطوّر')],['coverage',t('Locations','المواقع')]]
   const links=nav.map(([id,label])=>`<a href="#${id}">${label}</a>`).join('')
   const statistic=(n,label)=>`<div><strong class="figure">${num(n)}</strong><span>${label}</span></div>`
   const steps=[
     [t('Choose your kiosk','اختر الكشك'),t('Open the Hub on your phone and browse the essentials available at your preferred location.','افتح البوابة على هاتفك وتصفّح المستلزمات المتاحة في الموقع الذي تفضّله.')],
-    [t('Place your order','أكمل طلبك'),t('Select what you need and pay from your phone before you head out.','اختر ما تحتاجه وادفع من هاتفك قبل التوجه إلى الكشك.')],
-    [t('Collect on your way','استلم في طريقك'),t('Sign in at your selected kiosk and collect your order. You can also browse and order directly at the kiosk.','سجّل الدخول في الكشك الذي اخترته لاستلام طلبك. ويمكنك أيضاً التصفّح والطلب مباشرةً من الكشك.')]
+    [t('Check availability and order','شوف المتاح واطلب'),t('Select what you need and pay from your phone before you head out.','اختر ما تحتاجه وادفع من هاتفك قبل التوجه إلى الكشك.')],
+    [t('Collect at that kiosk','استلم من نفس الكشك'),t('Sign in at your selected kiosk and collect your order. You can also browse and order directly at the kiosk.','سجّل الدخول في الكشك الذي اخترته لاستلام طلبك. ويمكنك أيضاً التصفّح والطلب مباشرةً من الكشك.')]
   ]
-  const orders = months.map(m => Object.values(m.orders).reduce((sum, n) => sum+n, 0))
-  const customers = months.map(m => m.customers)
-  function spark(values) {
-    const max = Math.max(...values)
-    const points = values.map((v,k) => `${2+k*96/Math.max(1,values.length-1)},${30-v/max*27}`).join(' ')
-    return `<svg class="spark" viewBox="0 0 100 32" aria-hidden="true"><polyline points="${points}" /></svg>`
-  }
-  function plot(values, label, key, hidden=false) {
-    const scale = Math.ceil(Math.max(...values)/500)*500
-    return `<figure class="chart" data-series="${key}" ${hidden?'hidden':''}>
-      <figcaption>${label}</figcaption>
-      <div class="bars">${values.map((v,k)=>`<div><strong>${num(v)}</strong><i style="height:${v/scale*128}px;--delay:${k*65}ms"></i><small>${month(months[k].date)}</small></div>`).join('')}</div>
-      <small>${sample} · ${num(2026)}</small></figure>`
-  }
+  const categoryCounts = assortment.map(category => category.products.length)
+  const assortmentChart = `<figure class="chart"><figcaption>${t('What can I find in a kiosk?','ماذا أجد في الكشك؟')}</figcaption><div class="bars">${assortment.map((category,k)=>`<div><strong>${num(categoryCounts[k])}</strong><i style="height:${categoryCounts[k]/Math.max(...categoryCounts)*128}px;--delay:${k*65}ms"></i><small>${category.label[i]}</small></div>`).join('')}</div><small>${t('Example kiosk assortment · distinct products per category','تشكيلة كشك توضيحية · عدد المنتجات المختلفة بكل فئة')}</small></figure>`
   const pinPosition = site => [(site.x-31.16)/.22*100, (30.10-site.y)/.17*100]
   const route = [...locations].sort((a,b)=>a.y-b.y).map(s=>pinPosition(s).join(',')).join(' ')
   const dots=locations.map((s,k)=>`<button type="button" data-pin="${s.id}" aria-label="${s.name[i]} · ${s.area[i]}" aria-pressed="${k===0}" style="left:${(s.x-31.16)/.22*100}%;top:${(30.10-s.y)/.17*100}%">${num(k+1)}</button>`).join('')
@@ -53,33 +39,67 @@ export function render(lang, fonts = false) {
       <div class="hero-inner wrap">
         <div class="hero-text">
           <p class="kicker">${t('Self-service pharmacy network','شبكة الخدمة الصيدلية الذاتية')}</p>
-          <h1>${t('Your pharmacy','مستلزماتك الصيدلية')}<br><em>${t('pick-up point.','في طريقك.')}</em></h1>
-          <p class="lead">${t('AutoPharm connects everyday essentials to the places you pass. Order on your phone. Collect at a H.A.V.E kiosk.', 'تضع أوتوفارم مستلزماتك اليومية في الأماكن التي تمرّ بها. اطلب من هاتفك واستلم من كشك H.A.V.E.')}</p>
-          <div class="actions"><a class="primary" href="${productURL}">${explore} ${arrow}</a><a class="sub" href="#coverage">${t('Find a kiosk','ابحث عن كشك')} ↓</a></div>
+          <h1>${t('Know what’s in the kiosk','اعرف المتاح في الكشك')}<br><em>${t('before you go.','قبل ما تروح.')}</em></h1>
+          <p class="lead">${t('Check medicines at your chosen H.A.V.E kiosk. Order on your phone and collect there, or shop at the machine when you arrive.', 'شوف الأدوية المتاحة في كشك H.A.V.E اللي تختاره. اطلب من موبايلك واستلم هناك، أو اشترِ من الكشك لما توصل.')}</p>
+          <div class="actions"><a class="primary" href="#product">${t("See how pickup works","شوف طريقة الاستلام")}</a><a class="sub" href="#coverage">${t('Find a kiosk','ابحث عن كشك')} ↓</a></div>
         </div>
         <figure class="exhibit">
           <div class="orbit base" aria-hidden="true"></div><div class="orbit satellite" aria-hidden="true"></div>
           <div class="cabinet"><img src="/kiosk.jpeg" width="1280" height="720" fetchpriority="high" alt="${t('H.A.V.E self-service kiosk','كشك H.A.V.E للخدمة الذاتية')}"></div>
-          <button class="spin-control" type="button" hidden data-play="${t('Play rotation','تشغيل الدوران')}" data-pause="${t('Pause rotation','إيقاف الدوران مؤقتاً')}"></button>
+          <p class="rotate-hint" id="rotate-hint" hidden>${t('Drag to rotate · Arrow keys also work','اسحب للتدوير · يمكنك استخدام مفاتيح الأسهم')}</p>
           <figcaption><i aria-hidden="true"></i> H.A.V.E <span>/</span> ${t('Collection kiosk','كشك الاستلام')}</figcaption>
         </figure>
       </div>
     </section>
   <section id="impact" class="wrap observatory section">
-    <div class="panel-heading"><div><p class="kicker">${t('Network activity','نشاط الشبكة')}</p><h2>${t('The network in numbers.','الشبكة بالأرقام.')}</h2></div><small>${sample} · ${month(latest.date,true)}</small></div>
-    <div class="dashboard">
-      <div class="readings">
-        <div>${statistic(locations.length,t('Kiosk locations','مواقع الأكشاك'))}<span class="node-mark" aria-hidden="true">⌖</span></div>
-        <div>${statistic(latest.customers,t('Monthly collecting customers','العملاء المستلمون شهرياً'))}${spark(customers)}</div>
-        <div>${statistic(collections,t('Monthly orders collected','الطلبات المستلمة شهرياً'))}${spark(orders)}</div>
+    <div class="panel-heading"><div><p class="kicker">H.A.V.E</p><h2>${t('Made for your everyday stops.','جزء من مشاويرك اليومية.')}</h2></div></div>
+    <div class="dashboard"><div class="readings">
+    <div>${statistic(2,t('Ways to shop','طريقتان للشراء'))}<p>${t('On your phone or at the kiosk.','من موبايلك أو من الكشك.')}</p></div>
+    <div>${statistic(2,t('Languages','لغتان'))}<p>${t('Arabic and English.','العربية والإنجليزية.')}</p></div>
+    </div><div class="instrument">${assortmentChart}</div></div>
+  </section>
+  <section class="wrap section split" id="why">
+    <div><p class="kicker">${t('Why H.A.V.E','لماذا H.A.V.E')}</p><h2>${t('Need one thing on your way home?','محتاج دواء وأنت مروّح؟')}</h2></div>
+    <div><p class="big">${t('Check before you make the trip.','اتأكد قبل ما تعمل المشوار.')}</p><p>${t('Choose a kiosk on your route, see whether it carries what you need, then decide where to stop. Order ahead on your phone, or browse and buy at the machine.','اختار كشك في طريقك، وشوف إذا كان فيه اللي محتاجه، وبعدها قرر هتوقف فين. اطلب مسبقاً من موبايلك، أو تصفّح واشترِ من الكشك.')}</p></div>
+  </section>
+  <section class="product section" id="product">
+    <div class="wrap"><p class="kicker">H.A.V.E</p>
+    <h2>${t('Choose on your phone.','اختر من هاتفك.')}<br>${t('Collect at the kiosk.','واستلم من الكشك.')}</h2>
+    <figure class="hub-walkthrough"><img src="/hub-screen.png" alt="${t("H.A.V.E Hub home screen","الشاشة الرئيسية لبوابة H.A.V.E")}"><figcaption>${t("Start with the kiosk that fits your route.","ابدأ بالكشك المناسب لطريقك.")}</figcaption></figure><div class="steps">${steps.map(([title,body],k)=>`<article><span class="step">${num(k+1)}</span>
+    <h3>${title}</h3><p>${body}</p>
+    </article>`).join('')}</div><p class="coming-soon">${t("Medicine browsing coming soon","تصفّح الأدوية قريباً")}</p>
+    </div>
+    </section>
+  <section class="wrap section coverage" id="coverage"><p class="kicker">${t('Locations','المواقع')}</p>
+    <h2>${t('Find a kiosk in Greater Cairo','ابحث عن كشك في القاهرة الكبرى')}</h2><small>${t('Example locations · illustrative venues and hours','مواقع توضيحية · أمثلة للأماكن وساعات العمل')}</small>
+    <div class="locator">
+    <div>
+    <label for="search">${t('Search by venue or neighbourhood','ابحث باسم الموقع أو الحي')}</label><input type="search" id="search" placeholder="${t('e.g. Maadi','مثال: المعادي')}">
+    <div class="places">${locations.map((s,k)=>`<button type="button" data-place="${s.id}" aria-pressed="${k===0}"><span class="idx">${num(k+1)}</span><span><b>${s.name[i]}</b><small>${s.area[i]} · <bdi>${clock(s.hours[0])}–${clock(s.hours[1])}</bdi></small></span></button>`).join('')}</div><p id="empty" role="status" hidden>${t('No matching kiosks. Try another neighbourhood.','لا توجد نتائج. جرّب حيّاً آخر.')}</p><button class="map-toggle outline" aria-controls="map" aria-expanded="false" data-hide="${t('Hide map','إخفاء الخريطة')}" data-show="${t('View map','عرض الخريطة')}">${t('View map','عرض الخريطة')}</button>
+    </div>
+    <div class="map" id="map">
+    <div class="map-grid" aria-hidden="true">
+    </div>
+    <svg class="routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${route}" /></svg>
+    <div class="river" aria-hidden="true">
+    </div><span class="map-caption">${t('Greater Cairo · schematic map','القاهرة الكبرى · خريطة توضيحية')}</span>${dots}<output class="map-name">${locations[0].name[i]} · ${locations[0].area[i]}</output>
+    </div>
+    </div>
+    </section>
+  <section class="wrap section" id="milestones"><p class="kicker">${t('Impact & Growth','الأثر والتطوّر')}</p><h2>${t('Building the network','تطوّر الشبكة')}</h2><p>${t('Illustrative timeline','تسلسل زمني توضيحي')}</p>
+    <ol class="growth-story">${milestones.map((m,k)=>`<li><div class="milestone-art">${k===1?'<img src="/hub-screen.png" alt="'+t('H.A.V.E Hub home screen','الشاشة الرئيسية لبوابة H.A.V.E')+'">':k===0?'<img src="/kiosk.jpeg" alt="'+t('H.A.V.E kiosk installation','تركيب كشك H.A.V.E')+'">':'<div class="pickup-scene"><span class="customer" aria-hidden="true">●</span><img src="/kiosk.jpeg" alt="'+t('Illustration of a customer collecting at H.A.V.E','رسم توضيحي لعميل يستلم من كشك H.A.V.E')+'"><span class="collection-bag" aria-hidden="true">✓</span></div>'}</div><time datetime="${m.date}">${month(m.date,true)}</time><h3>${m.title[i]}</h3></li>`).join('')}</ol></section>
+  <section class="hosting section" id="hosting">
+    <div class="wrap split">
+      <div>
+        <h2>${t('Host a H.A.V.E kiosk','استضف كشك H.A.V.E')}</h2>
+        <p>${t('Give people visiting your location a convenient place to collect everyday pharmacy essentials.', 'وفّر لزوّار موقعك مكاناً مناسباً لاستلام مستلزماتهم الصيدلية اليومية.')}</p>
       </div>
-      <div class="instrument" id="adoption">
-        <div class="switches" role="group" aria-label="${t('Graph metric','مؤشر الرسم البياني')}" hidden>
-          <button type="button" data-show-series="customers" aria-pressed="true">${t('Customers','العملاء')}</button>
-          <button type="button" data-show-series="orders" aria-pressed="false">${t('Orders','الطلبات')}</button>
-        </div>
-        ${plot(customers,t('Monthly customers collecting at least one order','العملاء الذين استلموا طلباً واحداً على الأقل شهرياً'),'customers')}
-        ${plot(orders,t('Orders collected each month','عدد الطلبات المستلمة كل شهر'),'orders',true)}
+      <div class="host-details">
+        <dl>
+          <dt>${t('Your role', 'دورك')}</dt><dd>${t('Provide a suitable space for the kiosk.', 'توفير مساحة مناسبة للكشك.')}</dd>
+          <dt>${t('AutoPharm’s role', 'دور أوتوفارم')}</dt><dd>${t('Install, stock, and operate the kiosk.', 'تركيب الكشك وتزويده بالمنتجات وتشغيله.')}</dd>
+        </dl>
+        <a class="outline" href="#contact" data-host-inquiry>${t('Discuss a location', 'تحدّث معنا عن موقعك')} ${arrow}</a>
       </div>
     </div>
   </section>
@@ -97,66 +117,6 @@ export function render(lang, fonts = false) {
     </article>
     </div>
     </div>
-    </section>
-  <section class="product section" id="product">
-    <div class="wrap"><p class="kicker">H.A.V.E</p>
-    <h2>${t('Choose on your phone.','اختر من هاتفك.')}<br>${t('Collect at the kiosk.','واستلم من الكشك.')}</h2>
-    <div class="steps">${steps.map(([title,body],k)=>`<article><span class="step">${num(k+1)}</span>
-    <h3>${title}</h3><p>${body}</p>
-    </article>`).join('')}</div><a class="sub" href="${productURL}">${explore} ${arrow}</a>
-    </div>
-    </section>
-  <section class="wrap section coverage" id="coverage"><p class="kicker">${t('Locations','المواقع')}</p>
-    <h2>${t('Find a kiosk in Greater Cairo','ابحث عن كشك في القاهرة الكبرى')}</h2><small>${sample} · ${t('Example venues and hours','أمثلة توضيحية للمواقع وساعات العمل')}</small>
-    <div class="locator">
-    <div>
-    <label for="search">${t('Search by venue or neighbourhood','ابحث باسم الموقع أو الحي')}</label><input type="search" id="search" placeholder="${t('e.g. Maadi','مثال: المعادي')}">
-    <div class="places">${locations.map((s,k)=>`<button type="button" data-place="${s.id}" aria-pressed="${k===0}"><span class="idx">${num(k+1)}</span><span><b>${s.name[i]}</b><small>${s.area[i]} · <bdi>${clock(s.hours[0])}–${clock(s.hours[1])}</bdi></small></span></button>`).join('')}</div><p id="empty" role="status" hidden>${t('No matching kiosks. Try another neighbourhood.','لا توجد نتائج. جرّب حيّاً آخر.')}</p><button class="map-toggle outline" aria-controls="map" aria-expanded="false" data-hide="${t('Hide map','إخفاء الخريطة')}" data-show="${t('View map','عرض الخريطة')}">${t('View map','عرض الخريطة')}</button>
-    </div>
-    <div class="map" id="map">
-    <div class="map-grid" aria-hidden="true">
-    </div>
-    <svg class="routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${route}" /></svg>
-    <div class="river" aria-hidden="true">
-    </div><span class="map-caption">${t('Greater Cairo · schematic map','القاهرة الكبرى · خريطة توضيحية')}</span>${dots}<output class="map-name">${locations[0].name[i]} · ${locations[0].area[i]}</output>
-    </div>
-    </div>
-    </section>
-  <section class="hosting section" id="hosting">
-    <div class="wrap split">
-      <div>
-        <h2>${t('Host a H.A.V.E kiosk','استضف كشك H.A.V.E')}</h2>
-        <p>${t('Give people visiting your location a convenient place to collect everyday pharmacy essentials.', 'وفّر لزوّار موقعك مكاناً مناسباً لاستلام مستلزماتهم الصيدلية اليومية.')}</p>
-      </div>
-      <div class="host-details">
-        <dl>
-          <dt>${t('Your role', 'دورك')}</dt><dd>${t('Provide a suitable space for the kiosk.', 'توفير مساحة مناسبة للكشك.')}</dd>
-          <dt>${t('AutoPharm’s role', 'دور أوتوفارم')}</dt><dd>${t('Install, stock, and operate the kiosk.', 'تركيب الكشك وتزويده بالمنتجات وتشغيله.')}</dd>
-        </dl>
-        <a class="outline" href="#contact" data-host-inquiry>${t('Discuss a location', 'تحدّث معنا عن موقعك')} ${arrow}</a>
-      </div>
-    </div>
-  </section>
-  <section class="wrap section reviews" id="reviews" aria-labelledby="reviews-title">
-    <h2 id="reviews-title">${t('Community reviews', 'آراء المجتمع')}</h2>
-    <small>${t('Sample reviews from fictional customers.', 'آراء توضيحية لعملاء خياليين.')}</small>
-    <div class="review-grid">
-      ${reviews.map(review => `<figure>
-        <blockquote>${t('“','«')}${review.quote[i]}${t('”','»')}</blockquote>
-        <figcaption><strong>${review.name[i]}</strong> · ${review.area[i]}</figcaption>
-      </figure>`).join('')}
-    </div>
-  </section>
-  <section class="wrap section split" id="milestones">
-    <div><p class="kicker">${t('Company milestones','محطات الشركة')}</p>
-    <h2>${t('Building the network','تطوّر الشبكة')}</h2><small>${t('Illustrative timeline','تسلسل زمني توضيحي')}</small>
-    </div>
-    <ol class="timeline">${milestones.map(m=>`<li><time datetime="${m.date}">${month(m.date,true)}</time><b>${m.title[i]}</b></li>`).join('')}</ol>
-    </section>
-  <section class="wrap team" id="team">
-    <div><p class="kicker">${t('People behind AutoPharm','فريق أوتوفارم')}</p>
-    <h2>${t('One team, from the Hub to the kiosk','فريق واحد من البوابة إلى الكشك')}</h2>
-    </div><p>${t('Our product team designs the mobile Hub and kiosk experience. Our operations team works with venue hosts on kiosk placement, stock and day-to-day service.','يصمّم فريق المنتج تجربة البوابة على الهاتف وشاشات الأكشاك. ويتعاون فريق التشغيل مع الجهات المضيفة لاختيار مواقع الأكشاك ومتابعة المخزون والخدمة اليومية.')}</p>
     </section>
   <section class="contact section" id="contact">
     <div class="wrap split">

@@ -3,7 +3,7 @@ import { createServer } from 'node:http'
 import { readFile, readdir } from 'node:fs/promises'
 const out = new URL('./dist/',import.meta.url)
 const files = new Set((await readdir(out,{withFileTypes:true})).filter(item=>item.isFile()).map(item=>'/'+item.name))
-const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',jpeg:'image/jpeg',woff2:'font/woff2',txt:'text/plain'}
+const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',png:'image/png',jpeg:'image/jpeg',woff2:'font/woff2',txt:'text/plain'}
 const port=Number(process.env.PORT || 5177)
 createServer(async(req,res)=>{
   const pathname=req.url.split('?')[0]
