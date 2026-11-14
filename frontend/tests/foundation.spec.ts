@@ -27,7 +27,7 @@ for (const app of apps) {
       await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
     } else {
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(`H.A.V.E ${app.name}`)
-      expect(await page.locator('body').innerText()).toBe(`H.A.V.E ${app.name}`)
+      await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
     }
     await page.evaluate(() => document.fonts.ready)
     expect(await page.evaluate(() => document.fonts.check('600 24px "Inter Variable"'))).toBe(true)

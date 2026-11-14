@@ -17,7 +17,7 @@ def load_development_access(path=ACCESS_FILE):
         raise ValueError("Cannot read development/access.local.json. Check its JSON syntax and permissions.") from None
     fields = {"hubPublicOrigin", "kioskPublicOrigin", "kioskAccessPassword"}
     if (not isinstance(data, dict) or not fields.issubset(data)
-            or set(data) - fields - {"ownerPrivateOrigin"}
+            or set(data) - fields - {"ownerPrivateOrigin", "advisorPublicOrigin"}
             or any(not isinstance(data[key], str) for key in fields)):
         raise ValueError("development/access.local.json requires exactly hubPublicOrigin, kioskPublicOrigin and kioskAccessPassword strings.")
     for field, ports in (("hubPublicOrigin", (None, 443)), ("kioskPublicOrigin", (None, 443, 8443))):
@@ -51,4 +51,18 @@ def load_development_access(path=ACCESS_FILE):
             valid = False
         if not valid:
             raise ValueError("ownerPrivateOrigin must be an exact HTTPS origin on private port 9443.")
+    if "advisorPublicOrigin" in data:
+        try:
+            value = data["advisorPublicOrigin"]
+            advisor = urlsplit(value)
+            valid = (advisor.scheme == "https" and (advisor.port == 10000 or value == data["hubPublicOrigin"])
+                     and not advisor.username and not advisor.password and not advisor.path
+                     and not advisor.query and not advisor.fragment and advisor.hostname
+                     and re.fullmatch(r"[a-z0-9]+(?:[.-][a-z0-9]+)+", advisor.hostname)
+                     and not re.fullmatch(r"[0-9.]+", advisor.hostname)
+                     and value == f"https://{advisor.hostname}" + (":10000" if advisor.port == 10000 else ""))
+        except (ValueError, TypeError, AttributeError):
+            valid = False
+        if not valid:
+            raise ValueError("advisorPublicOrigin must be the exact Hub HTTPS origin or an exact HTTPS origin on port 10000.")
     return data

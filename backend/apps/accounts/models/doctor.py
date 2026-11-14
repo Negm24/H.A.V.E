@@ -21,8 +21,16 @@ class Doctor(models.Model):
     # NULL once a rejected application's personal data is erased (FR-82e).
     professional_license_number = models.CharField(
         max_length=100,
-        null=True,
+        null=True, blank=True,
     )
+    medical_school = models.CharField(max_length=200, blank=True, default="")
+    name_ar = models.CharField(max_length=200, blank=True, default="")
+    clinic_name_ar = models.CharField(max_length=200, blank=True, default="")
+    clinic_address_ar = models.TextField(blank=True, default="")
+    specialty_ar = models.CharField(max_length=100, blank=True, default="")
+    nationality = models.CharField(max_length=2, blank=True, default="")
+    country_of_graduation = models.CharField(max_length=2, blank=True, default="")
+    syndicate_registration_number = models.CharField(max_length=100, blank=True, default="")
     specialty = models.CharField(max_length=100)
     clinic_name = models.CharField(max_length=200)
     clinic_address = models.TextField()

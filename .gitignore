@@ -52,6 +52,8 @@ htmlcov/
 # Django/runtime data
 db.sqlite3
 media/
+private_verification/
+private-backups/
 staticfiles/
 *.log
 

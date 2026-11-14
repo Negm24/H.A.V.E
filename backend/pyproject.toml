@@ -15,5 +15,7 @@ dependencies = [
     "psycopg[binary]>=3.3.6",
     "pyjwt>=2.15.1",
     "pyotp>=2.9.0",
+    "pypdf>=6,<7",
     "redis>=8.1.0",
+    "weasyprint>=68,<71",
 ]

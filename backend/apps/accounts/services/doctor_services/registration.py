@@ -22,7 +22,9 @@ def create_doctor_account(
     specialty,
     clinic_name,
     clinic_address,
+    medical_school="",
 ):
+    medical_school = validate_required_text(medical_school, field_name="Medical school / university", max_length=200) if medical_school else ""
     first_name = validate_name(first_name)
     last_name = validate_name(last_name)
     phone_number = normalize_phone_number(phone_number)
@@ -67,13 +69,14 @@ def create_doctor_account(
         first_name=first_name, last_name=last_name, phone_number=phone_number, email=email,
         password_hash=make_password(password),
         professional_license_number=professional_license_number, specialty=specialty,
-        clinic_name=clinic_name, clinic_address=clinic_address,
+        clinic_name=clinic_name, clinic_address=clinic_address, medical_school=medical_school.strip(),
     )
 
 
 def _create_doctor_from_validated_data(
     *, first_name, last_name, phone_number, email, password_hash,
-    professional_license_number, specialty, clinic_name, clinic_address, email_verified=False,
+    professional_license_number, specialty, clinic_name, clinic_address, email_verified=False, medical_school="",
+    name_ar="", clinic_name_ar="", clinic_address_ar="", nationality="", country_of_graduation="",
 ):
     """Internal persistence step; callers validate inputs and establish phone proof."""
     user = User(
@@ -100,6 +103,8 @@ def _create_doctor_from_validated_data(
                 password_hash=password_hash,
                 professional_license_number=professional_license_number,
                 specialty=specialty,
+                medical_school=medical_school, name_ar=name_ar, clinic_name_ar=clinic_name_ar,
+                clinic_address_ar=clinic_address_ar, nationality=nationality, country_of_graduation=country_of_graduation,
                 clinic_name=clinic_name,
                 clinic_address=clinic_address,
                 approval_status=Doctor.ApprovalStatus.PENDING,
@@ -122,7 +127,8 @@ def find_rejected_applicant(*, phone_number, email):
 
 def _reopen_rejected_doctor(
     doctor_id, *, first_name, last_name, phone_number, email, password_hash,
-    professional_license_number, specialty, clinic_name, clinic_address,
+    professional_license_number, specialty, clinic_name, clinic_address, medical_school="",
+    name_ar="", clinic_name_ar="", clinic_address_ar="", nationality="", country_of_graduation="",
 ):
     """Re-signup of a rejected applicant: same rows and ID, personal data restored, PENDING again."""
     now = timezone.now()
@@ -145,12 +151,16 @@ def _reopen_rejected_doctor(
             doctor.credential_changed_at = now
             doctor.professional_license_number = professional_license_number
             doctor.specialty, doctor.clinic_name, doctor.clinic_address = specialty, clinic_name, clinic_address
+            doctor.medical_school = medical_school
+            doctor.name_ar, doctor.clinic_name_ar, doctor.clinic_address_ar = name_ar, clinic_name_ar, clinic_address_ar
+            doctor.nationality, doctor.country_of_graduation = nationality, country_of_graduation
             doctor.approval_status = Doctor.ApprovalStatus.PENDING
             doctor.application_submitted_at = now
             doctor.phone_hash = doctor.email_hash = None
             doctor.save(update_fields=[
                 "password_hash", "credential_changed_at", "professional_license_number", "specialty",
-                "clinic_name", "clinic_address", "approval_status", "phone_hash", "email_hash", "application_submitted_at",
+                "clinic_name", "clinic_address", "medical_school", "name_ar", "clinic_name_ar", "clinic_address_ar",
+                "nationality", "country_of_graduation", "approval_status", "phone_hash", "email_hash", "application_submitted_at",
             ])
     except IntegrityError as exc:
         _raise_conflict(exc)

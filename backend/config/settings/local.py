@@ -33,6 +33,8 @@ if _access:
     PAYMENTS_PUBLIC_BASE_URL = _access["hubPublicOrigin"]
     KIOSK_PUBLIC_BASE_URL = DEVELOPMENT_KIOSK_PUBLIC_ORIGIN = _access["kioskPublicOrigin"]
     DEVELOPMENT_PUBLIC_ORIGINS = [PAYMENTS_PUBLIC_BASE_URL, KIOSK_PUBLIC_BASE_URL]
+    if _access.get("advisorPublicOrigin"):
+        DEVELOPMENT_PUBLIC_ORIGINS.append(_access["advisorPublicOrigin"])
     if _access.get("ownerPrivateOrigin"):
         DEVELOPMENT_PUBLIC_ORIGINS.append(_access["ownerPrivateOrigin"])
         OWNER_ALLOWED_AUTHORITIES.append(urlsplit(_access["ownerPrivateOrigin"]).netloc)

@@ -1,0 +1,230 @@
+:root {
+  --advisor-primary: #5d5294;
+  --advisor-accent: #9181d0;
+  --advisor-ink: #292b31;
+  --advisor-muted: #656b7c;
+  --advisor-border: #dce0ed;
+  --advisor-surface: #fff;
+  --advisor-ground: #f3f5fe;
+}
+body { margin: 0; background: var(--advisor-ground); color: var(--advisor-ink); }
+button, input, textarea, select { font: inherit; }
+.advisor-shell *, .advisor-auth *, .advisor-dialog * { box-sizing: border-box; }
+.advisor-shell button, .advisor-auth button, .advisor-dialog button, .advisor-auth-language button {
+  border: 1px solid var(--advisor-border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 42px;
+  cursor: pointer;
+  background: white;
+  color: var(--advisor-ink);
+  font-size: 13px;
+  font-weight: 550;
+  transition: background 150ms, border-color 150ms, box-shadow 150ms;
+}
+.advisor-shell button:hover:not(:disabled), .advisor-auth button:hover:not(:disabled), .advisor-dialog button:hover:not(:disabled) { border-color: var(--advisor-accent); background: #f6f4fc; }
+.advisor-shell button:disabled, .advisor-auth button:disabled, .advisor-dialog button:disabled { cursor: default; opacity: .5; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--advisor-accent); outline-offset: 3px; }
+button.advisor-primary { background: var(--advisor-primary); color: white; border-color: var(--advisor-primary); }
+button.advisor-primary:hover:not(:disabled) { background: #4c3b7f; color: white; }
+button.advisor-danger { color: #a3231c; border-color: #eac4c2; background: #fff7f6; }
+.advisor-shell { display: flex; min-height: 100dvh; }
+.advisor-sidebar { width: 242px; flex-shrink: 0; padding: 34px 20px; background: #1d1f2e; color: white; position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; }
+.advisor-brand { display: flex; gap: 12px; align-items: center; padding: 0 10px 38px; }
+.advisor-brand-mark { flex-shrink: 0; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: #7a69b3; color: white; font-size: 23px; font-weight: 750; }
+.advisor-brand strong { font-size: 22px; letter-spacing: .07em; }
+.advisor-brand small { display: block; color: #c7c1dd; font-size: 11px; margin-top: 4px; }
+.advisor-sidebar nav { display: grid; gap: 9px; }
+.advisor-sidebar nav button { display: flex; align-items: center; gap: 12px; text-align: start; background: transparent; color: #d3d3df; border-color: transparent; font-size: 13px; padding: 13px 15px; }
+.advisor-sidebar nav button span { font-size: 23px; width: 24px; line-height: 1; }
+.advisor-sidebar nav button[aria-current=page], .advisor-sidebar nav button:hover:not(:disabled) { background: #6d5d9f; color: white; border-color: transparent; }
+.advisor-clinic { margin-top: auto; padding: 24px 12px 0; border-top: 1px solid #353748; display: grid; gap: 7px; font-size: 12px; color: #ddd9ec; }
+.advisor-clinic small { color: #a8a8ba; }
+.advisor-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.advisor-topbar { height: 84px; padding: 0 38px; border-bottom: 1px solid var(--advisor-border); background: #fff; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.advisor-topbar > span { font-size: 12px; color: var(--advisor-muted); }
+.advisor-topbar > div { display: flex; align-items: center; gap: 20px; }
+.advisor-doctor-name { font-size: 12px; font-weight: 600; }
+.advisor-content { padding: 35px 38px; max-width: 1400px; width: 100%; margin-inline: auto; flex: 1; }
+.advisor-page-heading h1 { margin: 0 0 9px; font-size: 28px; letter-spacing: -.04em; }
+.advisor-subtitle { margin: 0 0 28px; font-size: 13px; color: var(--advisor-muted); line-height: 1.6; }
+.advisor-panel { background: var(--advisor-surface); border: 1px solid var(--advisor-border); border-radius: 16px; padding: 26px; margin-bottom: 22px; }
+.advisor-panel-heading h2 { margin: 0 0 24px; font-size: 17px; }
+.advisor-field { display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #555b6d; min-width: 0; }
+.advisor-field input, .advisor-field textarea, .advisor-field select { background: #fcfcff; color: var(--advisor-ink); border: 1px solid #d5d9e8; border-radius: 9px; padding: 12px 13px; width: 100%; min-width: 0; min-height: 45px; font-size: 14px; }
+.advisor-field textarea { min-height: 85px; resize: vertical; line-height: 1.7; }
+.advisor-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.advisor-patient-lookup, .advisor-search { display: flex; align-items: end; gap: 12px; margin-bottom: 22px; }
+.advisor-patient-lookup > label, .advisor-search > label { flex: 1; }
+.advisor-check { display: flex; align-items: start; gap: 9px; margin: 20px 0 0; font-size: 12px; line-height: 1.6; }
+.advisor-check input { accent-color: var(--advisor-primary); width: 17px; height: 17px; flex-shrink: 0; margin-top: 2px; }
+.advisor-patient-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px; border: 1px solid #dcd5ef; border-radius: 11px; padding: 15px 22px; background: #ece8f7; margin-bottom: 22px; font-size: 12px; color: #423a6a; position: sticky; top: 8px; z-index: 2; }
+.advisor-medicine-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+.advisor-medicine-results article { padding: 15px; display: flex; justify-content: space-between; gap: 14px; align-items: center; border: 1px solid #e4e1ef; border-radius: 11px; }
+.advisor-medicine-results strong { font-size: 13px; line-height: 1.4; display: block; }
+.advisor-medicine-results small { display: block; font-size: 10px; color: var(--advisor-muted); margin: 7px 0; }
+.advisor-medicine-results article span { font-size: 10px; color: #5d5294; background: #eeebf7; border-radius: 4px; padding: 3px 6px; }
+.advisor-prescription-line { border: 1px solid #dedbe8; border-radius: 12px; padding: 21px; margin-top: 16px; }
+.advisor-prescription-line > header { display: flex; justify-content: space-between; gap: 15px; align-items: center; margin-bottom: 20px; }
+.advisor-prescription-line h3 { margin: 0 0 6px; font-size: 15px; }
+.advisor-prescription-line small { font-size: 11px; color: var(--advisor-muted); }
+.advisor-prescription-line > .advisor-form-grid { margin-top: 18px; }
+.advisor-issue-footer { display: flex; justify-content: space-between; align-items: end; gap: 20px; flex-wrap: wrap; }
+.advisor-issue-footer > label { max-width: 350px; flex: 1; }
+.advisor-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.advisor-empty { padding: 35px 15px; text-align: center; color: var(--advisor-muted); font-size: 13px; }
+.advisor-error, .advisor-success, .advisor-notice { border-radius: 9px; padding: 12px 15px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.advisor-error { color: #9a241d; background: #fff1ef; border: 1px solid #f0d3cf; }
+.advisor-success { color: #206947; background: #edf8f1; }
+.advisor-notice { color: #815a0b; background: #fff7e4; }
+.advisor-footer { padding: 20px 38px; color: #83899c; font-size: 10px; }
+.advisor-dialog { border: 1px solid var(--advisor-border); border-radius: 16px; padding: 26px; width: min(650px, calc(100vw - 30px)); max-height: calc(100dvh - 40px); margin: auto; color: var(--advisor-ink); background: white; box-shadow: 0 15px 70px #12132444; }
+.advisor-dialog::backdrop { background: #17192788; }
+.advisor-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.advisor-dialog > header h2 { margin: 0; font-size: 19px; }
+.advisor-dialog > header button { border: 0; font-size: 24px; padding: 0 8px; }
+.advisor-dialog form { display: grid; gap: 18px; }
+.advisor-review-patient { padding: 18px; background: #f5f3fb; border-radius: 10px; }
+.advisor-review-patient h3 { margin: 0 0 10px; }
+.advisor-review-patient p { font-size: 13px; margin: 6px 0; }
+.advisor-review-line { padding: 18px 0; border-bottom: 1px solid var(--advisor-border); }
+.advisor-review-line > strong { display: block; font-size: 14px; }
+.advisor-review-line small { font-size: 12px; color: var(--advisor-muted); }
+.advisor-preserve-text { white-space: pre-wrap; unicode-bidi: plaintext; overflow-wrap: anywhere; line-height: 1.7; font-size: 13px; }
+.advisor-issued { padding: 60px 25px; text-align: center; background: white; border: 1px solid var(--advisor-border); border-radius: 16px; }
+.advisor-issued-icon { display: grid; place-items: center; width: 65px; height: 65px; border-radius: 50%; background: #e6f5ec; color: #27885c; font-size: 30px; margin: 0 auto 25px; }
+.advisor-issued h2 { font-size: 25px; }
+.advisor-issued .advisor-actions { justify-content: center; }
+.advisor-reference { font-family: monospace; font-size: 16px; color: #5d5294; }
+.advisor-history-filters { display: grid; grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(120px, 1fr)); align-items: end; gap: 14px; }
+.advisor-history-filters > button { justify-self: start; }
+.advisor-history-list { margin-top: 25px; }
+.advisor-history-row { display: flex; align-items: center; gap: 22px; width: 100%; text-align: start; margin-bottom: 10px; padding: 18px !important; }
+.advisor-history-row > span:first-child { flex: 1; min-width: 0; }
+.advisor-history-row strong { font-size: 14px; display: block; }
+.advisor-history-row small { font-size: 11px; color: var(--advisor-muted); display: block; margin-top: 7px; overflow-wrap: anywhere; }
+.advisor-history-row time { font-size: 12px; color: var(--advisor-muted); }
+.advisor-badge { display: inline-block; padding: 5px 8px; border-radius: 6px; font-size: 10px; background: #f0eef5; color: #655a85; }
+.advisor-badge--active { background: #e7f5ed; color: #26774f; }
+.advisor-badge--revoked { background: #fdebea; color: #a62e26; }
+.advisor-badge--expired { background: #fff4df; color: #8b641c; }
+.advisor-pagination { display: flex; justify-content: space-between; gap: 15px; align-items: center; margin-top: 20px; font-size: 12px; }
+.advisor-revoke-form { margin-top: 25px; padding: 18px; border-radius: 10px; background: #fff6f5; }
+.advisor-detail-heading { display: flex; gap: 15px; align-items: center; font-size: 12px; color: var(--advisor-muted); }
+.advisor-letterhead-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(250px, .8fr); align-items: start; gap: 25px; }
+.advisor-letterhead-grid .advisor-panel > form { display: grid; gap: 20px; }
+.advisor-letterhead-grid h2 { font-size: 20px; margin: 0; }
+.advisor-letterhead-grid form > p { margin: 0; color: var(--advisor-muted); font-size: 13px; }
+.advisor-logo-upload { border-top: 1px solid var(--advisor-border); margin-top: 28px; padding-top: 20px; }
+.advisor-logo-upload h3 { font-size: 16px; }
+.advisor-logo-upload form { display: grid; gap: 15px; }
+.advisor-letterhead-sample { background: white; border: 1px solid #dedfe8; border-radius: 3px; aspect-ratio: 210 / 297; padding: 28px; position: relative; box-shadow: 0 5px 15px #282a3d0c; }
+.advisor-letterhead-sample-header { text-align: center; padding-bottom: 20px; border-bottom: 2px solid #5d5294; }
+.advisor-letterhead-sample-header--left { text-align: left; }
+.advisor-letterhead-sample-header--right { text-align: right; }
+.advisor-letterhead-sample-header strong { font-size: 15px; }
+.advisor-letterhead-sample-header p, .advisor-letterhead-sample-header small { font-size: 9px; color: var(--advisor-muted); overflow-wrap: anywhere; }
+.advisor-letterhead-sample-brand { font-size: 11px; color: #5d5294; font-weight: 700; padding-top: 20px; }
+.advisor-paper-lines { display: grid; gap: 25px; margin-top: 35px; }
+.advisor-paper-lines i { border-bottom: 1px solid #ececf1; height: 20px; }
+.advisor-letterhead-sample footer { position: absolute; bottom: 30px; left: 25px; font-size: 8px; border-top: 1px solid #c9cad5; padding-top: 12px; color: var(--advisor-muted); }
+.advisor-auth { min-height: 100dvh; display: grid; grid-template-columns: minmax(250px, 1fr) minmax(400px, 1fr); }
+.advisor-auth-brand { background: #1d1f2e; color: white; padding: 90px 60px; display: flex; justify-content: center; flex-direction: column; }
+.advisor-auth-brand > .advisor-brand-mark { width: 65px; height: 65px; font-size: 37px; border-radius: 18px; margin-bottom: 25px; }
+.advisor-auth-brand h1 { font-size: 40px; margin: 0; letter-spacing: -.04em; }
+.advisor-auth-brand h1 span { display: block; font-size: 25px; color: #cfc7e8; font-weight: 400; margin-top: 15px; }
+.advisor-auth-brand p { color: #b8b7ca; font-size: 15px; line-height: 1.7; max-width: 320px; }
+.advisor-auth-card { width: 100%; max-width: 600px; padding: 80px 60px; align-self: center; margin-inline: auto; }
+.advisor-auth-card h2 { font-size: 26px; margin: 0 0 30px; }
+.advisor-auth-card form { display: grid; gap: 20px; }
+.advisor-auth-card .advisor-check { margin-top: 0; }
+.advisor-auth-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-top: 25px; }
+.advisor-auth-links button { background: transparent; border: 0; padding: 0; color: var(--advisor-primary); }
+.advisor-auth-language { position: absolute; inset-inline-end: 25px; top: 20px; z-index: 2; }
+.advisor-enrollment { background: #ede9f7; padding: 15px; border-radius: 10px; }
+.advisor-enrollment p { font-size: 13px; line-height: 1.7; }
+.advisor-enrollment code { display: block; user-select: all; font-size: 15px; overflow-wrap: anywhere; }
+.advisor-status-card { display: grid; gap: 18px; }
+.advisor-status-card p { margin: 0; line-height: 1.6; }
+.advisor-loading { min-height: 100dvh; display: grid; place-items: center; color: var(--advisor-primary); }
+.advisor-skip { position: fixed; inset-inline-start: 10px; top: -100px; background: white; padding: 12px; color: #423a6a; z-index: 100; }
+.advisor-skip:focus { top: 10px; }
+@media(max-width:1100px) {
+  .advisor-sidebar { width: 210px; padding-inline: 12px; }
+  .advisor-content { padding: 28px 24px; }
+  .advisor-topbar { padding-inline: 24px; }
+  .advisor-topbar > span { display: none; }
+  .advisor-topbar > div { width: 100%; justify-content: flex-end; }
+  .advisor-history-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media(max-width:760px) {
+  .advisor-shell { display: block; }
+  .advisor-sidebar { width: 100%; height: auto; position: static; padding: 18px 20px 12px; }
+  .advisor-brand { padding: 0 0 18px; }
+  .advisor-brand-mark { width: 34px; height: 34px; font-size: 21px; }
+  .advisor-brand strong { font-size: 19px; }
+  .advisor-sidebar nav { display: flex; overflow-x: auto; gap: 5px; }
+  .advisor-sidebar nav button { font-size: 11px; padding: 10px 12px; flex: 1; white-space: nowrap; justify-content: center; }
+  .advisor-sidebar nav button span { display: none; }
+  .advisor-clinic { display: none; }
+  .advisor-topbar { height: 64px; padding-inline: 20px; }
+  .advisor-topbar > div { gap: 12px; justify-content: space-between; }
+  .advisor-doctor-name { font-size: 10px; }
+  .advisor-content { padding: 25px 18px; }
+  .advisor-page-heading h1 { font-size: 25px; }
+  .advisor-panel { padding: 19px; border-radius: 13px; }
+  .advisor-medicine-results, .advisor-letterhead-grid { grid-template-columns: 1fr; }
+  .advisor-form-grid { gap: 14px; }
+  .advisor-patient-lookup, .advisor-search { align-items: stretch; flex-direction: column; }
+  .advisor-history-row { gap: 10px; flex-wrap: wrap; }
+  .advisor-history-row > span:first-child { flex-basis: 65%; }
+  .advisor-history-filters { grid-template-columns: 1fr; }
+  .advisor-patient-strip { font-size: 10px; padding: 12px 15px; }
+  .advisor-letterhead-sample { max-width: 400px; width: 100%; margin-inline: auto; }
+  .advisor-auth { display: block; }
+  .advisor-auth-brand { padding: 45px 30px 30px; }
+  .advisor-auth-brand > .advisor-brand-mark { width: 45px; height: 45px; font-size: 27px; margin-bottom: 15px; }
+  .advisor-auth-brand h1 { font-size: 28px; }
+  .advisor-auth-brand h1 span { display: inline; font-size: 20px; margin-inline-start: 10px; }
+  .advisor-auth-brand p { font-size: 12px; margin-bottom: 0; }
+  .advisor-auth-card { padding: 35px 25px; }
+  .advisor-auth-language { top: 15px; inset-inline-end: 15px; }
+  .advisor-auth-language button { padding: 5px 10px; min-height: 34px; font-size: 11px; }
+  .advisor-dialog { padding: 20px; }
+  .advisor-footer { padding-inline: 20px; font-size: 9px; }
+}
+@media(max-width:420px) {
+  .advisor-form-grid { grid-template-columns: 1fr; }
+  .advisor-prescription-line { padding: 15px; }
+  .advisor-issue-footer { flex-direction: column; align-items: stretch; }
+  .advisor-issue-footer > label { max-width: none; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .advisor-shell *, .advisor-auth *, .advisor-dialog * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+.advisor-dosage {border:1px solid var(--border, #cfd3e5); border-radius:14px; padding:18px; margin:18px 0; min-width:0; display:grid;gap:16px;}
+.advisor-instruction-preview {background:#f3f1fb;border-radius:10px;padding:14px;overflow-wrap:anywhere;}
+.advisor-time-row {display:flex;gap:8px;margin:8px 0;align-items:center;}
+.advisor-time-row input {min-width:0;flex:1;}
+.advisor-dose-unit {font-size:12px;color:#595d6c;margin-top:6px;}
+
+.advisor-clinic-logo { display:block; max-width:160px; max-height:90px; object-fit:contain; margin:12px auto 20px; border-radius:8px; }
+.advisor-letterhead-sample-header--left .advisor-clinic-logo { margin-left:0; margin-right:auto; }
+.advisor-letterhead-sample-header--right .advisor-clinic-logo { margin-right:0; margin-left:auto; }
+.advisor-amount-stepper { display:flex; align-items:stretch; gap:6px; }
+.advisor-amount-stepper input { min-width:0; text-align:center; -moz-appearance:textfield; }
+.advisor-amount-stepper input::-webkit-inner-spin-button, .advisor-amount-stepper input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+.advisor-amount-stepper button { min-width:42px; font-size:20px; }
+
+.advisor-letterhead-sample-header {display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;align-items:start;}
+.advisor-preview-details {white-space:pre-line;font-size:8px;line-height:1.7;overflow-wrap:anywhere;}
+.advisor-preview-details[dir=rtl] {text-align:right;}
+.advisor-preview-center {text-align:center;min-width:0;}
+.advisor-preview-center strong {display:block;font-size:11px;}
+.advisor-preview-center .advisor-clinic-logo {max-width:100%;max-height:70px;margin:0 auto 14px;}
+.advisor-header-settings p {font-size:12px;color:var(--advisor-muted);margin:10px 0;}
+
+.advisor-platform-brand {position:absolute;top:9px;right:16px;width:100px;height:26.15px;overflow:hidden;}
+.advisor-platform-brand img {position:absolute;width:369.231px;height:221.538px;max-width:none;left:-266.154px;top:-170.769px;}
+.advisor-letterhead-sample-header {margin-top:20px;}

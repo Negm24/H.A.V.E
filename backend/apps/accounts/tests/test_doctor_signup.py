@@ -1,5 +1,10 @@
 from unittest.mock import patch
 import json
+from io import BytesIO
+from tempfile import TemporaryDirectory
+from uuid import uuid4
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -11,15 +16,30 @@ from apps.accounts.services.doctor_services.registration import create_doctor_ac
 from apps.accounts.tests.helpers import SessionFixtures
 
 
-SIGNUP = "/api/v1/auth/doctors/signup/"
-VERIFY = "/api/v1/auth/doctors/signup/verify/"
+BASE = "/api/v1/auth/doctors/registration/"
+SIGNUP = BASE + "start/"
+VERIFY = BASE + "verify/"
 PASSWORD = "Orchid-River-Example-4826!"
 APPLICATION = {
     "first_name": "Mona", "last_name": "Hassan", "phone_number": "01212345678",
     "email": "Doctor@Example.test", "password": PASSWORD,
-    "professional_license_number": "EG-MED-12345", "specialty": "Family medicine",
+    "professional_license_number": "EG-MED-12345",
+    "name_ar": "منى حسن", "clinic_name_ar": "عيادة تجريبية", "clinic_address_ar": "القاهرة",
+    "nationality": "EG", "country_of_graduation": "EG", "medical_school": "Example medical school",
     "clinic_name": "Demo Clinic", "clinic_address": "12 Example Street, Cairo",
 }
+
+
+def upload_and_submit(case, response):
+    if response.status_code != 200:
+        return response
+    kinds = ["graduation", "syndicate"] + (["id_front", "id_back"] if response.json()["data"]["nationality"] == "EG" else ["passport"])
+    for kind in kinds:
+        content = BytesIO()
+        Image.new("RGB", (200, 150), "white").save(content, format="JPEG")
+        uploaded = case.client.put(BASE + f"documents/{kind}/", {"image": SimpleUploadedFile("fictional.jpg", content.getvalue(), content_type="image/jpeg")}, format="multipart", HTTP_X_CSRFTOKEN=case.csrf())
+        case.assertEqual(uploaded.status_code, 200, uploaded.data)
+    return case.client.post(BASE + "submit/", {"action_id": str(uuid4())}, format="json", HTTP_X_CSRFTOKEN=case.csrf())
 
 
 @override_settings(DEBUG=False, AUTH_CONSOLE_SMS=True, OWNER_NOTIFICATION_EMAIL="owner@example.test",
@@ -27,6 +47,11 @@ APPLICATION = {
 class DoctorSignupTests(SessionFixtures, TestCase):
     def setUp(self):
         self.setup_sessions()
+        self.temp = TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        storage = override_settings(DOCTOR_VERIFICATION_ROOT=self.temp.name)
+        storage.enable()
+        self.addCleanup(storage.disable)
         mock = patch("apps.accounts.services.doctor_services.signup._deliver_sms")
         self.sms = mock.start()
         self.addCleanup(mock.stop)
@@ -35,19 +60,19 @@ class DoctorSignupTests(SessionFixtures, TestCase):
         self.addCleanup(email.stop)
 
     def start(self, **changes):
-        return self.client.post(SIGNUP, APPLICATION | changes, format="json")
+        return self.client.post(SIGNUP, APPLICATION | changes, format="json", HTTP_X_CSRFTOKEN=self.csrf())
 
     def verify(self, challenge_id, *, code=None, phone="01212345678"):
         return self.client.post(VERIFY, {
             "challenge_id": challenge_id, "phone_number": phone,
             "code": code or self.sms.call_args.kwargs["code"],
-        }, format="json")
+        }, format="json", HTTP_X_CSRFTOKEN=self.csrf())
 
     def finish(self, challenge_id, *, phone="01212345678"):
         """Both verification steps: SMS code (202), then the emailed code."""
         response = self.verify(challenge_id, phone=phone)
         self.assertEqual(response.status_code, 202, getattr(response, "data", None))
-        return self.verify(challenge_id, code=self.email.call_args.kwargs["code"], phone=phone)
+        return upload_and_submit(self, self.verify(challenge_id, code=self.email.call_args.kwargs["code"], phone=phone))
 
     def apply(self, **changes):
         response = self.start(**changes)
@@ -158,3 +183,8 @@ class DoctorSignupTests(SessionFixtures, TestCase):
     def test_no_mock_sms_without_explicit_opt_in(self):
         self.assertEqual(self.start().status_code, 503)
         self.sms.assert_not_called()
+
+    def test_retired_signup_cannot_bypass_document_review(self):
+        self.assertEqual(self.client.post("/api/v1/auth/doctors/signup/", APPLICATION, format="json").status_code, 410)
+        self.assertEqual(self.client.post("/api/v1/auth/doctors/signup/verify/", {}, format="json").status_code, 410)
+        self.assertEqual(Doctor.objects.count(), 0)

@@ -45,6 +45,16 @@ class DevelopmentAccessTests(SimpleTestCase):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 self.read(self.valid | {"ownerPrivateOrigin": invalid})
 
+    def test_advisor_uses_only_its_exact_funnel_origin(self):
+        self.assertEqual(self.read(self.valid | {"advisorPublicOrigin": self.valid["hubPublicOrigin"]})["advisorPublicOrigin"], self.valid["hubPublicOrigin"])
+        origin = "https://laptop.example.ts.net:10000"
+        self.assertEqual(self.read(self.valid | {"advisorPublicOrigin": origin})["advisorPublicOrigin"], origin)
+        for invalid in (origin + "/", origin + "/api", "http://laptop.example.ts.net:10000",
+                        "https://laptop.example.ts.net:9443", "https://other.example.ts.net",
+                        "https://user:secret@laptop.example.ts.net:10000", None):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                self.read(self.valid | {"advisorPublicOrigin": invalid})
+
     def test_rejects_broad_hosts_paths_credentials_and_arbitrary_ports(self):
         for value in ("http://laptop.example.ts.net", "https://*.ts.net", "https://laptop.example.ts.net/",
                       "https://laptop.example.ts.net/path", "https://laptop.example.ts.net?x=1",

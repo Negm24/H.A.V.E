@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "apps.payments.apps.PaymentsConfig",
     "apps.operations.apps.OperationsConfig",
     "apps.observability.apps.ObservabilityConfig",
+    "apps.prescriptions.apps.PrescriptionsConfig",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -71,6 +72,11 @@ SESSION_COOKIE_AGE = OWNER_SESSION_IDLE_SECONDS
 OWNER_ALLOWED_AUTHORITIES = ["localhost:5176", "127.0.0.1:5176", "localhost:8000", "127.0.0.1:8000", "backend:8000", "testserver"]
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
+# Private professional evidence is never served by MEDIA_URL or a frontend proxy.
+# The development backend bind mount persists it; hosted deployments must mount
+# durable private storage here and include it in their protected backup policy.
+DOCTOR_VERIFICATION_ROOT = Path(env("DOCTOR_VERIFICATION_ROOT", default=str(BASE_DIR / "private_verification")))
+DOCTOR_REGISTRATION_COOKIE_NAME = "have_doctor_registration"
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 HOST_AGENT_TOKEN = env("HOST_AGENT_TOKEN", default="")

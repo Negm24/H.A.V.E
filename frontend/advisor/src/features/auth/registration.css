@@ -1,0 +1,141 @@
+.advisor-registration { min-height:100dvh; display:grid;grid-template-columns:minmax(270px, .8fr) minmax(0, 2fr); color:var(--advisor-ink); }
+.advisor-registration *, .advisor-registration *::before, .advisor-registration *::after {box-sizing:border-box;}
+.advisor-registration button {font:inherit;cursor:pointer;min-height:44px;border:1px solid var(--advisor-border);border-radius:10px;background:white;color:var(--advisor-ink);padding:11px 17px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:background 160ms,border-color 160ms,transform 160ms;}
+.advisor-registration button:hover:not(:disabled) {background:#f2effa;border-color:var(--advisor-accent);}
+.advisor-registration button.advisor-primary {background:var(--advisor-primary);border-color:var(--advisor-primary);color:white;}
+.advisor-registration button.advisor-primary:hover:not(:disabled) {background:#4c3b7f;}
+.advisor-registration button:disabled {cursor:default;opacity:.55;}
+.advisor-registration button svg {flex-shrink:0;}
+.advisor-registration-sidebar {background:#1d1f2e;color:#f8f7ff;padding:42px clamp(24px,4vw,62px);position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;overflow-y:auto;}
+.advisor-registration-sidebar>* {flex-shrink:0;}
+.advisor-registration-brand {display:flex;gap:12px;align-items:center;}
+.advisor-registration-brand strong {font-size:24px;letter-spacing:.06em;display:block;}
+.advisor-registration-brand div>span {font-size:12px;color:#c5bddf;display:block;margin-top:5px;}
+.advisor-registration-intro {margin-top:55px;}
+.advisor-registration-intro>span {font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:#bdb0e9;font-weight:600;}
+.advisor-registration-intro h1 {font-size:clamp(26px,2.6vw,36px);line-height:1.25;letter-spacing:-.035em;margin:16px 0;max-width:300px;}
+.advisor-registration-intro p {font-size:13px;line-height:1.8;color:#bdbccc;max-width:290px;}
+.advisor-registration-steps {list-style:none;padding:0;margin:36px 0;display:grid;gap:27px;}
+.advisor-registration-steps li {display:flex;align-items:center;gap:13px;color:#a6a5b9;position:relative;}
+.advisor-registration-steps li>span:last-child {min-width:0;overflow-wrap:anywhere;}
+.advisor-registration-step-icon {width:42px;height:42px;display:grid;place-items:center;border:1px solid #434353;border-radius:13px;position:relative;background:#252736;flex-shrink:0;}
+.advisor-registration-steps li:not(:last-child) .advisor-registration-step-icon::after {content:'';position:absolute;height:27px;width:1px;background:#414150;top:42px;inset-inline-start:20px;}
+.advisor-registration-steps small {display:block;font-size:10px;opacity:.8;margin-bottom:5px;}
+.advisor-registration-steps strong {font-size:13px;font-weight:500;line-height:1.5;}
+.advisor-registration-steps .is-current {color:#fff;}
+.advisor-registration-steps .is-current .advisor-registration-step-icon {background:#7564ad;border-color:#a393d2;box-shadow:0 0 0 4px #9580d01c;}
+.advisor-registration-steps .is-current strong {font-weight:650;}
+.advisor-registration-steps .is-complete {color:#c6e7d4;}
+.advisor-registration-steps .is-complete .advisor-registration-step-icon {color:#a1d9b8;background:#284437;border-color:#426551;}
+.advisor-registration-privacy {display:flex;align-items:start;gap:10px;border-top:1px solid #373949;padding-top:22px;margin-top:auto;color:#bbb8cd;}
+.advisor-registration-privacy svg {flex-shrink:0;color:#b6a5df;margin-top:2px;}
+.advisor-registration-privacy p {font-size:12px;line-height:1.8;margin:0;max-width:270px;}
+.advisor-registration-workspace {padding:26px clamp(25px,5vw,85px) 60px;max-width:1100px;width:100%;margin-inline:auto;min-width:0;}
+.advisor-registration-topline {display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:43px;min-height:44px;padding-inline-end:85px;}
+.advisor-registration-topline>button {border-color:transparent;background:transparent;padding-inline:0;color:var(--advisor-muted);}
+.advisor-registration-saved {display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#26734e;white-space:nowrap;}
+.advisor-registration-saved svg {width:17px;height:17px;}
+.advisor-registration-saved.has-unsaved-changes {color:#8b641c;}
+.advisor-registration-heading>span {font-size:11px;color:var(--advisor-primary);letter-spacing:.025em;font-weight:650;}
+.advisor-registration-heading h2 {font-size:29px;letter-spacing:-.035em;line-height:1.3;margin:13px 0;outline:none;}
+.advisor-registration-heading p {font-size:13px;line-height:1.8;color:var(--advisor-muted);max-width:580px;margin-bottom:26px;}
+.advisor-registration-form>fieldset {border:0;padding:0;margin:0;min-width:0;}
+.advisor-registration-form {animation:advisor-registration-arrive 200ms ease-out;}
+.advisor-registration-section-heading {display:flex;align-items:center;gap:9px;margin:25px 0 19px;}
+.advisor-registration-section-heading h3 {font-size:14px;font-weight:650;margin:0;}
+.advisor-registration-section-heading svg {width:19px;height:19px;color:var(--advisor-primary);}
+.advisor-registration-section-heading:not(:first-child) {border-top:1px solid var(--advisor-border);padding-top:26px;margin-top:30px;}
+.advisor-registration .advisor-form-grid {gap:21px 18px;}
+.advisor-registration .advisor-field {font-size:12px;line-height:1.5;}
+.advisor-registration .advisor-field>span>small {font-size:12px;color:var(--advisor-muted);font-weight:400;}
+.advisor-registration .advisor-field input,.advisor-registration .advisor-field select {background:white;min-height:48px;line-height:1.5;}
+.advisor-registration .advisor-field input[aria-invalid=true] {border-color:#bc3a30;background:#fffafa;}
+.advisor-registration-full {grid-column:1/-1;min-width:0;}
+.advisor-registration-hint,.advisor-registration-copy {font-size:12px;color:var(--advisor-muted);line-height:1.8;display:block;}
+.advisor-registration-hint {margin-top:9px;}
+.advisor-registration-field-error {font-size:12px;color:#a3231c;}
+.advisor-registration-footer {border-top:1px solid var(--advisor-border);padding-top:22px;margin-top:32px;display:flex;justify-content:space-between;gap:15px;}
+.advisor-registration-footer>.advisor-primary {min-width:150px;}
+.advisor-registration-expiry {font-size:12px;color:#6b6680;line-height:1.7;padding:9px 12px;background:#eeebf7;border-radius:7px;margin:0 0 20px;}
+.advisor-registration-account-fields {display:grid;gap:22px;max-width:470px;}
+.advisor-registration-account-fields .advisor-registration-hint {margin:0;}
+.advisor-registration-resume-link {margin-top:22px!important;background:transparent!important;border-color:transparent!important;color:var(--advisor-primary)!important;padding-inline:0!important;text-align:start;}
+.advisor-registration-code {max-width:420px;display:grid;gap:10px;padding:18px 0;}
+.advisor-registration-code-icon {color:var(--advisor-primary);background:#eae5f6;border-radius:16px;width:54px;height:54px;display:grid;place-items:center;margin-bottom:8px;}
+.advisor-registration-code h3 {font-size:17px;line-height:1.6;margin:0;}
+.advisor-registration-code>p {font-size:13px;color:var(--advisor-muted);margin:0 0 15px;overflow-wrap:anywhere;}
+.advisor-registration-code input {font-size:24px!important;letter-spacing:.28em;}
+.advisor-registration-document-summary {display:flex;gap:13px;background:#eae7f5;border:1px solid #ddd6ef;padding:17px 19px;border-radius:12px;margin:0 0 24px;}
+.advisor-registration-document-summary>svg {flex-shrink:0;color:var(--advisor-primary);margin-top:3px;}
+.advisor-registration-document-summary strong {font-size:12px;color:#423a6a;}
+.advisor-registration-document-summary p {font-size:12px;line-height:1.8;color:#635a7d;margin:7px 0;}
+.advisor-registration-document-summary small {font-size:12px;color:#706584;}
+.advisor-document-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+.advisor-document-card {background:white;border:1px solid var(--advisor-border);border-radius:14px;padding:17px;min-width:0;}
+.advisor-document-card.is-uploaded {border-color:#aed2be;}
+.advisor-document-heading {display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.advisor-document-heading h3 {font-size:13px;font-weight:650;margin:0 0 4px;line-height:1.6;}
+.advisor-document-heading div>span {font-size:12px;color:var(--advisor-muted);}
+.advisor-registration-icon {background:#f0edf8;color:var(--advisor-primary);display:grid;place-items:center;width:35px;height:35px;border-radius:10px;flex-shrink:0;}
+.is-uploaded .advisor-registration-icon {background:#eaf6ee;color:#287449;}
+.advisor-document-placeholder {min-height:112px;background:#f7f7fb;border:1px dashed #d6d4e3;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:12px;color:#9891b0;text-align:center;}
+.advisor-document-placeholder span {font-size:12px;color:#6b6477;line-height:1.7;max-width:200px;}
+button.advisor-document-preview {height:112px;background:#f7f7fb;padding:5px;width:100%;border-radius:9px;overflow:hidden;}
+.advisor-document-preview img {width:100%;height:100%;object-fit:contain;}
+.advisor-document-actions {display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;}
+.advisor-document-actions button {font-size:12px;padding:9px 10px;min-height:44px;flex:1;white-space:normal;}
+.advisor-document-actions svg {width:17px;height:17px;}
+.advisor-document-actions .advisor-document-remove {color:#a32d24;border:0;background:transparent;flex:0 1 auto;}
+.advisor-registration-file {display:none!important;}
+.advisor-registration-optional {margin-top:20px;padding:15px 17px;border:1px solid var(--advisor-border);border-radius:10px;background:white;font-size:12px;}
+.advisor-registration-optional>summary {cursor:pointer;color:var(--advisor-primary);line-height:1.7;min-height:28px;}
+.advisor-registration-optional>p {font-size:12px;line-height:1.8;color:var(--advisor-muted);}
+.advisor-registration-optional .advisor-field {max-width:400px;}
+.advisor-registration-progress-count {font-size:12px;color:#26734e;margin:18px 0 0;}
+.advisor-capture-stage {background:#141723;border-radius:12px;aspect-ratio:4/3;position:relative;overflow:hidden;display:grid;place-items:center;}
+.advisor-capture-stage video {height:100%;width:100%;object-fit:cover;}
+.advisor-capture-stage>img {height:100%;width:100%;object-fit:contain;position:absolute;inset:0;}
+.advisor-capture-guide {width:82%;aspect-ratio:1.58;position:absolute;inset:0;margin:auto;border:1px solid #ffffff88;border-radius:13px;box-shadow:0 0 0 100vmax #05070c77;}
+.is-paper .advisor-capture-guide {width:55%;aspect-ratio:1/1.414;border-radius:4px;}
+.advisor-capture-guide>b {position:absolute;width:24px;height:24px;border-color:#fff;border-style:solid;border-width:0;}
+.advisor-capture-guide>b:nth-last-child(4) {top:-2px;left:-2px;border-top-width:3px;border-left-width:3px;border-top-left-radius:12px;}
+.advisor-capture-guide>b:nth-last-child(3) {top:-2px;right:-2px;border-top-width:3px;border-right-width:3px;border-top-right-radius:12px;}
+.advisor-capture-guide>b:nth-last-child(2) {bottom:-2px;right:-2px;border-bottom-width:3px;border-right-width:3px;border-bottom-right-radius:12px;}
+.advisor-capture-guide>b:nth-last-child(1) {bottom:-2px;left:-2px;border-bottom-width:3px;border-left-width:3px;border-bottom-left-radius:12px;}
+.advisor-capture-sample {opacity:.5;position:absolute;inset:18%;display:grid;grid-template-columns:26% 1fr;grid-template-rows:repeat(3,1fr);gap:12% 8%;}
+.advisor-capture-sample>i {grid-row:1/4;background:#f3f5fe;border-radius:7px;}
+.advisor-capture-sample>span {align-self:center;background:#f3f5fe;height:5px;border-radius:3px;}
+.is-paper .advisor-capture-sample {inset:15%;display:flex;flex-direction:column;gap:15%;}
+.is-paper .advisor-capture-sample>i {width:27%;height:20%;margin:0 auto;}
+.is-paper .advisor-capture-sample>span {width:100%;}
+.advisor-registration-actions {display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:22px;}
+.advisor-registration-review {border:1px solid var(--advisor-border);border-radius:13px;background:white;padding:21px;margin-bottom:17px;}
+.advisor-registration-review>header {display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px;}
+.advisor-registration-review h3 {font-size:14px;margin:0;}
+.advisor-registration-review>header>button {border:0;background:transparent;color:var(--advisor-primary);min-height:30px;padding:4px 8px;}
+.advisor-registration-review dl {margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;}
+.advisor-registration-review dt {font-size:12px;color:var(--advisor-muted);margin-bottom:7px;}
+.advisor-registration-review dd {font-size:13px;margin:0;overflow-wrap:anywhere;line-height:1.7;text-align:start;}
+.advisor-registration-review-docs {display:flex;flex-wrap:wrap;gap:12px;}
+.advisor-registration-review-image {flex:1 1 105px;max-width:160px;min-height:110px;display:flex!important;flex-direction:column;padding:10px!important;}
+.advisor-registration-review-image>img {height:65px;width:100%;object-fit:contain;}
+.advisor-registration-review-image>span {font-size:12px;line-height:1.5;}
+.advisor-registration-review-image>small {font-size:12px;}
+.advisor-registration-expanded-image {max-width:100%;height:auto;max-height:65dvh;display:block;margin-inline:auto;object-fit:contain;}
+.advisor-registration-verified-label {font-size:12px;display:flex;align-items:center;gap:5px;color:#26734e;}
+.advisor-registration-verified-label svg {width:16px;height:16px;}
+.advisor-registration-complete {padding:95px 15px;text-align:center;max-width:500px;margin:auto;}
+.advisor-registration-complete>span {display:grid;place-items:center;margin:0 auto 25px;width:70px;height:70px;border-radius:22px;background:#e3f3e9;color:#27885c;}
+.advisor-registration-complete>span>svg {width:38px;height:38px;}
+.advisor-registration-complete h2 {font-size:28px;letter-spacing:-.03em;}
+.advisor-registration-complete p {font-size:13px;line-height:1.9;color:var(--advisor-muted);margin-bottom:28px;}
+.advisor-registration-verified {padding:30px;background:#eef7f1;border-radius:13px;text-align:center;color:#26734e;}
+.advisor-registration-verified span {font-size:12px;overflow-wrap:anywhere;}
+@keyframes advisor-registration-arrive {from {opacity:.5;transform:translateY(5px);}to {opacity:1;transform:translateY(0);}}
+@media(min-width:1500px) {.advisor-registration {grid-template-columns:minmax(320px,.7fr) minmax(0,2fr);}.advisor-registration-workspace {padding-top:32px;}}
+@media(max-width:1000px) {.advisor-registration-sidebar {padding-inline:25px;}.advisor-registration-intro h1 {font-size:27px;}.advisor-registration-workspace {padding-inline:28px;}.advisor-document-grid {gap:12px;}.advisor-document-card {padding:13px;}.advisor-document-actions {gap:5px;}.advisor-document-actions button {font-size:12px;padding-inline:9px;}.advisor-registration-topline {padding-inline-end:70px;}.advisor-registration-saved {font-size:11px;}}
+@media(max-width:760px) {
+  .advisor-registration {display:block;}.advisor-registration-sidebar {height:auto;position:static;padding:24px 23px 20px;}.advisor-registration-brand .advisor-brand-mark {width:35px;height:35px;font-size:22px;}.advisor-registration-brand strong {font-size:20px;}.advisor-registration-brand div>span {font-size:10px;}.advisor-registration-intro {margin-top:23px;}.advisor-registration-intro>span {display:none;}.advisor-registration-intro h1 {font-size:24px;margin:0 0 9px;max-width:100%;}.advisor-registration-intro p {font-size:12px;margin:0;max-width:440px;}.advisor-registration-privacy {display:none;}.advisor-registration-steps {grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:24px 0 0;}.advisor-registration-steps li {flex-direction:column;align-items:center;gap:8px;text-align:center;}.advisor-registration-step-icon {height:34px;width:34px;border-radius:10px;}.advisor-registration-step-icon svg {width:20px;height:20px;}.advisor-registration-steps li:not(:last-child) .advisor-registration-step-icon::after {height:1px;width:calc((100vw - 48px)/4 - 35px);top:16px;inset-inline-start:34px;}.advisor-registration-steps small {display:none;}.advisor-registration-steps strong {font-size:12px;line-height:1.5;display:block;}.advisor-registration-workspace {padding:17px 23px 35px;}.advisor-registration-topline {margin-bottom:20px;min-height:30px;padding-inline-end:0;}.advisor-registration-topline>button {font-size:11px;min-height:32px;}.advisor-registration-heading h2 {font-size:24px;}.advisor-registration-heading p {font-size:12px;margin-bottom:20px;}.advisor-registration-heading>span {font-size:10px;}.advisor-registration .advisor-field input,.advisor-registration .advisor-field select {font-size:16px;}.advisor-registration-review {padding:16px;}.advisor-registration-review h3 {font-size:12px;}.advisor-registration-verified-label {font-size:12px;}.advisor-registration .advisor-form-grid {gap:17px 13px;}.advisor-registration-section-heading {margin-top:20px;}.advisor-document-actions button {font-size:12px;}.advisor-registration-complete {padding-top:40px;}
+}
+@media(max-width:480px) {.advisor-registration .advisor-form-grid {grid-template-columns:1fr;}.advisor-document-grid {grid-template-columns:1fr;}.advisor-document-card {padding:17px;}.advisor-document-heading h3 {font-size:13px;}.advisor-document-actions button {font-size:12px;}.advisor-registration-review dl {grid-template-columns:1fr;gap:14px;}.advisor-registration-review>header {flex-wrap:wrap;}.advisor-registration-document-summary {padding:14px;}.advisor-registration-document-summary p {font-size:12px;}.advisor-registration-footer>.advisor-primary {min-width:130px;}.advisor-registration-intro p {font-size:12px;}.advisor-registration-workspace {padding-inline:19px;}.advisor-registration-step-icon {width:32px;height:32px;}}
+@media(prefers-reduced-motion:reduce) {.advisor-registration * {animation:none!important;transition:none!important;scroll-behavior:auto!important;}}

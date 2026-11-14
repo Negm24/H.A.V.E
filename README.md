@@ -1,7 +1,15 @@
 # H.A.V.E — Django backend
 
-Current project assessment: [6 November 2026 readiness report](docs/verification/2026-11-06-readiness.md)
-and [requirement checklist](docs/verification/2026-11-06-checklist.md).
+Current implementation checkpoint — 9 November 2026: Hub/Kiosk purchasing,
+the private Owner workspace, and Advisor registration and in-person prescription
+issuance are implemented. See the [Advisor registration verification](docs/verification/2026-11-09-advisor-registration.md),
+[Advisor v1 verification](docs/verification/2026-11-08-advisor-v1.md),
+[Admin readiness](docs/verification/2026-11-07-admin-readiness.md),
+[Admin redesign verification](docs/verification/2026-11-07-admin-redesign.md), and
+[current Admin agreement](docs/admin-implementation-contract.md).
+The [6 November readiness report](docs/verification/2026-11-06-readiness.md)
+and [requirement checklist](docs/verification/2026-11-06-checklist.md) describe the
+earlier shopping foundation, rather than the complete current implementation.
 Hub QR scanning now authorises Terminal login automatically without a confirmation
 tap; the existing server-side approval and completion checks remain enforced.
 
@@ -73,7 +81,7 @@ No virtual-environment activation is needed for Docker commands. Do not start a 
 docker compose up -d --force-recreate backend
 ```
 
-`docker compose down` preserves PostgreSQL data. `down -v` deletes its volume; it is not a normal restart command. Frontend services are enabled through the `frontend` profile; kiosk and Hub authentication/catalogue integration is implemented. Advisor/Admin remain heading-only shells.
+`docker compose down` preserves PostgreSQL data. `down -v` deletes its volume; it is not a normal restart command. Frontend services are enabled through the `frontend` profile; kiosk and Hub authentication/catalogue integration is implemented. Advisor provides in-person prescription issuance and optional clinic-branded PDF downloads. Admin provides the private Owner workspace.
 
 Run authentication tests inside Docker:
 
@@ -160,7 +168,8 @@ walkthrough in [the testing guide](backend/AUTH_GUIDE.md#payment-return-continua
 H.A.V.E Admin now provides the privately provisioned Owner workspace: doctor review,
 customer support, guarded payment/receipt recovery, catalogue/images, inventory,
 individual Kiosk maintenance, technical monitoring and privileged activity.
-Full Advisor UI and prescriptions remain the next independent milestone.
+At that checkpoint, Advisor UI and prescriptions were the next independent
+milestone; the 8–9 November Advisor reports above document their implementation.
 
 Open `http://localhost:5176`, or the exact private HTTPS `ownerPrivateOrigin` on
 port 9443 from `development/access.local.json`. Admin uses Tailscale **Serve**, not
@@ -194,3 +203,21 @@ Inventory cabinet, financial charts and independent Kiosk indicators. Technical
 has Health, Usage, Incidents and Service Controls. See the
 [redesign evidence](docs/verification/2026-11-07-admin-redesign.md) and
 [design agreement](docs/admin-implementation-contract.md).
+## Advisor registration update — 9 November 2026
+
+Advisor now uses the four-step bilingual registration and private verification
+workflow described in [the Advisor agreement](docs/advisor-v1-contract.md).
+See the [registration verification report](docs/verification/2026-11-09-advisor-registration.md)
+for completed checks, the backed-up authorized doctor-data cleanup and remaining
+phone-camera acceptance.
+Verified applicants can resume a private draft for seven days; final submission
+alone enters the Owner review queue. The private Admin Doctor panel displays
+zoomable evidence and optional professional identifiers. Approved doctors manage
+clinic details and verified phone changes within Clinic letterhead.
+
+Professional images live in ignored `backend/private_verification`, outside
+public media, and persist through the backend bind mount. Hosted deployments must
+provide durable private storage at `DOCTOR_VERIFICATION_ROOT` and a reviewed backup
+and retention policy. The order worker performs bounded draft/deletion cleanup
+every minute; `python manage.py cleanup_doctor_registrations` is the explicit
+maintenance command. Use fictional documents in isolated tests.

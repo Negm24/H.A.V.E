@@ -8,6 +8,13 @@ vi.mock('node:fs', async original => { const fs = await original<typeof import('
 const hub = 'laptop.example.ts.net', kiosk = hub + ':8443'
 beforeEach(() => vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ hubPublicOrigin: `https://${hub}`, kioskPublicOrigin: `https://${kiosk}`, kioskAccessPassword: 'private-test-password' })))
 
+it('keeps Advisor forwarding separate from Hub, Kiosk and private Admin', () => {
+  vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ hubPublicOrigin: `https://${hub}`, kioskPublicOrigin: `https://${kiosk}`, kioskAccessPassword: 'private-test-password', advisorPublicOrigin: `https://${hub}:10000` }))
+  expect(publicHost(5175)).toBe(hub)
+  expect(requestOrigin(hub + ':10000', 5175)).toBe(`https://${hub}:10000`)
+  for (const host of [hub, kiosk, hub + ':9443', 'evil.example:10000']) expect(requestOrigin(host, 5175)).toBeUndefined()
+})
+
 it('only trusts the exact configured authority, port and HTTPS origin', () => {
   expect(publicHost(5173)).toBe(hub)
   expect(requestOrigin(kiosk, 5173)).toBe(`https://${kiosk}`)

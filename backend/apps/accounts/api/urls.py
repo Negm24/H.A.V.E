@@ -1,3 +1,10 @@
+from .views.doctor_registration_views import (
+    RegistrationStartView, RegistrationVerifyView, RegistrationResumeView,
+    RegistrationCurrentView, RegistrationRestartView, RegistrationDocumentView,
+    RegistrationSubmitView, OwnerVerificationView, OwnerVerificationDocumentView,
+)
+from .views.doctor_profile_views import DoctorProfileView, DoctorPhoneChangeRequestView, DoctorPhoneChangeVerifyView
+
 from django.urls import path
 
 from .views.customer_views import (
@@ -94,4 +101,16 @@ urlpatterns = [
     path("owners/doctors/", OwnerDoctorListView.as_view(), name="owner-doctors"),
     path("owners/doctors/<str:doctor_id>/", OwnerDoctorDetailView.as_view(), name="owner-doctor-detail"),
     path("owners/doctors/<str:doctor_id>/decision/", OwnerDoctorDecisionView.as_view(), name="owner-doctor-decision"),
+    path("doctors/profile/", DoctorProfileView.as_view()),
+    path("doctors/profile/phone/request/", DoctorPhoneChangeRequestView.as_view()),
+    path("doctors/profile/phone/verify/", DoctorPhoneChangeVerifyView.as_view()),
+    path("doctors/registration/start/", RegistrationStartView.as_view()),
+    path("doctors/registration/verify/", RegistrationVerifyView.as_view()),
+    path("doctors/registration/resume/", RegistrationResumeView.as_view()),
+    path("doctors/registration/current/", RegistrationCurrentView.as_view()),
+    path("doctors/registration/restart/", RegistrationRestartView.as_view()),
+    path("doctors/registration/documents/<str:kind>/", RegistrationDocumentView.as_view()),
+    path("doctors/registration/submit/", RegistrationSubmitView.as_view()),
+    path("owners/doctors/<str:doctor_id>/verification/", OwnerVerificationView.as_view()),
+    path("owners/doctors/<str:doctor_id>/verification/documents/<str:kind>/", OwnerVerificationDocumentView.as_view()),
 ]

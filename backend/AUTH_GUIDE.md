@@ -802,78 +802,60 @@ include the credential version: sessions created before this change must sign in
 again. Existing owner sessions, Hub tokens, and signup challenges keep their
 formats. Recovery intentionally revokes the recovered account's existing sessions.
 
-## Doctor signup: Swagger UI
+## Doctor registration — four-step wizard (9 November 2026)
 
-Doctors apply publicly; the owner approves through the owner API; only then can they
-use Advisor. These two routes need no login, cookies or CSRF, like customer signup.
+Use Advisor → Apply as a doctor. The ordered steps are bilingual doctor/clinic
+identity, Account, Professional verifications, Review and submit. SMS/email proof
+creates only a private seven-day draft; final submission creates the pending
+application. The old `/auth/doctors/signup/` and `/signup/verify/` endpoints now
+return 410 and cannot create applications without images.
 
-### 1. Submit the application
+All paths below start `/api/v1/auth/doctors/registration/`. Mutations require
+fresh CSRF from `/api/v1/auth/csrf/`; draft access uses a scoped HttpOnly cookie.
 
-Open http://localhost:8000/api/docs/ and expand **Advisor · Doctor signup**.
-Execute **POST /api/v1/auth/doctors/signup/** with fictional details:
-
-```json
-{
-  "first_name": "Mona",
-  "last_name": "Hassan",
-  "phone_number": "01212345678",
-  "email": "doctor@example.test",
-  "password": "REPLACE-WITH-A-STRONG-PASSWORD",
-  "professional_license_number": "EG-MED-12345",
-  "specialty": "Family medicine",
-  "clinic_name": "Demo Clinic",
-  "clinic_address": "12 Example Street, Cairo"
-}
-```
-
-Expect **202** with `challenge_id`, `expires_in: 300`, `resend_after: 60`.
-No account exists yet. Redis holds a password **hash**, never the password.
-
-Input rules: names, phone and email follow customer signup. The password needs
-12+ characters, must not be common, numeric-only or similar to the name/email.
-License, specialty, clinic name and address are required (100/100/200/1000 chars).
-The license number must be unique among doctors.
-
-### 2. Verify the phone, then the email
-
-Read the SMS code from `docker compose logs -f backend`:
-
-```text
-[MOCK SMS — DOCTOR SIGNUP] +201212345678 | challenge=<UUID> | code=<six digits>
-```
-
-Execute **POST /api/v1/auth/doctors/signup/verify/** with `challenge_id`,
-`phone_number` and the SMS `code`. Expect **202** with `next_step: "email"`; a code is
-emailed to the applicant. Call the same endpoint again with the emailed code.
-Expect **201** with the doctor's identity, `approval_status: "PENDING"` and
-`mfa_enrolled: false`. No tokens are issued.
-
-The owner notification goes to `OWNER_NOTIFICATION_EMAIL` (local settings fall back
-to `owner@have.local`). It contains the application ID, name and specialty, never
-the password or hashes. A failed notification never blocks signup.
-
-**Previously rejected applicants** (matched on the keyed hash of the phone **or** the
-email) get **201** on the **same** `HAV-D...` ID, back in PENDING, while they have
-fewer than three rejections. With three, the second call returns **403**.
-
-### Doctor signup failures
-
-| Test | Expected result |
+| Method/path | Behavior |
 | --- | --- |
-| Weak/common/similar password, blank professional field, extra field | 400, no code sent |
-| Wrong, expired, replayed code; five wrong guesses at either stage | 400; restart signup |
-| Applicant already rejected three times (phone or email matches) | 403 after both codes |
-| Phone, email or license already used by a doctor | 409 **after** a correct code |
-| Same phone/email belongs only to a customer | Separate doctor account allowed |
-| Resubmit inside 60 seconds | 429 with `Retry-After` |
-| Redis/SMS/email unavailable | 503 |
+| POST `start/` | Bilingual identity/clinic, nationality, country of graduation, manual school, phone/email/password; returns 202 challenge. |
+| POST `verify/` | Same phone/challenge/code twice: SMS → 202 email step → 200 private draft and cookie. No Doctor row yet. |
+| POST `resume/` | Phone/password authenticates an unexpired draft, rotates its cookie and returns saved age/expiry. Rate limited. |
+| GET/PATCH `current/` | Read/update private draft; verified contacts are not editable here. Reads do not extend the fixed seven days. |
+| PUT/GET/DELETE `documents/{kind}/` | Multipart `image`, authenticated binary preview, or removal. |
+| POST `submit/` | UUID `action_id`; required evidence checked, pending Doctor/application notification created once; identical replay returns original Doctor. |
+| POST `restart/` | Delete the authenticated draft/stub and its cookie. Submitted doctor evidence stays attached to the Doctor. |
 
-Doctor and customer pending signups for one phone do not replace each other.
-Per-source limits are shared with customer signup (20 sends / 10 min, 60 verifies / 5 min).
+Image kinds: graduation, id_front, id_back, passport, syndicate, practice_license.
+Graduation/Syndicate are required, plus Egyptian ID front/back or a foreign
+passport identity page. Licence image/number are optional. JPEG/PNG/WebP must
+be still images, at most 10 MiB; decoded dimensions/pixels are bounded and EXIF
+orientation/metadata normalized. File references are never public media URLs.
+
+Owner GET/PATCH `/api/v1/auth/owners/doctors/{id}/verification/` exposes documents
+and optional Syndicate/specialty/licence metadata. GET its `documents/{kind}/`
+returns a private image. Existing Owner host/origin/session/CSRF boundaries apply.
+No checklist or identifier is mandatory for approval. No OCR or registry API exists.
+
+Approved doctors use GET/PATCH `/api/v1/auth/doctors/profile/` with their Advisor
+bearer to edit specialty and bilingual clinic details only. POST profile/phone/request/
+then profile/phone/verify/ verifies a new number, preserves account ID/approval/MFA,
+and revokes existing sessions. Registered name, school and other identity fields
+are locked; freeform letterhead identity overrides are rejected. Historical PDFs
+use their signed snapshots. No signing freshness timer or extra MFA is added.
+
+`DOCTOR_VERIFICATION_ROOT` defaults to ignored `backend/private_verification`,
+persisted by the backend bind mount and excluded from `/media/`. Approved images
+last for the account lifetime; rejected/expired/replaced files are erased with
+retry markers. `cleanup_doctor_registrations` runs explicitly, or the order worker
+invokes bounded cleanup once per minute. Production storage, backup expiry and
+retention obligations need validation before collecting real credentials.
+
+The UI has per-document framing guides, Take photo/Upload image, Retake/Use photo,
+private previews, a seven-day draft notice and relative-age welcome-back modal.
+Camera denial falls back to uploading; real-device HTTPS capture remains a manual
+acceptance step. Test documents must be fictional and isolated from live records.
 
 ## Owner API: review doctor applications
 
-There is no dashboard UI; a future owner app uses these endpoints. Sign in first with
+The private Admin application uses these endpoints. Sign in first with
 **POST /owners/login/** (see the owner sections above). The session cookie authenticates;
 there is no bearer token. Swagger supplies CSRF; in Postman send `X-CSRFToken` on POST.
 
@@ -1349,3 +1331,25 @@ host agent and fixed labels; protected core services are not browser-controllabl
 See [Admin contract](../docs/admin-implementation-contract.md),
 [app guide](../frontend/CODEX-Increment-5.md) and
 [current evidence](../docs/verification/2026-11-07-admin-readiness.md).
+
+
+## Advisor v1 prescription API — 8 November 2026
+
+All /api/v1/advisor/ routes require approved active doctor bearer authentication.
+POST patient-lookup/ accepts an exact phone and returns minimum customer identity.
+POST medicines/search/ returns reviewed active catalogue medicines independent of
+stock. POST prescriptions/issue/ creates an atomic signed immutable snapshot with
+an action_id. POST prescriptions/search/ accepts private search/date/status filters.
+GET prescriptions/{id}/ and its /pdf/ require issuer ownership. POST /revoke/ and
+/replace/ require action_id and reason. Replacement signs and revokes atomically.
+GET/PATCH letterhead/ uses revisions; letterhead/logo/ validates PNG/JPEG uploads
+and serves the saved private logo. POST letterhead/preview/ renders fictional
+patient details. Issuance uses the existing valid approved-doctor session. No separate signing
+challenge or signing freshness window applies. TOTP remains part of login.
+
+Review eligibility is bound to the product formulation. Price/stock changes do
+not invalidate it. Clinical instructions are preserved verbatim and only signed
+snapshot data feeds PDF rendering. PDF rendering fetches only the validated
+embedded logo and uses server-installed fonts. Signing, PDF retrieval and lookup
+recheck doctor permission. The current flow never creates customer accounts or
+claims prescriptions from a phone lookup.
